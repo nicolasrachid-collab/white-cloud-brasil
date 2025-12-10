@@ -1,0 +1,7 @@
+<svg width="500" height="500" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+  <rect width="500" height="500" fill="#f3f4f6"/>
+  <path d="M200 150 L300 150 L280 350 L220 350 Z" fill="#000000"/>
+  <path d="M200 150 L220 100 L280 100 L300 150 Z" fill="#4b5563"/>
+  <circle cx="250" cy="250" r="5" fill="#3b82f6"/>
+  <text x="50%" y="420" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="20" fill="#374151">Mini Fit</text>
+</svg>

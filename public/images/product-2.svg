@@ -1,0 +1,9 @@
+<svg width="500" height="500" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+  <rect width="500" height="500" fill="#ecfdf5"/>
+  <path d="M200 150 L300 150 L320 380 Q325 400 300 400 L200 400 Q175 400 180 380 Z" fill="#34d399"/>
+  <rect x="210" y="100" width="80" height="50" fill="#065f46"/>
+  <rect x="210" y="200" width="80" height="120" fill="#ffffff" rx="5"/>
+  <text x="250" y="250" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="20" fill="#065f46">MINT</text>
+  <text x="250" y="270" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="14" fill="#065f46">NicSalt</text>
+  <path d="M250 160 Q230 200 250 200 Q270 200 250 160" fill="#a7f3d0"/>
+</svg>
