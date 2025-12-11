@@ -1,10 +1,10 @@
-﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Routes, Route, useParams, useNavigate as useNavigateRouter } from 'react-router-dom';
 import { 
   ShoppingCart, Search, Menu, X, User, Star, Truck, ShieldCheck, 
   CreditCard, ArrowRight, Minus, Plus, Trash2, 
-  MapPin, CheckCircle, TrendingUp, DollarSign, 
-  Users, ChevronLeft, ChevronRight, Mail, Instagram, Facebook, Youtube, Twitter,
+  MapPin, CheckCircle, DollarSign, 
+  ChevronRight, Mail, Instagram, Facebook, Youtube, Twitter,
   Heart, Eye, Share2
 } from './components/Icons';
 import { Button } from './components/Button';
@@ -14,15 +14,16 @@ import { CartBadge } from './components/CartBadge';
 import { FavoritesBadge } from './components/FavoritesBadge';
 import { QuickViewModal } from './components/QuickViewModal';
 import { ProductCardSkeleton, ProductGridSkeleton, ProductDetailSkeleton } from './components/Skeleton';
-import { LoadingSpinner } from './components/LoadingSpinner';
+import { Logos3 } from './components/Logos3';
 import { useToast } from './hooks/useToast';
 import { useDebounce } from './hooks/useDebounce';
 import { useCart } from './contexts/CartContext';
 import { useApp } from './contexts/AppContext';
 import { useFavorites } from './contexts/FavoritesContext';
 import { useProducts } from './contexts/ProductsContext';
-import { MOCK_PRODUCTS, CATEGORIES, HERO_BANNERS, BRANDS } from './constants';
-import { Product, CartItem, ViewState, Order, Review } from './types';
+import { CATEGORIES, HERO_BANNERS, BRANDS } from './constants';
+import { Product, Review } from './types';
+import { formatPrice } from './utils/formatUtils';
 
 // --- CONFIGURAÇÃO DO LOGOTIPO ---
 // IMPORTANTE: Caminhos locais (C:\Users...) NÃO funcionam em navegadores web.
@@ -397,11 +398,11 @@ const ProductCard: React.FC<{
         <div className="mt-auto">
           {product.originalPrice && (
             <span className="text-[10px] sm:text-xs text-gray-400 line-through block mb-0.5">
-              R$ {product.originalPrice.toFixed(2)}
+              {formatPrice(product.originalPrice)}
             </span>
           )}
           <div className="flex items-end gap-2">
-            <span className="text-base sm:text-lg font-bold text-gray-900">R$ {product.price.toFixed(2)}</span>
+            <span className="text-base sm:text-lg font-bold text-gray-900">{formatPrice(product.price)}</span>
             <span className="text-[10px] sm:text-xs text-gray-500 mb-1">à vista</span>
           </div>
           <p className="text-[9px] sm:text-[10px] text-gray-400 mt-1">
@@ -414,7 +415,6 @@ const ProductCard: React.FC<{
 };
 
 const HeroSlider = () => {
-  const { navigate } = useApp();
   const [current, setCurrent] = useState(0);
 
   const displayBanners = HERO_BANNERS;
@@ -450,7 +450,7 @@ const HeroSlider = () => {
       </div>
 
       {/* Navigation Dots */}
-      <div className="absolute bottom-6 left-0 w-full flex justify-center space-x-2">
+      <div className="absolute bottom-3 sm:bottom-4 md:bottom-6 left-0 w-full flex justify-center gap-0.5 sm:gap-1 px-4">
         {displayBanners.map((_, idx) => (
           <button
             key={idx}
@@ -489,6 +489,40 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     navigateRouter(`/produto/${id}`);
   };
   
+  // #region agent log
+  const allCategories = CATEGORIES;
+  const filteredCategories = CATEGORIES.filter(cat => cat.id !== 'all');
+  // Garantir que apenas 3 categorias sejam exibidas
+  const displayCategories = useMemo(() => {
+    const filtered = CATEGORIES.filter(cat => cat.id !== 'all');
+    const sliced = filtered.slice(0, 3);
+    // #region agent log
+    console.log('[DEBUG] Categories calculated:', {
+      total: CATEGORIES.length,
+      filtered: filtered.length,
+      sliced: sliced.length,
+      ids: sliced.map(c => c.id),
+      names: sliced.map(c => c.name)
+    });
+    console.log('[DEBUG] ASSERTION: sliced.length MUST be <= 3, actual:', sliced.length);
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:495',message:'Category filtering debug',data:{totalCategories:CATEGORIES.length,filteredCount:filtered.length,slicedCount:sliced.length,categoryIds:sliced.map(c=>c.id),categoryNames:sliced.map(c=>c.name)},timestamp:Date.now(),sessionId:'debug-session',runId:'run5',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    // Forçar retorno de exatamente 3 ou menos
+    return sliced.length > 3 ? sliced.slice(0, 3) : sliced;
+  }, []);
+
+  // #region agent log
+  useEffect(() => {
+    const container = document.getElementById('category-banners-container');
+    if (container && !isLoading) {
+      const cards = container.querySelectorAll('div[class*="group relative"]');
+      console.log('[DEBUG] DOM check - Cards found in container:', cards.length);
+      console.log('[DEBUG] displayCategories length:', displayCategories.length);
+      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:510',message:'DOM check after render',data:{cardsInDOM:cards.length,displayCategoriesLength:displayCategories.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'C'})}).catch(()=>{});
+    }
+  }, [displayCategories, isLoading]);
+  // #endregion
+
   // Simular loading inicial (pode ser removido quando houver API real)
   useEffect(() => {
     setIsLoading(true);
@@ -638,19 +672,21 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     </section>
 
     {/* 9. Brand Strip */}
-    {/* #region agent log */}
-    {(() => {
-      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:641',message:'Rendering Logos3 component',data:{brandsFromConstants:BRANDS.length,firstBrandUrl:BRANDS[0]?.logo,firstBrandHas222:BRANDS[0]?.logo?.includes('/222/'),firstBrandHasFFFFFF:BRANDS[0]?.logo?.includes('/FFFFFF/')},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'H1'})}).catch(()=>{});
-      return null;
-    })()}
-    {/* #endregion */}
     <Logos3 heading="As Melhores Marcas" />
 
     {/* 10. Category Banners */}
     <section className="container mx-auto px-3 sm:px-4">
       <SectionHeader title="Explore Nossas Categorias" onLinkClick={() => navigateRouter('/catalogo')} />
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-        {CATEGORIES.filter(cat => cat.id !== 'all').map(category => {
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6" id="category-banners-container">
+        {displayCategories.slice(0, 3).map((category, index) => {
+          // #region agent log
+          console.log('[DEBUG] Rendering card:', index + 1, 'of', displayCategories.length, '-', category.name);
+          if (index >= 3) {
+            console.error('[ERROR] Index >= 3! This should not happen!', index);
+            return null; // Não renderizar se index >= 3
+          }
+          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:682',message:'Rendering category card',data:{index, totalInArray:displayCategories.length, categoryId:category.id, categoryName:category.name, totalCards:index+1},timestamp:Date.now(),sessionId:'debug-session',runId:'run5',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
           const categoryProducts = (products || []).filter(p => p.category === category.id);
           const productCount = categoryProducts.length;
           
@@ -1069,12 +1105,12 @@ const ProductDetail = ({ product }: { product: Product }) => {
           <div className="bg-gray-50 p-4 sm:p-6 rounded-xl mb-6 sm:mb-8 border border-gray-200">
             <div className="flex items-end gap-2 sm:gap-3 mb-2 flex-wrap">
               <span className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
-                R$ {product.price.toFixed(2).replace('.', ',')}
+                {formatPrice(product.price)}
               </span>
               {product.originalPrice && (
                 <>
                   <span className="text-lg sm:text-xl md:text-2xl text-gray-400 line-through mb-1">
-                    R$ {product.originalPrice.toFixed(2).replace('.', ',')}
+                    {formatPrice(product.originalPrice)}
                   </span>
                   {savings && (
                     <span className="bg-red-600 text-white text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 rounded-full mb-1">
@@ -1086,7 +1122,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
             </div>
             {savings && (
               <p className="text-xs sm:text-sm text-gray-600 mb-2">
-                Economia de R$ {savings.value.toFixed(2).replace('.', ',')}
+                Economia de {formatPrice(savings.value)}
               </p>
             )}
             <p className="text-xs sm:text-sm text-primary-600 font-medium flex items-center">
@@ -1107,7 +1143,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
                 {product.flavors.map((flavor) => {
-                  const isAvailable = Math.random() > 0.3; // Mock: 70% disponível
+                  const isAvailable = true; // Todos os sabores disponíveis por padrão
                   const isSelected = selectedFlavor === flavor;
                   
                   return (
@@ -1538,7 +1574,7 @@ const Favorites = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Produc
 
 const Cart = () => {
     const { cart, cartTotal, updateQuantity, removeFromCart } = useCart();
-    const { navigate } = useApp();
+    const navigateRouter = useNavigateRouter();
     if (cart.length === 0) return <div className="p-8 sm:p-12 text-center text-gray-500">Carrinho Vazio</div>;
     return (
         <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
@@ -1550,7 +1586,7 @@ const Cart = () => {
                             <img src={item.images[0]} alt={item.name} className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded flex-shrink-0" />
                             <div className="flex-1 min-w-0">
                                 <h3 className="font-bold text-sm sm:text-base truncate">{item.name}</h3>
-                                <p className="text-sm sm:text-base">R$ {item.price.toFixed(2)}</p>
+                                <p className="text-sm sm:text-base">{formatPrice(item.price)}</p>
                                 <div className="flex items-center gap-3 sm:gap-4 mt-2">
                                      <div className="flex items-center border rounded">
                                         <button 
@@ -1584,7 +1620,7 @@ const Cart = () => {
                 <div className="w-full lg:w-80 bg-gray-50 p-4 sm:p-6 rounded-lg h-fit sticky bottom-0 lg:sticky lg:top-8">
                     <div className="flex justify-between font-bold text-lg sm:text-xl mb-4">
                         <span>Total</span>
-                        <span>R$ {cartTotal.toFixed(2)}</span>
+                        <span>{formatPrice(cartTotal)}</span>
                     </div>
                     <Button fullWidth size="lg" onClick={() => navigateRouter('/checkout')} aria-label="Finalizar compra" className="min-h-[44px]">Finalizar Compra</Button>
                 </div>
@@ -1598,8 +1634,8 @@ const TrackingPage = () => <div className="p-12 text-center">Rastreamento (Simul
 // --- MAIN APP ---
 
 export default function App() {
-  const { navigate } = useApp();
-  const { toast, showError, showSuccess, closeToast } = useToast();
+  const navigateRouter = useNavigateRouter();
+  const { toast, showSuccess, closeToast } = useToast();
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const { addToCart } = useCart();
 
