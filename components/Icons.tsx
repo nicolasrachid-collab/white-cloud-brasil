@@ -44,7 +44,8 @@ import {
   Clock,
   Edit,
   Heart,
-  Eye
+  Eye,
+  Share2
 } from 'lucide-react';
 
 export { 
@@ -93,5 +94,6 @@ export {
   Clock,
   Edit,
   Heart,
-  Eye
+  Eye,
+  Share2
 };

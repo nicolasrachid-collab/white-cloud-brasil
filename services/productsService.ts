@@ -2,7 +2,7 @@ import { Product } from '../types';
 import { MOCK_PRODUCTS } from '../constants';
 
 const STORAGE_KEY = 'white_cloud_brasil_products';
-const PRODUCTS_VERSION = '2.0'; // Versão para forçar atualização quando necessário
+const PRODUCTS_VERSION = '3.0'; // Versão para forçar atualização quando necessário (atualizado para incluir novas propriedades)
 const VERSION_KEY = 'white_cloud_brasil_products_version';
 
 // Verifica se os produtos precisam ser atualizados
@@ -21,10 +21,14 @@ const updateProductsIfNeeded = (products: Product[]): Product[] => {
   const updatedProducts = products.map(storedProduct => {
     const mockProduct = MOCK_PRODUCTS.find(p => p.id === storedProduct.id);
     if (mockProduct) {
-      // Mantém dados customizados do usuário, mas atualiza imagens
+      // Mantém dados customizados do usuário, mas atualiza imagens e novas propriedades
       return {
         ...storedProduct,
         images: mockProduct.images,
+        specifications: mockProduct.specifications || storedProduct.specifications,
+        includedItems: mockProduct.includedItems || storedProduct.includedItems,
+        warranty: mockProduct.warranty || storedProduct.warranty,
+        paymentOptions: mockProduct.paymentOptions || storedProduct.paymentOptions,
       };
     }
     return storedProduct;

@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { CartProvider } from './contexts/CartContext';
 import { AppProvider } from './contexts/AppContext';
-import { ContentProvider } from './contexts/ContentContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
 import { ProductsProvider } from './contexts/ProductsContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -14,22 +14,23 @@ if (!rootElement) {
 }
 
 console.log('Iniciando renderização do React...');
+
 try {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <React.StrictMode>
       <ErrorBoundary>
-        <AppProvider>
-          <ProductsProvider>
-            <ContentProvider>
+        <BrowserRouter>
+          <AppProvider>
+            <ProductsProvider>
               <FavoritesProvider>
                 <CartProvider>
                   <App />
                 </CartProvider>
               </FavoritesProvider>
-            </ContentProvider>
-          </ProductsProvider>
-        </AppProvider>
+            </ProductsProvider>
+          </AppProvider>
+        </BrowserRouter>
       </ErrorBoundary>
     </React.StrictMode>
   );

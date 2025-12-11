@@ -2,6 +2,9 @@ export interface Product {
   id: string;
   name: string;
   description: string;
+  detailedDescription?: string; // Descrição completa e detalhada do produto
+  brand?: string; // Marca do produto
+  sku?: string; // SKU do produto
   price: number;
   originalPrice?: number;
   category: string;
@@ -13,6 +16,10 @@ export interface Product {
   isBestSeller?: boolean;
   flavors?: string[];
   nicotine?: string[];
+  specifications?: { [key: string]: string }; // Especificações técnicas (ex: { "Medidas": "73mm x 36mm x 14mm", "Potência": "8-12W" })
+  includedItems?: string[]; // Itens inclusos na embalagem
+  warranty?: string; // Texto de garantia
+  paymentOptions?: string; // Opções de pagamento (ex: "Em até 12x sem juros")
 }
 
 export interface CartItem extends Product {
@@ -54,17 +61,14 @@ export interface Customer {
   registrationDate: string;
 }
 
-export interface ContentSection {
+export interface Review {
   id: string;
-  type: 'text' | 'image' | 'banner' | 'category';
-  title: string;
-  content: string;
-  imageUrl?: string;
-  order: number;
-  isActive: boolean;
-  cta?: string; // Texto do botão (ex: "Aproveitar Agora")
-  link?: string; // Link/URL para redirecionamento (ex: "/catalog", "/product/123", "https://...")
-  color?: string; // Gradiente Tailwind (ex: "from-purple-900 to-indigo-900")
+  productId: string;
+  customerName: string;
+  customerPhoto?: string;
+  rating: number; // 1 a 5
+  comment: string;
+  date: string; // ISO date string
 }
 
-export type ViewState = 'home' | 'catalog' | 'product' | 'cart' | 'checkout' | 'account' | 'admin' | 'tracking' | 'ai-editor' | 'favorites';
+export type ViewState = 'home' | 'catalog' | 'product' | 'cart' | 'checkout' | 'account' | 'tracking' | 'favorites';

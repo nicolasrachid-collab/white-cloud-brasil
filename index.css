@@ -115,6 +115,20 @@ body {
   background-size: 1000px 100%;
 }
 
+/* Animação de shimmer para o EmailCapture */
+@keyframes shimmer-email {
+  0% {
+    transform: translateX(-100%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-12deg);
+  }
+}
+
+.animate-shimmer-email {
+  animation: shimmer-email 8s infinite;
+}
+
 /* Utilitários */
 .line-clamp-2 {
   display: -webkit-box;
@@ -181,5 +195,15 @@ body {
   html {
     scroll-behavior: smooth;
   }
+}
+
+/* Ocultar scrollbar mas manter funcionalidade */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
 }
 
