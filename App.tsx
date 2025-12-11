@@ -13,6 +13,7 @@ import { EmailCapture } from './components/EmailCapture';
 import { CartBadge } from './components/CartBadge';
 import { FavoritesBadge } from './components/FavoritesBadge';
 import { QuickViewModal } from './components/QuickViewModal';
+import { AgeVerificationModal } from './components/AgeVerificationModal';
 import { ProductCardSkeleton, ProductGridSkeleton, ProductDetailSkeleton } from './components/Skeleton';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { useToast } from './hooks/useToast';
@@ -21,7 +22,7 @@ import { useCart } from './contexts/CartContext';
 import { useApp } from './contexts/AppContext';
 import { useFavorites } from './contexts/FavoritesContext';
 import { useProducts } from './contexts/ProductsContext';
-import { MOCK_PRODUCTS, CATEGORIES, HERO_BANNERS, BRANDS } from './constants';
+import { MOCK_PRODUCTS, CATEGORIES, HERO_BANNERS, BRANDS, MenuItem } from './constants';
 import { Logos3 } from './components/ui/Logos3';
 import { Product, CartItem, ViewState, Order, Review } from './types';
 
@@ -174,16 +175,72 @@ const Header = () => {
         {/* Desktop Navigation Bar */}
         <nav className="hidden lg:block border-t border-gray-100 bg-white">
           <div className="container mx-auto px-3 sm:px-4">
-            <ul className="flex items-center justify-between text-sm font-medium text-gray-600 py-3">
+            <ul className="flex items-center justify-between gap-4 sm:gap-6 text-sm font-medium text-gray-600 py-3">
               {CATEGORIES.map(cat => (
-                <li key={cat.id}>
-                  <button 
-                    onClick={() => navigateRouter('/catalogo')}
-                    className={`hover:text-primary-600 transition-colors py-1 relative group ${cat.isHighlight ? 'text-white bg-black px-3 rounded-full hover:bg-gray-800 hover:text-white' : ''}`}
-                  >
-                    {cat.name}
-                    {!cat.isHighlight && <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all group-hover:w-full"></span>}
-                  </button>
+                <li key={cat.id} className="relative group">
+                  {cat.hasDropdown ? (
+                    <>
+                      <button 
+                        className={`hover:text-primary-600 transition-colors py-1 relative uppercase ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
+                      >
+                        <span className={cat.isHighlight ? 'relative z-10' : ''}>{cat.name}</span>
+                        {!cat.isHighlight && <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all group-hover:w-full"></span>}
+                      </button>
+                      
+                      {/* Dropdown Menu */}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[800px] bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[60]">
+                        <div className="p-6">
+                          {cat.submenu?.sections ? (
+                            // Menu com seções (Juices e SaltNic) - Layout mais horizontal
+                            <div className="grid grid-cols-2 gap-8">
+                              {cat.submenu.sections.map((section, idx) => (
+                                <div key={idx}>
+                                  <h4 className="font-bold text-gray-900 text-sm mb-3 uppercase">
+                                    {section.title}
+                                  </h4>
+                                  <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                                    {section.items.map((item, itemIdx) => (
+                                      <li key={itemIdx}>
+                                        <button
+                                          onClick={() => navigateRouter('/catalogo')}
+                                          className="text-sm text-gray-600 hover:text-primary-600 transition-colors text-left w-full"
+                                        >
+                                          {item}
+                                        </button>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            // Menu simples (lista única) - Organizar em múltiplas colunas
+                            <ul className="grid grid-cols-3 gap-x-4 gap-y-2">
+                              {cat.submenu?.items?.map((item, idx) => (
+                                <li key={idx}>
+                                  <button
+                                    onClick={() => navigateRouter('/catalogo')}
+                                    className="text-sm text-gray-600 hover:text-primary-600 transition-colors text-left w-full"
+                                  >
+                                    {item}
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    // Link simples (Promoções e Perfumes)
+                    <button 
+                      onClick={() => navigateRouter('/catalogo')}
+                      className={`hover:text-primary-600 transition-colors py-1 relative uppercase ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
+                    >
+                      <span className={cat.isHighlight ? 'relative z-10' : ''}>{cat.name}</span>
+                      {!cat.isHighlight && <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all group-hover:w-full"></span>}
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -272,11 +329,11 @@ const Header = () => {
                   onClick={() => { navigateRouter('/catalogo'); setIsMenuOpen(false); }}
                   className={`flex items-center justify-between w-full text-left py-3 px-2 rounded-lg transition-colors ${
                     cat.isHighlight 
-                      ? 'bg-black text-white font-bold' 
+                      ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white font-bold highlight-button-shimmer' 
                       : 'text-gray-600 hover:bg-gray-50 hover:text-primary-600'
                   }`}
                 >
-                  <span>{cat.name}</span>
+                  <span className={cat.isHighlight ? 'relative z-10' : ''}>{cat.name}</span>
                   {!cat.isHighlight && <ChevronRight className="w-4 h-4 text-gray-300" />}
                 </button>
               ))}
@@ -1652,6 +1709,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col font-sans text-gray-900 bg-white">
+      <AgeVerificationModal />
       <Header />
 
       <main className="flex-1">

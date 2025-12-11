@@ -1,15 +1,212 @@
 import { Product } from './types';
 
-export const CATEGORIES = [
-  { id: 'all', name: 'Todos' },
-  { id: 'black-friday', name: 'Black Friday', isHighlight: true },
-  { id: 'disposables', name: 'Pods Descartáveis' },
-  { id: 'juices-br', name: 'Juices Nacionais' },
-  { id: 'juices-import', name: 'Juices Importados' },
-  { id: 'salts-br', name: 'SaltNic Nacional' },
-  { id: 'salts-import', name: 'SaltNic Importado' },
-  { id: 'pods', name: 'Pod Systems' },
-  { id: 'coils', name: 'Coils & Acessórios' },
+export interface MenuItem {
+  id: string;
+  name: string;
+  isHighlight?: boolean;
+  hasDropdown?: boolean;
+  submenu?: {
+    sections?: {
+      title: string;
+      items: string[];
+    }[];
+    items?: string[];
+  };
+}
+
+export const CATEGORIES: MenuItem[] = [
+  {
+    id: 'promocoes',
+    name: 'Promoções',
+    isHighlight: true,
+    hasDropdown: false
+  },
+  {
+    id: 'pods-descartaveis',
+    name: 'Pods Descartáveis',
+    hasDropdown: true,
+    submenu: {
+      items: [
+        'Elf Bar',
+        'Ignite',
+        'Vaporesso',
+        'Voopoo',
+        'Geekvape',
+        'Smok'
+      ]
+    }
+  },
+  {
+    id: 'juices',
+    name: 'Juices',
+    hasDropdown: true,
+    submenu: {
+      sections: [
+        {
+          title: 'Juices Nacionais',
+          items: [
+            'B-Side',
+            'Blends',
+            'Blue Jay',
+            'Br Liquid',
+            'Bulldogs',
+            'Capi Juice',
+            "Daddy's Juices",
+            'Dream Collab',
+            'LQD ART',
+            'MatiaMist',
+            'Radiola',
+            'Rainmaker',
+            'Rústico',
+            'Sierra Blends'
+          ]
+        },
+        {
+          title: 'Juices Importados',
+          items: [
+            'Badger Hill Reserve',
+            'Basix',
+            'Blvk',
+            'Born to Vape',
+            'Coastal Clouds',
+            'Dinner Lady',
+            'FRYD',
+            'Jam Monster',
+            'Johnny Creampuff',
+            'Magna',
+            'Mints',
+            'Mr. Freeze',
+            'Naked',
+            'Nasty',
+            "Nitro's Cold Brew",
+            'Reds',
+            'Sad Boy',
+            'Twist',
+            'Vapetasia',
+            'Vgod',
+            'Yogi',
+            'Zen Haus'
+          ]
+        }
+      ]
+    }
+  },
+  {
+    id: 'coils',
+    name: 'Coils',
+    hasDropdown: true,
+    submenu: {
+      items: [
+        'Artesanais',
+        'Cartuchos',
+        'Pod System',
+        'Sub-ohm'
+      ]
+    }
+  },
+  {
+    id: 'hardware',
+    name: 'Hardware',
+    hasDropdown: true,
+    submenu: {
+      items: [
+        'Mods',
+        'Kits',
+        'Atomizadores'
+      ]
+    }
+  },
+  {
+    id: 'saltnic',
+    name: 'SaltNic',
+    hasDropdown: true,
+    submenu: {
+      sections: [
+        {
+          title: 'SaltNic Nacional',
+          items: [
+            'B-Side Salts',
+            'Blends Salts',
+            'Blue Jay Salts',
+            'Br Liquid Salts',
+            'Bulldogs Salts',
+            'Capi Juice Salts',
+            "Daddy's Juices Salts",
+            'Dream Collab Salts',
+            'LQD ART Salts',
+            'MatiaMist Salts',
+            'Radiola Salts',
+            'Rainmaker Salts',
+            'Sierra Blends Salts'
+          ]
+        },
+        {
+          title: 'SaltNic Importado',
+          items: [
+            'Badger Hill Reserve Salts',
+            'Basix Salts',
+            'Blvk Salts',
+            'Born to Vape Salts',
+            'Dinner Lady Salts',
+            'Finest Salts',
+            'Hypnos',
+            'Jam Monster Salts',
+            'Johnny Creampuff Salts',
+            'Magna Salts',
+            'Mints Salts',
+            'Mr. Freeze Salts',
+            'Naked Salts',
+            'Nasty Salts',
+            "Nitro's Cold Brew Salts",
+            'Pod Salt',
+            'Reds Salts',
+            'Sad Boy Salts',
+            'Twist Salts',
+            'Vapetasia Salts',
+            'Vgod Salts',
+            'Yogi Salts',
+            'Zen Haus Salts'
+          ]
+        }
+      ]
+    }
+  },
+  {
+    id: 'pods',
+    name: 'Pods',
+    hasDropdown: true,
+    submenu: {
+      items: [
+        'Vaporesso',
+        'Voopoo',
+        'Geekvape',
+        'Smok',
+        'Uwell',
+        'Aspire'
+      ]
+    }
+  },
+  {
+    id: 'acessorios',
+    name: 'Acessórios',
+    hasDropdown: true,
+    submenu: {
+      items: [
+        'Cabos USB',
+        'Estojos',
+        'Baterias',
+        'Carregadores',
+        'Drip Tips',
+        'Algodão',
+        'Arame'
+      ]
+    }
+  },
+  {
+    id: 'perfumes',
+    name: 'Perfumes',
+    hasDropdown: false
+  }
 ];
 
 export const HERO_BANNERS = [
@@ -106,7 +303,7 @@ A White Cloud Brasil trabalha exclusivamente com produtos originais e autenticad
     price: 249.90,
     originalPrice: 299.90,
     category: 'pods',
-    images: ['/images/product-1.svg'],
+    images: ['/images/img_01.png', '/images/img_03.png', '/images/img_06.png', '/images/img_02.png', '/images/img_04.png', '/images/img_01.png'],
     rating: 4.8,
     reviewsCount: 124,
     stock: 15,
@@ -174,7 +371,7 @@ Garantia de Qualidade White Cloud
 Todos os nossos juices são produzidos em laboratórios certificados, seguindo rigorosos padrões de qualidade e segurança. Testamos cada lote para garantir pureza, sabor consistente e ausência de contaminantes.`,
     price: 89.90,
     category: 'salts-br',
-    images: ['/images/product-2.svg'],
+    images: ['/images/img_02.png', '/images/img_04.png', '/images/img_01.png', '/images/img_06.png', '/images/img_03.png', '/images/img_02.png'],
     rating: 4.5,
     reviewsCount: 56,
     stock: 40,
@@ -248,7 +445,7 @@ A Ignite é uma marca reconhecida mundialmente pela qualidade e inovação em pr
     price: 110.00,
     originalPrice: 130.00,
     category: 'disposables',
-    images: ['/images/product-3.svg'],
+    images: ['/images/img_03.png', '/images/img_01.png', '/images/img_04.png', '/images/img_06.png', '/images/img_02.png', '/images/img_03.png'],
     rating: 4.9,
     reviewsCount: 342,
     stock: 5,
@@ -327,7 +524,7 @@ Garantia de Qualidade
 Todas as coils Vaporesso são originais e autenticadas. Trabalhamos diretamente com distribuidores autorizados, garantindo produtos 100% originais com garantia do fabricante.`,
     price: 75.00,
     category: 'coils',
-    images: ['/images/product-4.svg'],
+    images: ['/images/img_04.png', '/images/img_06.png', '/images/img_02.png', '/images/img_01.png', '/images/img_03.png', '/images/img_04.png'],
     rating: 4.7,
     reviewsCount: 89,
     stock: 100,
@@ -399,7 +596,7 @@ A Premium Vape Co
 Com mais de 15 anos de experiência no mercado americano, a Premium Vape Co é reconhecida mundialmente pela excelência em desenvolvimento de e-liquids. Nossos produtos são vendidos em mais de 50 países e são a escolha de vapers experientes que buscam qualidade superior.`,
     price: 149.90,
     category: 'juices-import',
-    images: ['/images/product-5.svg'],
+    images: ['/images/img_06.png', '/images/img_02.png', '/images/img_04.png', '/images/img_01.png', '/images/img_03.png', '/images/img_06.png'],
     rating: 5.0,
     reviewsCount: 12,
     stock: 8,
@@ -469,7 +666,7 @@ A Voopoo é uma das marcas mais inovadoras do mercado, conhecida por combinar te
     price: 129.90,
     originalPrice: 159.90,
     category: 'pods',
-    images: ['/images/product-6.svg'],
+    images: ['/images/img_01.png', '/images/img_04.png', '/images/img_02.png', '/images/img_06.png', '/images/img_03.png', '/images/img_01.png'],
     rating: 4.2,
     reviewsCount: 45,
     stock: 22,
@@ -560,7 +757,7 @@ A Elfbar e o Compromisso
 A Elfbar é uma das marcas mais reconhecidas mundialmente em produtos descartáveis. Com milhões de unidades vendidas, estabelecemos o padrão de qualidade e inovação no mercado. Cada produto é desenvolvido com foco em segurança, qualidade e experiência do usuário.`,
     price: 115.00,
     category: 'disposables',
-    images: ['/images/product-7.svg'],
+    images: ['/images/img_02.png', '/images/img_03.png', '/images/img_01.png', '/images/img_06.png', '/images/img_04.png', '/images/img_02.png'],
     rating: 4.9,
     reviewsCount: 18,
     stock: 150,
@@ -643,7 +840,7 @@ Fundada na Malásia, a Nasty Juice é uma das marcas mais respeitadas e premiada
     price: 95.00,
     originalPrice: 110.00,
     category: 'juices-import',
-    images: ['/images/product-8.svg'],
+    images: ['/images/img_04.png', '/images/img_01.png', '/images/img_06.png', '/images/img_03.png', '/images/img_02.png', '/images/img_04.png'],
     rating: 4.8,
     reviewsCount: 220,
     stock: 30,

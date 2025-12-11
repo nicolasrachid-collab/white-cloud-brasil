@@ -2,7 +2,7 @@ import { Product } from '../types';
 import { MOCK_PRODUCTS } from '../constants';
 
 const STORAGE_KEY = 'white_cloud_brasil_products';
-const PRODUCTS_VERSION = '3.0'; // Versão para forçar atualização quando necessário (atualizado para incluir novas propriedades)
+const PRODUCTS_VERSION = '5.0'; // Versão para forçar atualização quando necessário (atualizado para novas imagens PNG)
 const VERSION_KEY = 'white_cloud_brasil_products_version';
 
 // Verifica se os produtos precisam ser atualizados
