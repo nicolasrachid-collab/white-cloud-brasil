@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Routes, Route, useParams, useNavigate as useNavigateRouter } from 'react-router-dom';
 import { 
   ShoppingCart, Search, Menu, X, User, Star, Truck, ShieldCheck, 
-  CreditCard, ArrowRight, Minus, Plus, Trash2, LayoutDashboard, 
-  Package, LogOut, MapPin, CheckCircle, TrendingUp, DollarSign, 
+  CreditCard, ArrowRight, Minus, Plus, Trash2, 
+  MapPin, CheckCircle, TrendingUp, DollarSign, 
   Users, ChevronLeft, ChevronRight, Mail, Instagram, Facebook, Youtube, Twitter,
-  Wand2, Upload, Sparkles, Image as ImageIcon, Copy, FileText, Heart, Eye
+  Heart, Eye, Share2
 } from './components/Icons';
 import { Button } from './components/Button';
 import Toast from './components/Toast';
@@ -18,17 +19,10 @@ import { useToast } from './hooks/useToast';
 import { useDebounce } from './hooks/useDebounce';
 import { useCart } from './contexts/CartContext';
 import { useApp } from './contexts/AppContext';
-import { useContent } from './contexts/ContentContext';
 import { useFavorites } from './contexts/FavoritesContext';
 import { useProducts } from './contexts/ProductsContext';
-import { MOCK_PRODUCTS, CATEGORIES, HERO_BANNERS, BRANDS, MOCK_ORDERS, MOCK_CUSTOMERS, MOCK_CONTENT_SECTIONS } from './constants';
-import { Product, CartItem, ViewState, Order } from './types';
-import { getOrders, saveOrders } from './services/ordersService';
-import { getImages, saveImages, addImage, deleteImage } from './services/imagesService';
-import { OrdersManager } from './components/admin/OrdersManager';
-import { CustomersManager } from './components/admin/CustomersManager';
-import { ProductsManager } from './components/admin/ProductsManager';
-import { ContentManager } from './components/admin/ContentManager';
+import { MOCK_PRODUCTS, CATEGORIES, HERO_BANNERS, BRANDS } from './constants';
+import { Product, CartItem, ViewState, Order, Review } from './types';
 
 // --- CONFIGURAÇÃO DO LOGOTIPO ---
 // IMPORTANTE: Caminhos locais (C:\Users...) NÃO funcionam em navegadores web.
@@ -38,7 +32,8 @@ const LOGO_URL = "/images/logo-whitecloud.png";
 // --- COMPONENTS ---
 
 const Header = () => {
-  const { navigate, searchTerm, setSearchTerm } = useApp();
+  const { searchTerm, setSearchTerm } = useApp();
+  const navigateRouter = useNavigateRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Fecha o menu se a tela for redimensionada para desktop
@@ -72,7 +67,7 @@ const Header = () => {
           {/* Logo */}
           <div 
             className="cursor-pointer flex-shrink-0"
-            onClick={() => navigate('home')}
+            onClick={() => navigateRouter('/')}
           >
             <img 
               src={LOGO_URL} 
@@ -105,14 +100,6 @@ const Header = () => {
 
           {/* User Actions */}
           <div className="flex items-center space-x-2 sm:space-x-4 md:space-x-6 text-sm font-medium text-gray-700">
-             <div className="hidden lg:flex items-center cursor-pointer hover:text-primary-600 transition-colors" onClick={() => navigate('admin')}>
-                <LayoutDashboard className="w-5 h-5 mr-2" />
-                <div>
-                  <div className="text-xs text-gray-400 font-normal">Area Restrita</div>
-                  <div className="leading-none">Admin</div>
-                </div>
-             </div>
-             
              {/* Mobile Menu Trigger */}
              <button 
                className="lg:hidden p-2 -mr-2 text-gray-700 min-h-[44px] min-w-[44px] flex items-center justify-center" 
@@ -125,7 +112,7 @@ const Header = () => {
 
              <button 
               className="relative cursor-pointer flex items-center hover:text-primary-600 transition-colors min-h-[44px]"
-              onClick={() => navigate('favorites')}
+              onClick={() => navigateRouter('/favoritos')}
               aria-label="Ver favoritos"
              >
                 <div className="relative p-1">
@@ -139,7 +126,7 @@ const Header = () => {
 
              <button 
               className="relative cursor-pointer flex items-center hover:text-primary-600 transition-colors min-h-[44px]"
-              onClick={() => navigate('cart')}
+              onClick={() => navigateRouter('/carrinho')}
               aria-label="Abrir carrinho"
              >
                 <div className="relative p-1">
@@ -160,7 +147,7 @@ const Header = () => {
               {CATEGORIES.map(cat => (
                 <li key={cat.id}>
                   <button 
-                    onClick={() => navigate('catalog')}
+                    onClick={() => navigateRouter('/catalogo')}
                     className={`hover:text-primary-600 transition-colors py-1 relative group ${cat.isHighlight ? 'text-white bg-black px-3 rounded-full hover:bg-gray-800 hover:text-white' : ''}`}
                   >
                     {cat.name}
@@ -209,15 +196,6 @@ const Header = () => {
 
           {/* Scrollable Content */}
           <div className="flex-1 overflow-y-auto p-5">
-            {/* Mobile AI Button */}
-            <button 
-                onClick={() => { navigate('ai-editor'); setIsMenuOpen(false); }}
-                className="w-full flex items-center justify-center p-3 mb-6 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-bold shadow-lg"
-              >
-                <Wand2 className="w-5 h-5 mr-2" />
-                Vape AI Studio
-            </button>
-
             {/* Mobile Search */}
             <div className="mb-6 relative">
               <input
@@ -233,7 +211,7 @@ const Header = () => {
             {/* Mobile Account Links */}
             <div className="mb-6 pb-6 border-b border-gray-100">
               <button 
-                onClick={() => { navigate('favorites'); setIsMenuOpen(false); }}
+                onClick={() => { navigateRouter('/favoritos'); setIsMenuOpen(false); }}
                 className="flex items-center w-full py-2 text-gray-700 font-medium hover:text-primary-600"
               >
                 <div className="bg-red-50 p-2 rounded-full mr-3 relative">
@@ -244,23 +222,13 @@ const Header = () => {
               </button>
 
               <button 
-                onClick={() => { navigate('account'); setIsMenuOpen(false); }}
+                onClick={() => { navigateRouter('/conta'); setIsMenuOpen(false); }}
                 className="flex items-center w-full py-2 text-gray-700 font-medium hover:text-primary-600 mt-2"
               >
                 <div className="bg-primary-50 p-2 rounded-full mr-3">
                    <User className="w-5 h-5 text-primary-600" />
                 </div>
                 <span>Minha Conta</span>
-              </button>
-              
-              <button 
-                onClick={() => { navigate('admin'); setIsMenuOpen(false); }}
-                className="flex items-center w-full py-2 text-gray-700 font-medium hover:text-primary-600 mt-2"
-              >
-                <div className="bg-gray-200 p-2 rounded-full mr-3">
-                   <LayoutDashboard className="w-5 h-5 text-gray-700" />
-                </div>
-                <span>Admin Panel</span>
               </button>
             </div>
 
@@ -270,7 +238,7 @@ const Header = () => {
               {CATEGORIES.map(cat => (
                 <button 
                   key={cat.id} 
-                  onClick={() => { navigate('catalog'); setIsMenuOpen(false); }}
+                  onClick={() => { navigateRouter('/catalogo'); setIsMenuOpen(false); }}
                   className={`flex items-center justify-between w-full text-left py-3 px-2 rounded-lg transition-colors ${
                     cat.isHighlight 
                       ? 'bg-black text-white font-bold' 
@@ -447,16 +415,9 @@ const ProductCard: React.FC<{
 
 const HeroSlider = () => {
   const { navigate } = useApp();
-  const { contentSections } = useContent();
   const [current, setCurrent] = useState(0);
 
-  // Filtrar apenas banners ativos e ordenar
-  const banners = contentSections
-    .filter(section => section.type === 'banner' && section.isActive && section.imageUrl)
-    .sort((a, b) => a.order - b.order);
-
-  // Fallback para HERO_BANNERS se não houver banners no contexto
-  const displayBanners = banners.length > 0 ? banners : HERO_BANNERS;
+  const displayBanners = HERO_BANNERS;
 
   useEffect(() => {
     if (displayBanners.length === 0) return;
@@ -476,22 +437,16 @@ const HeroSlider = () => {
         className="flex transition-transform duration-700 ease-out h-full" 
         style={{ transform: `translateX(-${current * 100}%)` }}
       >
-        {displayBanners.map((banner: any) => {
-          // Se for do tipo ContentSection (tem imageUrl)
-          const isContentSection = 'imageUrl' in banner;
-          const image = isContentSection ? banner.imageUrl : banner.image;
-
-          return (
-            <div key={banner.id} className={`w-full h-full flex-shrink-0 relative`}>
-              {/* Background Image */}
-              <img 
-                src={image} 
-                alt={`Banner ${banner.id}`} 
-                className="absolute inset-0 w-full h-full object-cover" 
-              />
-            </div>
-          );
-        })}
+        {displayBanners.map((banner) => (
+          <div key={banner.id} className="w-full h-full flex-shrink-0 relative">
+            {/* Background Image */}
+            <img 
+              src={banner.image} 
+              alt={banner.title} 
+              className="absolute inset-0 w-full h-full object-cover" 
+            />
+          </div>
+        ))}
       </div>
 
       {/* Navigation Dots */}
@@ -522,217 +477,16 @@ const SectionHeader = ({ title, linkText = "Ver todos", onLinkClick }: { title: 
 
 // --- AI EDITOR COMPONENT ---
 
-const AIStudio = ({ onError, onSuccess }: { onError?: (msg: string) => void; onSuccess?: (msg: string) => void }) => {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState('');
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
-        setGeneratedImage(null);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleGenerate = async () => {
-    const apiKey = import.meta.env.API_KEY || import.meta.env.GEMINI_API_KEY;
-    if (!selectedImage || !prompt || !apiKey) return;
-    
-    setIsLoading(true);
-    try {
-      const { GoogleGenAI } = await import("@google/genai");
-      const ai = new GoogleGenAI({ apiKey });
-      
-      // Extract base64 data (remove "data:image/jpeg;base64," prefix)
-      const base64Data = selectedImage.split(',')[1];
-      const mimeType = selectedImage.substring(selectedImage.indexOf(":") + 1, selectedImage.indexOf(";"));
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: {
-          parts: [
-            {
-              inlineData: {
-                mimeType: mimeType,
-                data: base64Data
-              }
-            },
-            { text: prompt }
-          ]
-        }
-      });
-
-      // Find image part in response
-      let foundImage = false;
-      const candidates = response.candidates;
-      if (candidates && candidates.length > 0) {
-        for (const part of candidates[0].content.parts) {
-          if (part.inlineData) {
-            const base64EncodeString = part.inlineData.data;
-            setGeneratedImage(`data:image/png;base64,${base64EncodeString}`);
-            foundImage = true;
-            break;
-          }
-        }
-      }
-      
-      if (!foundImage) {
-        onError?.("O modelo não retornou uma imagem. Tente reformular seu prompt para 'Edite esta imagem para...'.");
-        return;
-      }
-      
-      onSuccess?.("Imagem gerada com sucesso!");
-
-    } catch (error) {
-      console.error("Erro ao gerar imagem:", error);
-      onError?.("Ocorreu um erro ao processar sua imagem. Tente novamente.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="bg-gradient-to-r from-purple-900 to-blue-900 rounded-3xl p-8 md:p-12 text-white mb-12 shadow-2xl relative overflow-hidden">
-        <div className="relative z-10">
-          <h1 className="text-4xl md:text-5xl font-black mb-4 flex items-center gap-3">
-            <Sparkles className="w-10 h-10 text-yellow-400" />
-            Vape AI Studio
-          </h1>
-          <p className="text-xl text-blue-100 max-w-2xl mb-8">
-            Personalize seus dispositivos ou crie conceitos únicos usando nossa Inteligência Artificial. 
-            Faça upload, descreva sua ideia e veja a mágica acontecer.
-          </p>
-        </div>
-        <Wand2 className="absolute right-0 bottom-0 w-64 h-64 text-white/5 -rotate-12" />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Input Section */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm h-fit">
-          <h2 className="text-2xl font-bold mb-6 text-gray-900">1. Sua Imagem</h2>
-          
-          <div 
-            className={`border-2 border-dashed rounded-xl aspect-video flex flex-col items-center justify-center cursor-pointer transition-colors mb-6 relative overflow-hidden ${
-              selectedImage ? 'border-primary-500 bg-gray-50' : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50'
-            }`}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {selectedImage ? (
-              <img src={selectedImage} alt="Upload" className="w-full h-full object-contain" />
-            ) : (
-              <div className="text-center p-6">
-                <div className="bg-primary-50 p-4 rounded-full inline-flex mb-3">
-                  <Upload className="w-8 h-8 text-primary-600" />
-                </div>
-                <p className="font-medium text-gray-600">Clique para fazer upload</p>
-                <p className="text-sm text-gray-400 mt-1">PNG, JPG (Max 5MB)</p>
-              </div>
-            )}
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept="image/*" 
-              onChange={handleImageUpload} 
-            />
-            {selectedImage && (
-              <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="text-white font-medium flex items-center gap-2"><Upload className="w-4 h-4"/> Trocar Imagem</span>
-              </div>
-            )}
-          </div>
-
-          <h2 className="text-2xl font-bold mb-4 text-gray-900">2. Seu Comando</h2>
-          <div className="relative mb-6">
-            <textarea 
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Ex: Adicione fumaça de vapor colorida ao redor do dispositivo"
-              className="w-full h-32 bg-gray-50 border border-gray-200 rounded-xl p-4 focus:ring-2 focus:ring-primary-500 focus:outline-none resize-none"
-            />
-            <div className="absolute bottom-3 right-3">
-              <Sparkles className="w-5 h-5 text-primary-400" />
-            </div>
-          </div>
-
-          <Button 
-            fullWidth 
-            size="lg" 
-            onClick={handleGenerate}
-            disabled={!selectedImage || !prompt || isLoading}
-            className={`bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
-          >
-            {isLoading ? (
-              <span className="flex items-center gap-2">
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                Processando com Gemini...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <Wand2 className="w-5 h-5" /> Gerar Edição
-              </span>
-            )}
-          </Button>
-        </div>
-
-        {/* Output Section */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm h-fit min-h-[500px] flex flex-col">
-          <h2 className="text-2xl font-bold mb-6 text-gray-900">Resultado</h2>
-          
-          <div className="flex-1 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center overflow-hidden relative">
-            {generatedImage ? (
-              <img src={generatedImage} alt="Generated" className="w-full h-full object-contain" />
-            ) : (
-              <div className="text-center text-gray-400 p-8">
-                {isLoading ? (
-                  <div className="animate-pulse flex flex-col items-center">
-                    <Sparkles className="w-12 h-12 text-purple-300 mb-4 animate-spin-slow" />
-                    <p>A Inteligência Artificial está trabalhando...</p>
-                  </div>
-                ) : (
-                  <>
-                    <Wand2 className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                    <p>A imagem gerada aparecerá aqui</p>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-          
-          {generatedImage && (
-             <div className="mt-6 flex gap-4">
-                <Button variant="outline" fullWidth onClick={() => setGeneratedImage(null)}>Descartar</Button>
-                <a href={generatedImage} download="vape-ai-art.png" className="flex-1">
-                  <Button fullWidth>Baixar Imagem</Button>
-                </a>
-             </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // --- HOME SECTIONS ---
 
 const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) => void; onQuickAdd?: (product: Product) => void }) => {
-  const { navigate, setSelectedProductId, setView } = useApp();
-  const { contentSections } = useContent();
+  const { setActiveCategory } = useApp();
+  const navigateRouter = useNavigateRouter();
   const { products } = useProducts();
   const [isLoading, setIsLoading] = useState(false);
   
   const handleProductClick = (id: string) => {
-    setSelectedProductId(id);
-    setView('product');
-    window.scrollTo(0, 0);
+    navigateRouter(`/produto/${id}`);
   };
   
   // Simular loading inicial (pode ser removido quando houver API real)
@@ -751,7 +505,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
       </div>
     );
   }
-  
+
   return (
   <div className="space-y-12 sm:space-y-16 pb-12 sm:pb-16">
     {/* 2. Hero Slider */}
@@ -782,9 +536,9 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
     {/* 4. New Arrivals */}
     <section className="container mx-auto px-3 sm:px-4">
-      <SectionHeader title="Novidades Chegando" onLinkClick={() => navigate('catalog')} />
+      <SectionHeader title="Novidades Chegando" onLinkClick={() => navigateRouter('/catalogo')} />
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-        {products.slice(0, 5).map(product => (
+        {(products || []).slice(0, 5).map(product => (
           <ProductCard 
             key={product.id} 
             product={{...product, isNew: true}} 
@@ -821,7 +575,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     {/* 6. Best Sellers Layout (Banner Left + Grid Right) */}
     <section className="bg-gray-50 py-8 sm:py-12">
       <div className="container mx-auto px-3 sm:px-4">
-        <SectionHeader title="Os Mais Vendidos" onLinkClick={() => navigate('catalog')} />
+        <SectionHeader title="Os Mais Vendidos" onLinkClick={() => navigateRouter('/catalogo')} />
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Large Vertical Banner */}
           <div className="hidden lg:block lg:col-span-1 relative rounded-xl overflow-hidden h-full min-h-[400px]">
@@ -836,7 +590,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
           {/* Grid */}
           <div className="col-span-1 lg:col-span-3">
              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                {products.filter(p => p.isBestSeller).slice(0, 6).map(product => (
+                {(products || []).filter(p => p.isBestSeller).slice(0, 6).map(product => (
                   <ProductCard 
                     key={product.id} 
                     product={product} 
@@ -853,9 +607,9 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
     {/* 7. Best Offers */}
     <section className="container mx-auto px-3 sm:px-4">
-      <SectionHeader title="Ofertas Relâmpago" onLinkClick={() => navigate('catalog')} />
+      <SectionHeader title="Ofertas Relâmpago" onLinkClick={() => navigateRouter('/catalogo')} />
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-        {products.map(product => (
+        {(products || []).map(product => (
            <ProductCard 
              key={`offer-${product.id}`} 
              product={{...product, price: product.price * 0.8, originalPrice: product.price}} 
@@ -869,9 +623,9 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
     {/* 8. Customer Favorites */}
     <section className="container mx-auto px-3 sm:px-4">
-      <SectionHeader title="Queridinhos dos Clientes" onLinkClick={() => navigate('catalog')} />
+      <SectionHeader title="Queridinhos dos Clientes" onLinkClick={() => navigateRouter('/catalogo')} />
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
-        {products.slice(2, 6).map(product => (
+        {(products || []).slice(2, 6).map(product => (
            <ProductCard 
              key={`fav-${product.id}`} 
              product={product} 
@@ -895,57 +649,55 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
       </div>
     </section>
 
-    {/* Renderizar seções de conteúdo ativas */}
-    {contentSections
-      .filter(section => section.isActive)
-      .sort((a, b) => a.order - b.order)
-      .map(section => {
-        if (section.type === 'banner' && section.imageUrl) {
+    {/* 10. Category Banners */}
+    <section className="container mx-auto px-3 sm:px-4">
+      <SectionHeader title="Explore Nossas Categorias" onLinkClick={() => navigateRouter('/catalogo')} />
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        {CATEGORIES.filter(cat => cat.id !== 'all').map(category => {
+          const categoryProducts = (products || []).filter(p => p.category === category.id);
+          const productCount = categoryProducts.length;
+          
           return (
-            <section key={section.id} className="container mx-auto px-4">
-              <img 
-                src={section.imageUrl} 
-                alt={section.title}
-                className="w-full h-auto rounded-lg shadow-lg"
-              />
-              {section.content && (
-                <p className="text-center mt-4 text-gray-600">{section.content}</p>
-              )}
-            </section>
-          );
-        }
-        
-        if (section.type === 'image' && section.imageUrl) {
-          return (
-            <section key={section.id} className="container mx-auto px-4">
-              <div className="text-center">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{section.title}</h3>
-                <img 
-                  src={section.imageUrl} 
-                  alt={section.title}
-                  className="w-full max-w-4xl mx-auto h-auto rounded-lg shadow-lg"
-                />
-                {section.content && (
-                  <p className="mt-4 text-gray-600">{section.content}</p>
+            <div
+              key={category.id}
+              onClick={() => {
+                setActiveCategory(category.id);
+                navigateRouter('/catalogo');
+              }}
+              className={`group relative h-48 sm:h-56 md:h-64 rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
+                category.isHighlight 
+                  ? 'bg-gradient-to-br from-black to-gray-800' 
+                  : 'bg-gradient-to-br from-primary-500 to-primary-700'
+              }`}
+            >
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
+              
+              <div className="relative h-full flex flex-col items-center justify-center p-4 sm:p-6 text-white text-center">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 group-hover:scale-110 transition-transform">
+                  {category.name}
+                </h3>
+                {productCount > 0 && (
+                  <p className="text-sm sm:text-base text-white/80">
+                    {productCount} {productCount === 1 ? 'produto' : 'produtos'}
+                  </p>
                 )}
+                <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-xs sm:text-sm font-medium border border-white/50 px-3 py-1.5 rounded-full">
+                    Ver produtos →
+                  </span>
+                </div>
               </div>
-            </section>
+              
+              {category.isHighlight && (
+                <div className="absolute top-3 right-3 bg-red-600 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full">
+                  DESTAQUE
+                </div>
+              )}
+            </div>
           );
-        }
-        
-        if (section.type === 'text') {
-          return (
-            <section key={section.id} className="container mx-auto px-4">
-              <div className="max-w-3xl mx-auto text-center">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{section.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{section.content}</p>
-              </div>
-            </section>
-          );
-        }
-        
-        return null;
-      })}
+        })}
+      </div>
+    </section>
 
     {/* 10. Email Capture */}
     <EmailCapture />
@@ -956,16 +708,15 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 // --- OTHER VIEWS (Simplified for brevity, maintaining functionality) ---
 
 const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) => void; onQuickAdd?: (product: Product) => void }) => {
-  const { searchTerm, activeCategory, setActiveCategory, setSelectedProductId, setView } = useApp();
+  const { searchTerm, activeCategory, setActiveCategory } = useApp();
+  const navigateRouter = useNavigateRouter();
   const { products } = useProducts();
   const [isLoading, setIsLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   
   const handleProductClick = (id: string) => {
-    setSelectedProductId(id);
-    setView('product');
-    window.scrollTo(0, 0);
+    navigateRouter(`/produto/${id}`);
   };
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
@@ -1068,47 +819,180 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
   );
 };
 
+const ProductDetailWrapper = () => {
+  const { id } = useParams<{ id: string }>();
+  const { products } = useProducts();
+  const navigateRouter = useNavigateRouter();
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  
+  useEffect(() => {
+    if (products && products.length > 0) {
+      setIsInitialLoad(false);
+    }
+  }, [products]);
+  
+  const productsLoading = isInitialLoad && (!products || products.length === 0);
+  
+  if (productsLoading) {
+    return <ProductDetailSkeleton />;
+  }
+  
+  const product = (products || []).find(p => p.id === id);
+  
+  if (!product) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Produto não encontrado</h2>
+        <p className="text-gray-500 mb-8">O produto que você está procurando não está disponível.</p>
+        <Button onClick={() => navigateRouter('/catalogo')}>Voltar para Catálogo</Button>
+      </div>
+    );
+  }
+  
+  return <ProductDetail product={product} />;
+};
+
 const ProductDetail = ({ product }: { product: Product }) => {
   const { addToCart } = useCart();
-  const { navigate } = useApp();
+  const navigateRouter = useNavigateRouter();
+  const { products } = useProducts();
   const { showSuccess } = useToast();
   const [quantity, setQuantity] = useState(1);
   const [selectedFlavor, setSelectedFlavor] = useState(product.flavors?.[0] || '');
   const [isLoading, setIsLoading] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  
+  // Produtos relacionados (mesma categoria, excluindo o produto atual)
+  const relatedProducts = (products || []).filter(
+    p => p.category === product.category && p.id !== product.id
+  ).slice(0, 8);
+  
+  // Mock de reviews (substituir por dados reais depois)
+  const [reviews] = useState<Review[]>([
+    {
+      id: '1',
+      productId: product.id,
+      customerName: 'João Silva',
+      customerPhoto: 'https://ui-avatars.com/api/?name=João+Silva&background=3765FF&color=fff',
+      rating: 5,
+      comment: 'Produto excelente! Superou minhas expectativas. Qualidade premium e entrega rápida. Recomendo muito!',
+      date: '2024-01-15',
+    },
+    {
+      id: '2',
+      productId: product.id,
+      customerName: 'Maria Santos',
+      customerPhoto: 'https://ui-avatars.com/api/?name=Maria+Santos&background=10b981&color=fff',
+      rating: 4,
+      comment: 'Muito bom produto, recomendo! A única coisa é que poderia ter mais opções de sabores disponíveis.',
+      date: '2024-01-10',
+    },
+    {
+      id: '3',
+      productId: product.id,
+      customerName: 'Pedro Oliveira',
+      customerPhoto: 'https://ui-avatars.com/api/?name=Pedro+Oliveira&background=f59e0b&color=fff',
+      rating: 5,
+      comment: 'Perfeito! Exatamente como descrito. Vou comprar novamente com certeza.',
+      date: '2024-01-05',
+    },
+  ]);
   
   const handleAddToCart = () => {
     addToCart(product, quantity, { selectedFlavor });
     showSuccess(`${product.name} adicionado ao carrinho!`);
   };
   
+  const handleProductClick = (id: string) => {
+    navigateRouter(`/produto/${id}`);
+  };
+  
   useEffect(() => {
     setIsLoading(true);
     setImageLoaded(false);
+    setSelectedImageIndex(0);
+    setSelectedFlavor(product.flavors?.[0] || '');
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
-  }, [product.id]);
+  }, [product.id, product.flavors]);
   
-  if (!product) return null;
+  if (!product) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Produto não encontrado</h2>
+        <Button onClick={() => navigateRouter('/catalogo')}>Voltar para Catálogo</Button>
+      </div>
+    );
+  }
   
   if (isLoading) {
     return <ProductDetailSkeleton />;
   }
 
+  // Formatar data do review
+  const formatReviewDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  // Calcular economia
+  const calculateSavings = () => {
+    if (!product.originalPrice) return null;
+    const savingsPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+    const savingsValue = product.originalPrice - product.price;
+    return { percent: savingsPercent, value: savingsValue };
+  };
+
+  const savings = calculateSavings();
+
+  // Função para compartilhar
+  const handleShare = (platform: string) => {
+    const url = window.location.href;
+    const text = `Confira ${product.name} na White Cloud Brasil!`;
+    
+    switch (platform) {
+      case 'whatsapp':
+        window.open(`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`, '_blank');
+        break;
+      case 'twitter':
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+        break;
+      case 'facebook':
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+        break;
+      case 'email':
+        window.location.href = `mailto:?subject=${encodeURIComponent(text)}&body=${encodeURIComponent(url)}`;
+        break;
+    }
+  };
+
+  // Scroll para avaliações
+  const scrollToReviews = () => {
+    const reviewsSection = document.getElementById('reviews-section');
+    if (reviewsSection) {
+      reviewsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
-      <button onClick={() => navigate('catalog')} className="text-gray-500 hover:text-gray-900 mb-4 sm:mb-6 flex items-center text-sm font-medium group min-h-[44px]">
+    <div className="container mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8">
+      {/* Breadcrumb */}
+      <button onClick={() => navigateRouter('/catalogo')} className="text-gray-500 hover:text-gray-900 mb-4 sm:mb-6 flex items-center text-sm font-medium group min-h-[44px]">
         <ArrowRight className="w-4 h-4 mr-1 rotate-180 group-hover:-translate-x-1 transition-transform" /> Voltar para loja
       </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
+      {/* 1. SEÇÃO PRINCIPAL: Galeria + Informações */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 mb-12">
+        {/* Coluna Esquerda: Galeria de Imagens */}
         <div className="space-y-3 sm:space-y-4">
-          <div className="aspect-square bg-white border border-gray-100 rounded-xl sm:rounded-2xl overflow-hidden p-4 sm:p-8 flex items-center justify-center relative">
+          {/* Foto Principal */}
+          <div className="aspect-square bg-white border border-gray-100 rounded-xl sm:rounded-2xl overflow-hidden p-4 sm:p-8 flex items-center justify-center relative shadow-sm hover:shadow-md transition-shadow">
             {!imageLoaded && (
               <div className="absolute inset-0 bg-gray-200 animate-pulse" />
             )}
             <img 
-              src={product.images[0]} 
+              src={product.images[selectedImageIndex] || product.images[0]} 
               alt={product.name} 
               loading="eager"
               decoding="async"
@@ -1116,81 +1000,481 @@ const ProductDetail = ({ product }: { product: Product }) => {
               onLoad={() => setImageLoaded(true)}
             />
           </div>
+          
+          {/* Miniaturas das Imagens */}
           <div className="grid grid-cols-4 gap-2 sm:gap-4">
             {product.images.map((img, idx) => (
-              <div key={idx} className="aspect-square bg-white border border-gray-100 rounded-lg p-2 cursor-pointer hover:border-primary-500 transition-colors">
+              <div 
+                key={idx} 
+                onClick={() => {
+                  setSelectedImageIndex(idx);
+                  setImageLoaded(false);
+                }}
+                className={`aspect-square bg-white border rounded-lg p-2 cursor-pointer hover:border-primary-500 transition-colors ${
+                  selectedImageIndex === idx ? 'border-primary-500 border-2' : 'border-gray-100'
+                }`}
+              >
                 <img src={img} alt="" className="w-full h-full object-contain" />
               </div>
             ))}
           </div>
         </div>
 
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
-          <div className="flex items-center space-x-2 mb-4 sm:mb-6">
-            <div className="flex text-amber-400">
-              {[...Array(5)].map((_, i) => <Star key={i} className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'fill-current' : 'text-gray-300'}`} />)}
+        {/* Coluna Direita: Informações Principais */}
+        <div className="space-y-4 sm:space-y-6">
+          {/* 1. Nome do Produto (H1) */}
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-3">
+            {product.name}
+          </h1>
+          
+          {/* 2. Marca do Produto */}
+          {product.brand && (
+            <div className="mb-2">
+              <p className="text-sm sm:text-base text-gray-600">
+                <span className="font-semibold text-gray-700">Marca:</span>{' '}
+                <span className="text-primary-600 font-medium">{product.brand}</span>
+              </p>
             </div>
-            <span className="text-xs sm:text-sm text-gray-500">({product.reviewsCount} avaliações)</span>
+          )}
+
+          {/* SKU e Categorias */}
+          <div className="mb-2 space-y-1 text-xs sm:text-sm text-gray-500">
+            {product.sku && (
+              <p><span className="font-medium">SKU:</span> {product.sku}</p>
+            )}
+            <p>
+              <span className="font-medium">Categorias:</span>{' '}
+              {CATEGORIES.find(c => c.id === product.category)?.name || product.category}
+            </p>
+          </div>
+          
+          {/* 3. Avaliações */}
+          <div className="flex items-center space-x-2 mb-4">
+            <div className="flex text-amber-400">
+              {[...Array(5)].map((_, i) => (
+                <Star 
+                  key={i} 
+                  className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                    i < Math.floor(product.rating) ? 'fill-current' : 'text-gray-300'
+                  }`} 
+                />
+              ))}
+            </div>
+            <button 
+              onClick={scrollToReviews}
+              className="text-xs sm:text-sm text-gray-500 hover:text-primary-600 transition-colors underline"
+            >
+              {product.rating.toFixed(2)} de 5 ({product.reviewsCount} {product.reviewsCount === 1 ? 'avaliação' : 'avaliações'})
+            </button>
           </div>
 
-          <div className="bg-gray-50 p-4 sm:p-6 rounded-xl mb-6 sm:mb-8">
-            <div className="flex items-end gap-2 sm:gap-3 mb-2">
-              <span className="text-3xl sm:text-4xl font-bold text-gray-900">R$ {product.price.toFixed(2)}</span>
+          {/* 4. Preço (DESTAQUE MÁXIMO) */}
+          <div className="bg-gray-50 p-4 sm:p-6 rounded-xl mb-6 sm:mb-8 border border-gray-200">
+            <div className="flex items-end gap-2 sm:gap-3 mb-2 flex-wrap">
+              <span className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
+                R$ {product.price.toFixed(2).replace('.', ',')}
+              </span>
               {product.originalPrice && (
-                <span className="text-lg sm:text-xl text-gray-400 line-through mb-1">R$ {product.originalPrice.toFixed(2)}</span>
+                <>
+                  <span className="text-lg sm:text-xl md:text-2xl text-gray-400 line-through mb-1">
+                    R$ {product.originalPrice.toFixed(2).replace('.', ',')}
+                  </span>
+                  {savings && (
+                    <span className="bg-red-600 text-white text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 rounded-full mb-1">
+                      -{savings.percent}%
+                    </span>
+                  )}
+                </>
               )}
             </div>
+            {savings && (
+              <p className="text-xs sm:text-sm text-gray-600 mb-2">
+                Economia de R$ {savings.value.toFixed(2).replace('.', ',')}
+              </p>
+            )}
             <p className="text-xs sm:text-sm text-primary-600 font-medium flex items-center">
               <CreditCard className="w-4 h-4 mr-1" /> 5% de desconto no PIX
             </p>
           </div>
           
-          <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 leading-relaxed">{product.description}</p>
+          {/* Descrição Curta */}
+          <div className="mb-4 sm:mb-6">
+            <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{product.description}</p>
+          </div>
 
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <div className="flex items-center border border-gray-300 rounded-lg bg-white w-full sm:w-auto">
-              <button 
-                className="p-3 hover:bg-gray-50 text-gray-600 min-h-[44px] min-w-[44px] flex items-center justify-center" 
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                aria-label="Diminuir quantidade"
-              >
-                <Minus className="w-4 h-4" />
-              </button>
-              <span className="w-12 text-center font-bold min-h-[44px] flex items-center justify-center" aria-label={`Quantidade: ${quantity}`}>{quantity}</span>
-              <button 
-                className="p-3 hover:bg-gray-50 text-gray-600 min-h-[44px] min-w-[44px] flex items-center justify-center" 
-                onClick={() => setQuantity(quantity + 1)}
-                aria-label="Aumentar quantidade"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
+          {/* 5. Variações (Sabores/Cores/Modelos) */}
+          {product.flavors && product.flavors.length > 0 && (
+            <div className="mb-6 sm:mb-8">
+              <label className="block text-sm sm:text-base font-semibold text-gray-900 mb-3">
+                Sabores
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
+                {product.flavors.map((flavor) => {
+                  const isAvailable = Math.random() > 0.3; // Mock: 70% disponível
+                  const isSelected = selectedFlavor === flavor;
+                  
+                  return (
+                    <button
+                      key={flavor}
+                      onClick={() => isAvailable && setSelectedFlavor(flavor)}
+                      disabled={!isAvailable}
+                      className={`
+                        px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all
+                        min-h-[44px] flex items-center justify-center text-center
+                        ${isSelected && isAvailable
+                          ? 'bg-primary-600 text-white border-2 border-primary-600 shadow-md'
+                          : isAvailable
+                          ? 'bg-white text-gray-700 border border-gray-300 hover:border-primary-500 hover:bg-primary-50'
+                          : 'bg-gray-100 text-gray-400 border border-gray-200 line-through cursor-not-allowed'
+                        }
+                      `}
+                    >
+                      {flavor}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+          )}
+
+          {/* 6. Quantidade + CTAs */}
+          <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <div className="flex items-center border border-gray-300 rounded-lg bg-white w-full sm:w-auto">
+                <button 
+                  className="p-3 hover:bg-gray-50 text-gray-600 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors" 
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  aria-label="Diminuir quantidade"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="w-12 text-center font-bold min-h-[44px] flex items-center justify-center" aria-label={`Quantidade: ${quantity}`}>
+                  {quantity}
+                </span>
+                <button 
+                  className="p-3 hover:bg-gray-50 text-gray-600 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors" 
+                  onClick={() => setQuantity(quantity + 1)}
+                  aria-label="Aumentar quantidade"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              <Button 
+                size="lg" 
+                className="w-full sm:flex-1 text-base sm:text-lg min-h-[44px] font-bold uppercase shadow-lg hover:shadow-xl transition-shadow" 
+                onClick={handleAddToCart}
+                aria-label={`Adicionar ${quantity} ${product.name} ao carrinho`}
+              >
+                Adicionar ao Carrinho
+              </Button>
+            </div>
+            {/* Botão Secundário */}
             <Button 
-              size="lg" 
-              className="w-full sm:flex-1 text-base sm:text-lg min-h-[44px]" 
-              onClick={handleAddToCart}
-              aria-label={`Adicionar ${quantity} ${product.name} ao carrinho`}
+              variant="outline"
+              size="lg"
+              className="w-full text-base sm:text-lg min-h-[44px] font-semibold border-2 border-primary-600 text-primary-600 hover:bg-primary-50"
+              onClick={() => {
+                handleAddToCart();
+                navigateRouter('/carrinho');
+              }}
             >
-              Comprar Agora
+              Ir para o Carrinho
             </Button>
+          </div>
+
+          {/* 7. Calculadora de Frete */}
+          <div className="bg-gray-50 p-4 sm:p-6 rounded-xl border border-gray-200">
+            <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3">Calcular Frete</h3>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="CEP"
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                maxLength={9}
+              />
+              <Button className="min-h-[44px] px-6">
+                Calcular
+              </Button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* 8. BLOCO DE INFORMAÇÕES RÁPIDAS */}
+      <div className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+          {/* Formas de Pagamento */}
+          <div className="flex items-start gap-3">
+            <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">Formas de Pagamento</h3>
+              <p className="text-xs sm:text-sm text-gray-600">
+                {product.paymentOptions || 'Em até 12x sem juros'}
+              </p>
+            </div>
+          </div>
+
+          {/* Avaliações */}
+          <div className="flex items-start gap-3">
+            <Star className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 fill-amber-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">Avaliações</h3>
+              <button 
+                onClick={scrollToReviews}
+                className="text-xs sm:text-sm text-primary-600 hover:text-primary-700 underline"
+              >
+                Ver todas as avaliações
+              </button>
+            </div>
+          </div>
+
+          {/* Compartilhar */}
+          <div className="flex items-start gap-3">
+            <Share2 className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">Compartilhar</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleShare('whatsapp')}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-colors"
+                  aria-label="Compartilhar no WhatsApp"
+                >
+                  <span className="text-xs sm:text-sm font-bold">W</span>
+                </button>
+                <button
+                  onClick={() => handleShare('twitter')}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-400 hover:bg-blue-500 text-white flex items-center justify-center transition-colors"
+                  aria-label="Compartilhar no Twitter"
+                >
+                  <Twitter className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+                <button
+                  onClick={() => handleShare('facebook')}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors"
+                  aria-label="Compartilhar no Facebook"
+                >
+                  <Facebook className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+                <button
+                  onClick={() => handleShare('email')}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-600 hover:bg-gray-700 text-white flex items-center justify-center transition-colors"
+                  aria-label="Compartilhar por email"
+                >
+                  <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 9. DESCRIÇÃO DETALHADA */}
+      {product.detailedDescription && (
+        <section className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 md:mb-8 pb-3 border-b-2 border-gray-200">
+            Descrição
+          </h2>
+          <div className="text-gray-700 leading-relaxed space-y-4">
+            {product.detailedDescription.split('\n').map((paragraph, idx) => {
+              if (!paragraph.trim()) return null;
+              
+              // Detectar títulos principais (linhas em maiúsculas ou curtas que parecem títulos)
+              const isMainTitle = paragraph.length < 100 && (
+                paragraph === paragraph.toUpperCase() || 
+                (paragraph.match(/^[A-Z][^.!?]*$/) && paragraph.length < 80)
+              );
+              
+              // Detectar subtítulos (linhas que começam com números ou têm padrão de título)
+              const isSubtitle = paragraph.match(/^[\d•\-]/) || 
+                (paragraph.length < 60 && paragraph.match(/^[A-Z]/));
+              
+              if (isMainTitle) {
+                return (
+                  <h3 key={idx} className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-6 mb-3 first:mt-0 pt-4 first:pt-0 border-t border-gray-200 first:border-t-0">
+                    {paragraph}
+                  </h3>
+                );
+              }
+              
+              if (isSubtitle) {
+                return (
+                  <h4 key={idx} className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 mt-4 mb-2">
+                    {paragraph.replace(/^[•\-\d.]+\s*/, '')}
+                  </h4>
+                );
+              }
+              
+              // Detectar listas (linhas que começam com •, -, ou números)
+              if (paragraph.match(/^[•\-\d]/)) {
+                return (
+                  <li key={idx} className="mb-2 ml-5 list-disc text-sm sm:text-base">
+                    {paragraph.replace(/^[•\-\d.]+\s*/, '')}
+                  </li>
+                );
+              }
+              
+              return (
+                <p key={idx} className="mb-3 last:mb-0 text-sm sm:text-base">
+                  {paragraph}
+                </p>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* 10. ESPECIFICAÇÕES TÉCNICAS */}
+      {product.specifications && Object.keys(product.specifications).length > 0 && (
+        <section className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 md:mb-8">
+            Especificações Técnicas
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            {Object.entries(product.specifications).map(([key, value], idx) => (
+              <div 
+                key={idx} 
+                className={`py-3 sm:py-4 ${idx < Object.keys(product.specifications).length - 2 ? 'border-b border-gray-100' : ''} hover:bg-gray-50 transition-colors rounded-lg px-2`}
+              >
+                <div className="grid grid-cols-[40%_60%] gap-4">
+                  <span className="font-semibold text-gray-700 text-sm sm:text-base">{key}:</span>
+                  <span className="text-gray-500 text-sm sm:text-base">{value}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 11. ITENS INCLUSOS */}
+      {product.includedItems && product.includedItems.length > 0 && (
+        <section className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 md:mb-8">
+            Itens Inclusos
+          </h2>
+          <ul className="space-y-3 ml-5">
+            {product.includedItems.map((item, idx) => (
+              <li key={idx} className="text-sm sm:text-base text-gray-700 leading-relaxed list-disc">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* 12. GARANTIA */}
+      {product.warranty && (
+        <section className="bg-gray-50 border border-gray-200 rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 mb-12">
+          <div className="flex items-start gap-4">
+            <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600 flex-shrink-0 mt-1" />
+            <div>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Garantia
+              </h2>
+              <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                {product.warranty}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 13. PRODUTOS RELACIONADOS */}
+      {relatedProducts.length > 0 && (
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Produtos Relacionados</h2>
+            <button
+              onClick={() => navigateRouter('/catalogo')}
+              className="text-primary-600 hover:text-primary-700 font-medium text-sm sm:text-base flex items-center gap-1"
+            >
+              Ver todos <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
+            {relatedProducts.slice(0, 4).map((relatedProduct) => (
+              <ProductCard
+                key={relatedProduct.id}
+                product={relatedProduct}
+                onClick={() => handleProductClick(relatedProduct.id)}
+                onQuickAdd={(p) => {
+                  addToCart(p, 1);
+                  showSuccess(`${p.name} adicionado ao carrinho!`);
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 14. AVALIAÇÕES DOS CLIENTES */}
+      <section id="reviews-section" className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-8">Avaliações dos Clientes</h2>
+        
+        {reviews.length === 0 ? (
+          <p className="text-gray-500 text-center py-8">Ainda não há avaliações para este produto.</p>
+        ) : (
+          <div className="space-y-6">
+            {reviews.map((review) => (
+              <div key={review.id} className="border-b border-gray-100 last:border-b-0 pb-6 last:pb-0">
+                <div className="flex items-start gap-4">
+                  {/* Foto do Cliente */}
+                  <div className="flex-shrink-0">
+                    {review.customerPhoto ? (
+                      <img
+                        src={review.customerPhoto}
+                        alt={review.customerName}
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-lg">
+                        {review.customerName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex-1">
+                    {/* Nome e Data */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
+                      <h3 className="font-bold text-gray-900 text-sm sm:text-base">{review.customerName}</h3>
+                      <span className="text-xs sm:text-sm text-gray-500">{formatReviewDate(review.date)}</span>
+                    </div>
+                    
+                    {/* Avaliação de Estrelas */}
+                    <div className="flex items-center gap-1 mb-3">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${
+                            i < review.rating
+                              ? 'fill-amber-400 text-amber-400'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                      <span className="ml-2 text-xs sm:text-sm text-gray-500">({review.rating}/5)</span>
+                    </div>
+                    
+                    {/* Texto do Comentário */}
+                    <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{review.comment}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 };
 
 const Favorites = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) => void; onQuickAdd?: (product: Product) => void }) => {
   const { favorites, removeFavorite } = useFavorites();
-  const { navigate, setSelectedProductId, setView } = useApp();
+  const navigateRouter = useNavigateRouter();
   const { showSuccess } = useToast();
 
   const handleProductClick = (id: string) => {
-    setSelectedProductId(id);
-    setView('product');
-    window.scrollTo(0, 0);
+    navigateRouter(`/produto/${id}`);
   };
 
   const handleRemoveFavorite = (product: Product) => {
@@ -1209,7 +1493,7 @@ const Favorites = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Produc
           <p className="text-gray-500 mb-8">
             Comece a adicionar produtos aos seus favoritos para encontrá-los facilmente depois!
           </p>
-          <Button onClick={() => navigate('catalog')}>
+          <Button onClick={() => navigateRouter('/catalogo')}>
             Explorar Produtos
           </Button>
         </div>
@@ -1224,7 +1508,7 @@ const Favorites = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Produc
           Meus Favoritos ({favorites.length})
         </h1>
         <button
-          onClick={() => navigate('catalog')}
+          onClick={() => navigateRouter('/catalogo')}
           className="text-sm text-gray-500 hover:text-primary-600 flex items-center gap-1 transition-colors"
         >
           Continuar Comprando
@@ -1305,7 +1589,7 @@ const Cart = () => {
                         <span>Total</span>
                         <span>R$ {cartTotal.toFixed(2)}</span>
                     </div>
-                    <Button fullWidth size="lg" onClick={() => navigate('checkout')} aria-label="Finalizar compra" className="min-h-[44px]">Finalizar Compra</Button>
+                    <Button fullWidth size="lg" onClick={() => navigateRouter('/checkout')} aria-label="Finalizar compra" className="min-h-[44px]">Finalizar Compra</Button>
                 </div>
              </div>
         </div>
@@ -1314,363 +1598,48 @@ const Cart = () => {
 
 const TrackingPage = () => <div className="p-12 text-center">Rastreamento (Simulado)</div>;
 
-const AdminDashboard = () => {
-  const { showSuccess, showError } = useToast();
-  const { contentSections, updateSection, addSection, deleteSection } = useContent();
-  const { products, setProducts, refreshProducts } = useProducts();
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [images, setImages] = useState<string[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [customers] = useState(MOCK_CUSTOMERS);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Carregar dados do localStorage ao montar
-  useEffect(() => {
-    setOrders(getOrders());
-    setImages(getImages());
-  }, []);
-
-  // Salvar pedidos automaticamente quando mudar
-  useEffect(() => {
-    if (orders.length > 0) {
-      saveOrders(orders);
-    }
-  }, [orders]);
-
-  // Salvar imagens automaticamente quando mudar
-  useEffect(() => {
-    saveImages(images);
-  }, [images]);
-
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageData = reader.result as string;
-        const updated = addImage(imageData);
-        setImages(updated);
-        showSuccess('Imagem enviada com sucesso!');
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    showSuccess('Link da imagem copiado!');
-  };
-
-  const handleUpdateOrderStatus = (orderId: string, status: Order['status']) => {
-    setOrders(prev => {
-      const updated = prev.map(order => 
-        order.id === orderId ? { ...order, status } : order
-      );
-      saveOrders(updated);
-      return updated;
-    });
-    showSuccess(`Status do pedido ${orderId} atualizado para ${status}`);
-  };
-
-  const handleSaveProduct = (product: Product) => {
-    setProducts(products.map(p => p.id === product.id ? product : p));
-    showSuccess('Produto atualizado com sucesso!');
-  };
-
-  const handleDeleteProduct = (id: string) => {
-    setProducts(products.filter(p => p.id !== id));
-    showSuccess('Produto excluído com sucesso!');
-  };
-
-  const handleAddProduct = (productData: Omit<Product, 'id'>) => {
-    const newProduct: Product = {
-      ...productData,
-      id: `PROD-${Date.now()}`,
-    };
-    setProducts([...products, newProduct]);
-    showSuccess('Produto adicionado com sucesso!');
-  };
-
-  const handleSaveContent = (section: typeof MOCK_CONTENT_SECTIONS[0]) => {
-    updateSection(section);
-    showSuccess('Seção atualizada com sucesso!');
-  };
-
-  const handleDeleteContent = (id: string) => {
-    deleteSection(id);
-    showSuccess('Seção excluída com sucesso!');
-  };
-
-  const handleAddContent = (sectionData: Omit<typeof MOCK_CONTENT_SECTIONS[0], 'id'>) => {
-    addSection(sectionData);
-    showSuccess('Seção adicionada com sucesso!');
-  };
-
-  // Estatísticas do Dashboard
-  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
-  const pendingOrders = orders.filter(o => o.status === 'pending').length;
-  const totalCustomers = customers.length;
-  const totalProducts = products.length;
-
-  const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'products', label: 'Produtos', icon: Package },
-    { id: 'orders', label: 'Pedidos', icon: Truck },
-    { id: 'customers', label: 'Clientes', icon: Users },
-    { id: 'content', label: 'Conteúdo', icon: FileText },
-    { id: 'media', label: 'Galeria de Mídia', icon: ImageIcon },
-  ];
-
-  return (
-    <div className="container mx-auto px-4 py-8 min-h-screen bg-gray-50">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Painel Administrativo</h1>
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Sidebar */}
-        <aside className="w-full md:w-64 bg-white rounded-xl shadow-sm border border-gray-100 p-4 h-fit">
-          <nav className="space-y-1">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors ${
-                    activeTab === tab.id 
-                      ? 'bg-primary-50 text-primary-700 font-bold' 
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </aside>
-
-        {/* Content */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-          {activeTab === 'dashboard' && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h2>
-                <p className="text-sm text-gray-500">Visão geral do seu negócio</p>
-              </div>
-
-              {/* Cards de Estatísticas */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-blue-600 font-medium">Receita Total</p>
-                      <p className="text-2xl font-bold text-blue-900 mt-1">R$ {totalRevenue.toFixed(2)}</p>
-                    </div>
-                    <DollarSign className="w-10 h-10 text-blue-600" />
-                  </div>
-                </div>
-                <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-lg border border-yellow-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-yellow-600 font-medium">Pedidos Pendentes</p>
-                      <p className="text-2xl font-bold text-yellow-900 mt-1">{pendingOrders}</p>
-                    </div>
-                    <Truck className="w-10 h-10 text-yellow-600" />
-                  </div>
-                </div>
-                <div className="bg-gradient-to-br from-primary-50 to-primary-100 p-6 rounded-lg border border-primary-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-primary-600 font-medium">Total de Clientes</p>
-                      <p className="text-2xl font-bold text-primary-900 mt-1">{totalCustomers}</p>
-                    </div>
-                    <Users className="w-10 h-10 text-primary-600" />
-                  </div>
-                </div>
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-lg border border-purple-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-purple-600 font-medium">Total de Produtos</p>
-                      <p className="text-2xl font-bold text-purple-900 mt-1">{totalProducts}</p>
-                    </div>
-                    <Package className="w-10 h-10 text-purple-600" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Gráfico de Pedidos por Status */}
-              <div className="bg-white p-6 rounded-lg border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Pedidos por Status</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {(['pending', 'paid', 'shipped', 'delivered'] as Order['status'][]).map(status => {
-                    const count = orders.filter(o => o.status === status).length;
-                    const labels = {
-                      pending: 'Pendente',
-                      paid: 'Pago',
-                      shipped: 'Enviado',
-                      delivered: 'Entregue',
-                    };
-                    return (
-                      <div key={status} className="text-center p-4 bg-gray-50 rounded-lg">
-                        <p className="text-3xl font-bold text-gray-900">{count}</p>
-                        <p className="text-sm text-gray-500 mt-1">{labels[status]}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'products' && (
-            <ProductsManager
-              products={products}
-              onSave={handleSaveProduct}
-              onDelete={handleDeleteProduct}
-              onAdd={handleAddProduct}
-            />
-          )}
-
-          {activeTab === 'orders' && (
-            <OrdersManager
-              orders={orders}
-              onUpdateOrderStatus={handleUpdateOrderStatus}
-            />
-          )}
-
-          {activeTab === 'customers' && (
-            <CustomersManager customers={customers} />
-          )}
-
-          {activeTab === 'content' && (
-            <ContentManager
-              sections={contentSections}
-              categories={CATEGORIES}
-              onSave={handleSaveContent}
-              onDelete={handleDeleteContent}
-              onAdd={handleAddContent}
-            />
-          )}
-
-          {activeTab === 'media' && (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">Galeria de Mídia (Pasta Virtual)</h2>
-                  <p className="text-sm text-gray-500">Gerencie e anexe imagens para seus produtos.</p>
-                </div>
-                <div className="relative">
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    className="hidden" 
-                    accept="image/*" 
-                    onChange={handleUpload} 
-                  />
-                  <Button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2">
-                    <Upload className="w-4 h-4" /> Upload Imagem
-                  </Button>
-                </div>
-              </div>
-
-              {/* Upload Folder Area */}
-              <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 mb-8 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                 <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-3">
-                    <Upload className="w-6 h-6 text-primary-500" />
-                 </div>
-                 <p className="text-gray-900 font-medium">Clique para enviar arquivos</p>
-                 <p className="text-xs text-gray-500">JPG, PNG, WEBP</p>
-              </div>
-
-              {/* Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {images.length === 0 && (
-                  <div className="col-span-full py-12 text-center text-gray-400">
-                    Nenhuma imagem na pasta ainda.
-                  </div>
-                )}
-                {images.map((img, idx) => (
-                  <div key={idx} className="group relative aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-                       <button 
-                        onClick={() => copyToClipboard(img)}
-                        className="bg-white text-gray-900 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 hover:bg-gray-100"
-                       >
-                         <Copy className="w-3 h-3" /> Copiar Link
-                       </button>
-                       <button 
-                        onClick={() => {
-                          setImages(prev => {
-                            const updated = deleteImage(idx);
-                            return updated;
-                          });
-                          showSuccess('Imagem excluída!');
-                        }}
-                        className="bg-red-500 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 hover:bg-red-600"
-                       >
-                         <Trash2 className="w-3 h-3" /> Excluir
-                       </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // --- MAIN APP ---
 
 export default function App() {
-  console.log('App component renderizando...');
-  try {
-    const { view, selectedProductId, navigate, setSelectedProductId, setView } = useApp();
-    const { toast, showError, showSuccess, closeToast } = useToast();
-    const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
-    const { addToCart } = useCart();
-    const { products } = useProducts();
-    console.log('Hooks carregados, view:', view);
+  const { navigate } = useApp();
+  const { toast, showError, showSuccess, closeToast } = useToast();
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const { addToCart } = useCart();
 
-    const handleQuickView = (product: Product) => {
-      setQuickViewProduct(product);
-    };
+  const handleQuickView = (product: Product) => {
+    setQuickViewProduct(product);
+  };
 
-    const handleQuickAdd = (product: Product) => {
-      addToCart(product, 1);
-      showSuccess(`${product.name} adicionado ao carrinho!`);
-    };
+  const handleQuickAdd = (product: Product) => {
+    addToCart(product, 1);
+    showSuccess(`${product.name} adicionado ao carrinho!`);
+  };
 
-    const handleViewFullDetails = (product: Product) => {
-      setSelectedProductId(product.id);
-      setView('product');
-      window.scrollTo(0, 0);
-    };
+  const handleViewFullDetails = (product: Product) => {
+    navigateRouter(`/produto/${product.id}`);
+  };
 
   return (
     <div className="min-h-screen flex flex-col font-sans text-gray-900 bg-white">
       <Header />
 
       <main className="flex-1">
-        {view === 'home' && <Home onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />}
-        {view === 'catalog' && <Catalog onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />}
-        {view === 'product' && selectedProductId && (
-          <ProductDetail 
-            product={products.find(p => p.id === selectedProductId)!} 
-          />
-        )}
-        {view === 'cart' && <Cart />}
-        {view === 'favorites' && <Favorites onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />}
-        {view === 'checkout' && <div className="text-center py-20"><h2 className="text-2xl font-bold">Checkout Simulado</h2><Button onClick={() => navigate('home')} className="mt-4">Voltar</Button></div>}
-        {view === 'admin' && <AdminDashboard />}
-        {view === 'tracking' && <TrackingPage />}
-        {view === 'account' && <div className="text-center py-20 font-bold">Minha Conta</div>}
-        {view === 'ai-editor' && <AIStudio onError={showError} onSuccess={showSuccess} />}
+        <Routes>
+          <Route path="/" element={<Home onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
+          <Route path="/catalogo" element={<Catalog onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
+          <Route path="/produto/:id" element={<ProductDetailWrapper />} />
+          <Route path="/carrinho" element={<Cart />} />
+          <Route path="/favoritos" element={<Favorites onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
+          <Route path="/checkout" element={
+            <div className="text-center py-20">
+              <h2 className="text-2xl font-bold">Checkout Simulado</h2>
+              <Button onClick={() => navigateRouter('/')} className="mt-4">Voltar</Button>
+            </div>
+          } />
+          <Route path="/rastreamento" element={<TrackingPage />} />
+          <Route path="/conta" element={<div className="text-center py-20 font-bold">Minha Conta</div>} />
+          <Route path="*" element={<Home onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
+        </Routes>
       </main>
 
       {/* Toast Notification */}
@@ -1685,7 +1654,7 @@ export default function App() {
       />
 
       {/* 11. Footer */}
-      <footer className="bg-gray-900 text-gray-300 pt-16 pb-8 border-t border-gray-800">
+      <footer className="bg-gray-900 text-gray-300 pt-16 pb-8">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
             <div>
@@ -1739,23 +1708,4 @@ export default function App() {
       </footer>
     </div>
   );
-  } catch (error) {
-    console.error('Erro no App:', error);
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Erro ao carregar aplicação</h1>
-          <p className="text-gray-600 mb-4">
-            {error instanceof Error ? error.message : 'Erro desconhecido'}
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            Recarregar Página
-          </button>
-        </div>
-      </div>
-    );
-  }
 }
