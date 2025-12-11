@@ -2,6 +2,8 @@
 
 **Data de Criação:** 2025-01-27  
 **Versão do Projeto:** 2.0  
+**Commit Hash:** `5797913`  
+**Tag:** `v2.0-completo`  
 **Branch:** `master`
 
 ---
@@ -84,7 +86,7 @@ git checkout v2.0-completo
 
 ### Opção 2: Usando o Commit Hash
 ```bash
-git checkout <commit-hash>
+git checkout 5797913
 ```
 
 ### Opção 3: Criar Nova Branch a Partir Deste Ponto
