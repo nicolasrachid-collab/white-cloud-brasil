@@ -2,7 +2,7 @@
   <rect width="500" height="500" fill="#f3f4f6"/>
   <rect x="150" y="100" width="200" height="300" rx="20" fill="#1f2937"/>
   <rect x="170" y="120" width="160" height="200" rx="5" fill="#374151"/>
-  <circle cx="250" cy="350" r="15" fill="#3765FF"/>
+  <circle cx="250" cy="350" r="15" fill="#2759FF"/>
   <rect x="200" y="50" width="100" height="60" rx="10" fill="#111827"/>
   <text x="50%" y="450" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="24" fill="#9ca3af">X-Pro 2</text>
 </svg>

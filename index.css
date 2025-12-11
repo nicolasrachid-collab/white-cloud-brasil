@@ -207,3 +207,39 @@ body {
   display: none;  /* Chrome, Safari and Opera */
 }
 
+/* Animação de shimmer para o banner promocional */
+@keyframes shimmer-banner {
+  0% {
+    transform: translateX(-100%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-20deg);
+  }
+}
+
+.banner-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.banner-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.6) 25%,
+    rgba(37, 89, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0.6) 75%,
+    transparent 100%
+  );
+  animation: shimmer-banner 4s infinite ease-in-out;
+  pointer-events: none;
+  z-index: 1;
+  filter: blur(1px);
+}
+

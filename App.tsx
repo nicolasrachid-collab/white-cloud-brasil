@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, useParams, useNavigate as useNavigateRouter } from 'react-router-dom';
 import { 
   ShoppingCart, Search, Menu, X, User, Star, Truck, ShieldCheck, 
@@ -22,10 +22,11 @@ import { useApp } from './contexts/AppContext';
 import { useFavorites } from './contexts/FavoritesContext';
 import { useProducts } from './contexts/ProductsContext';
 import { MOCK_PRODUCTS, CATEGORIES, HERO_BANNERS, BRANDS } from './constants';
+import { Logos3 } from './components/ui/Logos3';
 import { Product, CartItem, ViewState, Order, Review } from './types';
 
-// --- CONFIGURAÇÃO DO LOGOTIPO ---
-// IMPORTANTE: Caminhos locais (C:\Users...) NÃO funcionam em navegadores web.
+// --- CONFIGURAÃ‡ÃƒO DO LOGOTIPO ---
+// IMPORTANTE: Caminhos locais (C:\Users...) NÃƒO funcionam em navegadores web.
 // Mova seu arquivo 'logo.png' para a pasta 'public/images/' do projeto.
 const LOGO_URL = "/images/logo-whitecloud.png";
 
@@ -45,7 +46,7 @@ const Header = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Impede o scroll do body quando o menu está aberto
+  // Impede o scroll do body quando o menu estÃ¡ aberto
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -57,9 +58,26 @@ const Header = () => {
 
   return (
     <>
-      {/* Top Black Bar */}
-      <div className="bg-black text-white text-xs py-2 text-center font-medium tracking-wide relative z-[60]">
-        PROIBIDO PARA MENORES DE 18 ANOS
+      {/* Mini Banner de Destaque */}
+      <div className="bg-gradient-to-r from-primary-50 to-blue-50 border-b border-primary-100 relative z-[60] banner-shimmer">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 relative z-10">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+            <div className="text-center sm:text-left">
+              <p className="text-sm sm:text-base font-bold text-gray-900 mb-0.5">
+                Mega Promoção Monstrinho Misterioso
+              </p>
+              <p className="text-xs sm:text-sm text-gray-700">
+                A cada R$400,00 em compra, leve um Labubu Misterioso
+              </p>
+            </div>
+            <button 
+              onClick={() => navigateRouter('/catalogo')}
+              className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-2.5 rounded-md transition-colors whitespace-nowrap text-sm sm:text-base shadow-md hover:shadow-lg relative z-10"
+            >
+              Confira
+            </button>
+          </div>
+        </div>
       </div>
 
       <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
@@ -74,7 +92,7 @@ const Header = () => {
               alt="White Cloud Brasil" 
               className="h-12 sm:h-16 md:h-20 w-auto object-contain transition-transform hover:scale-105"
               onError={(e) => {
-                // Fallback caso a imagem não exista
+                // Fallback caso a imagem nÃ£o exista
                 e.currentTarget.style.display = 'none';
                 e.currentTarget.parentElement!.innerHTML = '<span class="text-lg sm:text-xl md:text-2xl font-black tracking-tighter text-gray-900">WHITE CLOUD <span class="text-primary-600">BRASIL</span></span>';
               }}
@@ -85,7 +103,7 @@ const Header = () => {
           <div className="hidden lg:flex flex-1 max-w-2xl relative">
             <input
               type="text"
-              placeholder="O que você está buscando?"
+              placeholder="Pesquise seu produto na White Cloud :)"
               className="w-full bg-gray-50 border border-gray-200 rounded-full py-2.5 pl-6 pr-12 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all placeholder-gray-400 text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -108,6 +126,19 @@ const Header = () => {
                aria-expanded={isMenuOpen}
              >
                 <Menu className="w-6 h-6 sm:w-7 sm:h-7" />
+             </button>
+
+             {/* Login/Cadastro Button */}
+             <button 
+              className="hidden sm:flex items-center hover:text-primary-600 transition-colors min-h-[44px] cursor-pointer"
+              onClick={() => navigateRouter('/conta')}
+              aria-label="Entrar ou criar conta"
+             >
+               <User className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
+               <div className="flex flex-col items-start leading-tight">
+                 <span className="text-xs sm:text-sm font-medium">Entrar</span>
+                 <span className="text-[10px] text-gray-500">ou criar conta</span>
+               </div>
              </button>
 
              <button 
@@ -254,7 +285,7 @@ const Header = () => {
 
           {/* Mobile Menu Footer */}
           <div className="p-5 border-t border-gray-100 bg-gray-50 text-center">
-            <p className="text-xs text-gray-400">© 2023 White Cloud Brasil</p>
+            <p className="text-xs text-gray-400">Â© 2025 White Cloud Brasil</p>
           </div>
         </div>
       </aside>
@@ -306,7 +337,7 @@ const ProductCard: React.FC<{
         )}
       </div>
 
-      {/* Botão de Favorito */}
+      {/* BotÃ£o de Favorito */}
       <button
         onClick={handleToggleFavorite}
         className="absolute top-2 right-2 z-30 p-2 sm:p-2.5 bg-white/95 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 active:scale-95 border border-gray-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -351,7 +382,7 @@ const ProductCard: React.FC<{
           />
         )}
         
-        {/* Overlay com botões no hover */}
+        {/* Overlay com botÃµes no hover */}
         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 flex items-center justify-center">
           <div className="flex flex-col gap-3 px-4 w-full max-w-[200px]">
             <button 
@@ -362,10 +393,10 @@ const ProductCard: React.FC<{
                   onQuickView(product);
                 }
               }}
-              aria-label="Exibição rápida"
+              aria-label="Compra rápida"
             >
               <Eye className="w-4 h-4" />
-              <span className="hidden sm:inline">Exibição Rápida</span>
+              <span className="hidden sm:inline">Compra rápida</span>
               <span className="sm:hidden">Ver</span>
             </button>
             
@@ -402,10 +433,10 @@ const ProductCard: React.FC<{
           )}
           <div className="flex items-end gap-2">
             <span className="text-base sm:text-lg font-bold text-gray-900">R$ {product.price.toFixed(2)}</span>
-            <span className="text-[10px] sm:text-xs text-gray-500 mb-1">à vista</span>
+            <span className="text-[10px] sm:text-xs text-gray-500 mb-1">Ã  vista</span>
           </div>
           <p className="text-[9px] sm:text-[10px] text-gray-400 mt-1">
-            ou em até 12x no cartão
+            ou em atÃ© 12x no cartÃ£o
           </p>
         </div>
       </div>
@@ -517,7 +548,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 divide-y md:divide-y-0 md:divide-x divide-gray-100">
           {[
             { icon: Truck, title: "Envio para todo Brasil", sub: "Entrega expressa e rastreada" },
-            { icon: CheckCircle, title: "Entrega em até 24h", sub: "Para capitais selecionadas" },
+            { icon: CreditCard, title: "Compra Facilitada", sub: "Parcelamos em até 12x" },
             { icon: ShieldCheck, title: "Compra 100% Segura", sub: "Seus dados protegidos" },
           ].map((item, idx) => (
             <div key={idx} className="flex items-center justify-center space-x-4 pt-4 md:pt-0">
@@ -557,7 +588,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
           <img src="https://placehold.co/800x600/111/FFF?text=Pod+Systems+Promo" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Banner 1" />
           <div className="absolute inset-0 bg-black/40 flex flex-col justify-center px-8 text-white">
             <h3 className="text-3xl font-bold mb-2">Pod Systems</h3>
-            <p className="mb-4 text-gray-200">A melhor tecnologia em suas mãos.</p>
+            <p className="mb-4 text-gray-200">A melhor tecnologia em suas mÃ£os.</p>
             <Button size="sm" variant="outline" className="w-fit border-white text-white hover:bg-white hover:text-black">Confira</Button>
           </div>
         </div>
@@ -583,7 +614,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-8 text-white">
               <span className="text-amber-400 font-bold mb-2">TOP #1</span>
               <h3 className="text-3xl font-bold leading-tight mb-4">O preferido da galera</h3>
-              <Button className="w-full bg-white text-black hover:bg-gray-100">Comprar Agora</Button>
+              <Button className="w-full bg-primary-600 text-white hover:bg-primary-700">Comprar Agora</Button>
             </div>
           </div>
           
@@ -607,7 +638,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
     {/* 7. Best Offers */}
     <section className="container mx-auto px-3 sm:px-4">
-      <SectionHeader title="Ofertas Relâmpago" onLinkClick={() => navigateRouter('/catalogo')} />
+      <SectionHeader title="Ofertas RelÃ¢mpago" onLinkClick={() => navigateRouter('/catalogo')} />
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
         {(products || []).map(product => (
            <ProductCard 
@@ -641,7 +672,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     <section className="border-t border-b border-gray-100 bg-white py-8 sm:py-12">
       <div className="container mx-auto px-3 sm:px-4">
         <h3 className="text-center font-bold text-gray-400 text-sm tracking-widest uppercase mb-8">As Melhores Marcas</h3>
-        <div className="flex flex-wrap justify-center md:justify-between items-center gap-8 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+        <div className="flex flex-wrap justify-center md:justify-between items-center gap-8">
            {BRANDS.map((brand, idx) => (
              <img key={idx} src={brand.logo} alt={brand.name} className="h-8 md:h-12 object-contain hover:scale-110 transition-transform cursor-pointer" />
            ))}
@@ -683,7 +714,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
                 )}
                 <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
                   <span className="text-xs sm:text-sm font-medium border border-white/50 px-3 py-1.5 rounded-full">
-                    Ver produtos →
+                    Ver produtos â†’
                   </span>
                 </div>
               </div>
@@ -735,7 +766,7 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
-      {/* Botão para mostrar/ocultar filtros em mobile */}
+      {/* BotÃ£o para mostrar/ocultar filtros em mobile */}
       <div className="lg:hidden mb-4">
         <Button 
           variant="outline" 
@@ -762,7 +793,7 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
                     }`}
                     onClick={() => {
                       setActiveCategory(cat.id);
-                      setShowFilters(false); // Fechar filtros em mobile após seleção
+                      setShowFilters(false); // Fechar filtros em mobile apÃ³s seleÃ§Ã£o
                     }}
                   >
                     {cat.name}
@@ -772,7 +803,7 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
             </ul>
           </div>
           <div>
-            <h3 className="font-bold text-gray-900 mb-3 sm:mb-4 text-base sm:text-lg">Filtrar por Preço</h3>
+            <h3 className="font-bold text-gray-900 mb-3 sm:mb-4 text-base sm:text-lg">Filtrar por PreÃ§o</h3>
             <div className="flex items-center space-x-2">
               <input type="number" placeholder="Min" className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm min-h-[44px]" />
               <span className="text-gray-400">-</span>
@@ -787,8 +818,8 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
             <span className="text-gray-500 font-medium text-sm sm:text-base">{filteredProducts.length} produtos encontrados</span>
             <select className="border-none text-xs sm:text-sm font-medium focus:ring-0 text-gray-700 bg-transparent cursor-pointer hover:text-primary-600 min-h-[44px]">
               <option>Mais Relevantes</option>
-              <option>Menor Preço</option>
-              <option>Maior Preço</option>
+              <option>Menor PreÃ§o</option>
+              <option>Maior PreÃ§o</option>
               <option>Mais Recentes</option>
             </select>
           </div>
@@ -842,9 +873,9 @@ const ProductDetailWrapper = () => {
   if (!product) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Produto não encontrado</h2>
-        <p className="text-gray-500 mb-8">O produto que você está procurando não está disponível.</p>
-        <Button onClick={() => navigateRouter('/catalogo')}>Voltar para Catálogo</Button>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Produto nÃ£o encontrado</h2>
+        <p className="text-gray-500 mb-8">O produto que vocÃª estÃ¡ procurando nÃ£o estÃ¡ disponÃ­vel.</p>
+        <Button onClick={() => navigateRouter('/catalogo')}>Voltar para CatÃ¡logo</Button>
       </div>
     );
   }
@@ -873,10 +904,10 @@ const ProductDetail = ({ product }: { product: Product }) => {
     {
       id: '1',
       productId: product.id,
-      customerName: 'João Silva',
-      customerPhoto: 'https://ui-avatars.com/api/?name=João+Silva&background=3765FF&color=fff',
+      customerName: 'JoÃ£o Silva',
+      customerPhoto: 'https://ui-avatars.com/api/?name=JoÃ£o+Silva&background=3765FF&color=fff',
       rating: 5,
-      comment: 'Produto excelente! Superou minhas expectativas. Qualidade premium e entrega rápida. Recomendo muito!',
+      comment: 'Produto excelente! Superou minhas expectativas. Qualidade premium e entrega rÃ¡pida. Recomendo muito!',
       date: '2024-01-15',
     },
     {
@@ -885,7 +916,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
       customerName: 'Maria Santos',
       customerPhoto: 'https://ui-avatars.com/api/?name=Maria+Santos&background=10b981&color=fff',
       rating: 4,
-      comment: 'Muito bom produto, recomendo! A única coisa é que poderia ter mais opções de sabores disponíveis.',
+      comment: 'Muito bom produto, recomendo! A Ãºnica coisa Ã© que poderia ter mais opÃ§Ãµes de sabores disponÃ­veis.',
       date: '2024-01-10',
     },
     {
@@ -920,8 +951,8 @@ const ProductDetail = ({ product }: { product: Product }) => {
   if (!product) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Produto não encontrado</h2>
-        <Button onClick={() => navigateRouter('/catalogo')}>Voltar para Catálogo</Button>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Produto nÃ£o encontrado</h2>
+        <Button onClick={() => navigateRouter('/catalogo')}>Voltar para CatÃ¡logo</Button>
       </div>
     );
   }
@@ -946,7 +977,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
 
   const savings = calculateSavings();
 
-  // Função para compartilhar
+  // FunÃ§Ã£o para compartilhar
   const handleShare = (platform: string) => {
     const url = window.location.href;
     const text = `Confira ${product.name} na White Cloud Brasil!`;
@@ -967,7 +998,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
     }
   };
 
-  // Scroll para avaliações
+  // Scroll para avaliaÃ§Ãµes
   const scrollToReviews = () => {
     const reviewsSection = document.getElementById('reviews-section');
     if (reviewsSection) {
@@ -982,7 +1013,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
         <ArrowRight className="w-4 h-4 mr-1 rotate-180 group-hover:-translate-x-1 transition-transform" /> Voltar para loja
       </button>
 
-      {/* 1. SEÇÃO PRINCIPAL: Galeria + Informações */}
+      {/* 1. SEÃ‡ÃƒO PRINCIPAL: Galeria + InformaÃ§Ãµes */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 mb-12">
         {/* Coluna Esquerda: Galeria de Imagens */}
         <div className="space-y-3 sm:space-y-4">
@@ -1020,7 +1051,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
           </div>
         </div>
 
-        {/* Coluna Direita: Informações Principais */}
+        {/* Coluna Direita: InformaÃ§Ãµes Principais */}
         <div className="space-y-4 sm:space-y-6">
           {/* 1. Nome do Produto (H1) */}
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-3">
@@ -1048,7 +1079,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
             </p>
           </div>
           
-          {/* 3. Avaliações */}
+          {/* 3. AvaliaÃ§Ãµes */}
           <div className="flex items-center space-x-2 mb-4">
             <div className="flex text-amber-400">
               {[...Array(5)].map((_, i) => (
@@ -1064,11 +1095,11 @@ const ProductDetail = ({ product }: { product: Product }) => {
               onClick={scrollToReviews}
               className="text-xs sm:text-sm text-gray-500 hover:text-primary-600 transition-colors underline"
             >
-              {product.rating.toFixed(2)} de 5 ({product.reviewsCount} {product.reviewsCount === 1 ? 'avaliação' : 'avaliações'})
+              {product.rating.toFixed(2)} de 5 ({product.reviewsCount} {product.reviewsCount === 1 ? 'avaliaÃ§Ã£o' : 'avaliaÃ§Ãµes'})
             </button>
           </div>
 
-          {/* 4. Preço (DESTAQUE MÁXIMO) */}
+          {/* 4. PreÃ§o (DESTAQUE MÃXIMO) */}
           <div className="bg-gray-50 p-4 sm:p-6 rounded-xl mb-6 sm:mb-8 border border-gray-200">
             <div className="flex items-end gap-2 sm:gap-3 mb-2 flex-wrap">
               <span className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
@@ -1097,12 +1128,12 @@ const ProductDetail = ({ product }: { product: Product }) => {
             </p>
           </div>
           
-          {/* Descrição Curta */}
+          {/* DescriÃ§Ã£o Curta */}
           <div className="mb-4 sm:mb-6">
             <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{product.description}</p>
           </div>
 
-          {/* 5. Variações (Sabores/Cores/Modelos) */}
+          {/* 5. VariaÃ§Ãµes (Sabores/Cores/Modelos) */}
           {product.flavors && product.flavors.length > 0 && (
             <div className="mb-6 sm:mb-8">
               <label className="block text-sm sm:text-base font-semibold text-gray-900 mb-3">
@@ -1110,7 +1141,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
                 {product.flavors.map((flavor) => {
-                  const isAvailable = Math.random() > 0.3; // Mock: 70% disponível
+                  const isAvailable = Math.random() > 0.3; // Mock: 70% disponÃ­vel
                   const isSelected = selectedFlavor === flavor;
                   
                   return (
@@ -1168,7 +1199,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
                 Adicionar ao Carrinho
               </Button>
             </div>
-            {/* Botão Secundário */}
+            {/* BotÃ£o SecundÃ¡rio */}
             <Button 
               variant="outline"
               size="lg"
@@ -1200,7 +1231,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
         </div>
       </div>
 
-      {/* 8. BLOCO DE INFORMAÇÕES RÁPIDAS */}
+      {/* 8. BLOCO DE INFORMAÃ‡Ã•ES RÃPIDAS */}
       <div className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 mb-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {/* Formas de Pagamento */}
@@ -1209,21 +1240,21 @@ const ProductDetail = ({ product }: { product: Product }) => {
             <div>
               <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">Formas de Pagamento</h3>
               <p className="text-xs sm:text-sm text-gray-600">
-                {product.paymentOptions || 'Em até 12x sem juros'}
+                {product.paymentOptions || 'Em atÃ© 12x sem juros'}
               </p>
             </div>
           </div>
 
-          {/* Avaliações */}
+          {/* AvaliaÃ§Ãµes */}
           <div className="flex items-start gap-3">
             <Star className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 fill-amber-400 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">Avaliações</h3>
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">AvaliaÃ§Ãµes</h3>
               <button 
                 onClick={scrollToReviews}
                 className="text-xs sm:text-sm text-primary-600 hover:text-primary-700 underline"
               >
-                Ver todas as avaliações
+                Ver todas as avaliaÃ§Ãµes
               </button>
             </div>
           </div>
@@ -1268,24 +1299,24 @@ const ProductDetail = ({ product }: { product: Product }) => {
         </div>
       </div>
 
-      {/* 9. DESCRIÇÃO DETALHADA */}
+      {/* 9. DESCRIÃ‡ÃƒO DETALHADA */}
       {product.detailedDescription && (
         <section className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 md:mb-8 pb-3 border-b-2 border-gray-200">
-            Descrição
+            DescriÃ§Ã£o
           </h2>
           <div className="text-gray-700 leading-relaxed space-y-4">
             {product.detailedDescription.split('\n').map((paragraph, idx) => {
               if (!paragraph.trim()) return null;
               
-              // Detectar títulos principais (linhas em maiúsculas ou curtas que parecem títulos)
+              // Detectar tÃ­tulos principais (linhas em maiÃºsculas ou curtas que parecem tÃ­tulos)
               const isMainTitle = paragraph.length < 100 && (
                 paragraph === paragraph.toUpperCase() || 
                 (paragraph.match(/^[A-Z][^.!?]*$/) && paragraph.length < 80)
               );
               
-              // Detectar subtítulos (linhas que começam com números ou têm padrão de título)
-              const isSubtitle = paragraph.match(/^[\d•\-]/) || 
+              // Detectar subtÃ­tulos (linhas que comeÃ§am com nÃºmeros ou tÃªm padrÃ£o de tÃ­tulo)
+              const isSubtitle = paragraph.match(/^[\dâ€¢\-]/) || 
                 (paragraph.length < 60 && paragraph.match(/^[A-Z]/));
               
               if (isMainTitle) {
@@ -1299,16 +1330,16 @@ const ProductDetail = ({ product }: { product: Product }) => {
               if (isSubtitle) {
                 return (
                   <h4 key={idx} className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 mt-4 mb-2">
-                    {paragraph.replace(/^[•\-\d.]+\s*/, '')}
+                    {paragraph.replace(/^[â€¢\-\d.]+\s*/, '')}
                   </h4>
                 );
               }
               
-              // Detectar listas (linhas que começam com •, -, ou números)
-              if (paragraph.match(/^[•\-\d]/)) {
+              // Detectar listas (linhas que comeÃ§am com â€¢, -, ou nÃºmeros)
+              if (paragraph.match(/^[â€¢\-\d]/)) {
                 return (
                   <li key={idx} className="mb-2 ml-5 list-disc text-sm sm:text-base">
-                    {paragraph.replace(/^[•\-\d.]+\s*/, '')}
+                    {paragraph.replace(/^[â€¢\-\d.]+\s*/, '')}
                   </li>
                 );
               }
@@ -1323,11 +1354,11 @@ const ProductDetail = ({ product }: { product: Product }) => {
         </section>
       )}
 
-      {/* 10. ESPECIFICAÇÕES TÉCNICAS */}
+      {/* 10. ESPECIFICAÃ‡Ã•ES TÃ‰CNICAS */}
       {product.specifications && Object.keys(product.specifications).length > 0 && (
         <section className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 md:mb-8">
-            Especificações Técnicas
+            EspecificaÃ§Ãµes TÃ©cnicas
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {Object.entries(product.specifications).map(([key, value], idx) => (
@@ -1407,12 +1438,12 @@ const ProductDetail = ({ product }: { product: Product }) => {
         </section>
       )}
 
-      {/* 14. AVALIAÇÕES DOS CLIENTES */}
+      {/* 14. AVALIAÃ‡Ã•ES DOS CLIENTES */}
       <section id="reviews-section" className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-8">Avaliações dos Clientes</h2>
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-8">AvaliaÃ§Ãµes dos Clientes</h2>
         
         {reviews.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">Ainda não há avaliações para este produto.</p>
+          <p className="text-gray-500 text-center py-8">Ainda nÃ£o hÃ¡ avaliaÃ§Ãµes para este produto.</p>
         ) : (
           <div className="space-y-6">
             {reviews.map((review) => (
@@ -1440,7 +1471,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
                       <span className="text-xs sm:text-sm text-gray-500">{formatReviewDate(review.date)}</span>
                     </div>
                     
-                    {/* Avaliação de Estrelas */}
+                    {/* AvaliaÃ§Ã£o de Estrelas */}
                     <div className="flex items-center gap-1 mb-3">
                       {[...Array(5)].map((_, i) => (
                         <Star
@@ -1455,7 +1486,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
                       <span className="ml-2 text-xs sm:text-sm text-gray-500">({review.rating}/5)</span>
                     </div>
                     
-                    {/* Texto do Comentário */}
+                    {/* Texto do ComentÃ¡rio */}
                     <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{review.comment}</p>
                   </div>
                 </div>
@@ -1491,7 +1522,7 @@ const Favorites = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Produc
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-3">Nenhum favorito ainda</h2>
           <p className="text-gray-500 mb-8">
-            Comece a adicionar produtos aos seus favoritos para encontrá-los facilmente depois!
+            Comece a adicionar produtos aos seus favoritos para encontrÃ¡-los facilmente depois!
           </p>
           <Button onClick={() => navigateRouter('/catalogo')}>
             Explorar Produtos
@@ -1660,46 +1691,75 @@ export default function App() {
             <div>
               <h4 className="text-white font-bold text-lg mb-6 flex items-center">Atendimento</h4>
               <ul className="space-y-4 text-sm">
-                <li className="flex items-center"><Mail className="w-4 h-4 mr-2" /> suporte@whitecloudbrasil.com</li>
-                <li className="flex items-center"><User className="w-4 h-4 mr-2" /> (11) 99999-9999</li>
-                <li className="flex items-center"><MapPin className="w-4 h-4 mr-2" /> Seg. a Sex. 9h às 18h</li>
+                <li className="flex items-center"><Mail className="w-4 h-4 mr-2" /> sac@whitecloudbrasil.com</li>
+                <li className="flex items-center"><User className="w-4 h-4 mr-2" /> +595 994 872020</li>
+                <li className="flex items-center"><MapPin className="w-4 h-4 mr-2" /> Seg. a Sex 9h ás 18h</li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-bold text-lg mb-6">Institucional</h4>
               <ul className="space-y-3 text-sm">
                 <li><button className="hover:text-white transition-colors">Quem Somos</button></li>
-                <li><button className="hover:text-white transition-colors">Política de Privacidade</button></li>
-                <li><button className="hover:text-white transition-colors">Termos de Uso</button></li>
-                <li><button className="hover:text-white transition-colors">Trabalhe Conosco</button></li>
+                <li><button className="hover:text-white transition-colors">Guia Vape</button></li>
+                <li><button className="hover:text-white transition-colors">Política de Envio e Entrega</button></li>
+                <li><button className="hover:text-white transition-colors">Garantia & Trocas</button></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-white font-bold text-lg mb-6">Ajuda</h4>
+              <h4 className="text-white font-bold text-lg mb-6">Central do Cliente</h4>
               <ul className="space-y-3 text-sm">
+                <li><button className="hover:text-white transition-colors">Política de Privacidade</button></li>
+                <li><button className="hover:text-white transition-colors">Entre em Contato</button></li>
+                <li><button className="hover:text-white transition-colors">Minha Conta</button></li>
                 <li><button className="hover:text-white transition-colors">Rastrear Pedido</button></li>
-                <li><button className="hover:text-white transition-colors">Trocas e Devoluções</button></li>
-                <li><button className="hover:text-white transition-colors">Envio e Prazos</button></li>
-                <li><button className="hover:text-white transition-colors">Perguntas Frequentes</button></li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-bold text-lg mb-6">Siga-nos</h4>
               <div className="flex space-x-4 mb-8">
                 <button className="bg-gray-800 p-2 rounded-full hover:bg-primary-600 transition-colors"><Instagram className="w-5 h-5" /></button>
-                <button className="bg-gray-800 p-2 rounded-full hover:bg-primary-600 transition-colors"><Facebook className="w-5 h-5" /></button>
                 <button className="bg-gray-800 p-2 rounded-full hover:bg-primary-600 transition-colors"><Youtube className="w-5 h-5" /></button>
                 <button className="bg-gray-800 p-2 rounded-full hover:bg-primary-600 transition-colors"><Twitter className="w-5 h-5" /></button>
               </div>
               <h4 className="text-white font-bold text-lg mb-4">Pagamento</h4>
-              <div className="flex gap-2">
-                 <div className="h-8 w-12 bg-white rounded flex items-center justify-center"><CreditCard className="text-black w-5 h-5"/></div>
-                 <div className="h-8 w-12 bg-white rounded flex items-center justify-center"><DollarSign className="text-black w-5 h-5"/></div>
+              <div className="flex flex-wrap gap-2">
+                 {/* Visa */}
+                 <div className="h-10 w-16 bg-white rounded flex items-center justify-center px-1 shadow-sm">
+                   <span className="text-[10px] font-bold text-blue-900">VISA</span>
+                 </div>
+                 {/* Mastercard */}
+                 <div className="h-10 w-16 bg-white rounded flex items-center justify-center px-1 shadow-sm">
+                   <div className="flex items-center gap-0.5">
+                     <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                     <div className="w-3 h-3 rounded-full bg-orange-500 -ml-1.5"></div>
+                   </div>
+                 </div>
+                 {/* Elo */}
+                 <div className="h-10 w-16 bg-white rounded flex items-center justify-center px-1 shadow-sm">
+                   <span className="text-[9px] font-bold text-gray-900">elo</span>
+                 </div>
+                 {/* American Express */}
+                 <div className="h-10 w-16 bg-blue-600 rounded flex items-center justify-center px-1 shadow-sm">
+                   <span className="text-[7px] font-bold text-white">AMERICAN EXPRESS</span>
+                 </div>
+                 {/* Hipercard */}
+                 <div className="h-10 w-16 bg-red-600 rounded flex items-center justify-center px-1 shadow-sm">
+                   <span className="text-[8px] font-bold text-white">Hipercard</span>
+                 </div>
+                 {/* PIX */}
+                 <div className="h-10 w-16 bg-white rounded flex items-center justify-center px-1 shadow-sm">
+                   <span className="text-[9px] font-bold text-gray-800">PIX</span>
+                 </div>
+                 {/* Boleto */}
+                 <div className="h-10 w-16 bg-white rounded flex flex-col items-center justify-center px-1 shadow-sm">
+                   <div className="w-full h-2 bg-gray-800 mb-0.5"></div>
+                   <span className="text-[7px] font-bold text-gray-800">BOLETO</span>
+                 </div>
               </div>
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
-            <p>&copy; 2023 White Cloud Brasil. Todos os direitos reservados.</p>
+            <p>&copy; 2025 White Cloud Brasil. Todos os direitos reservados.</p>
             <div className="flex items-center space-x-2 mt-4 md:mt-0">
                <ShieldCheck className="w-4 h-4" /> <span>Site Seguro</span>
             </div>
