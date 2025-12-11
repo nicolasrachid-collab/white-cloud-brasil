@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Routes, Route, useParams, useNavigate as useNavigateRouter } from 'react-router-dom';
 import { 
   ShoppingCart, Search, Menu, X, User, Star, Truck, ShieldCheck, 
@@ -17,6 +17,7 @@ import { AgeVerificationModal } from './components/AgeVerificationModal';
 import { CartDrawer } from './components/CartDrawer';
 import { ProductCardSkeleton, ProductGridSkeleton, ProductDetailSkeleton } from './components/Skeleton';
 import { LoadingSpinner } from './components/LoadingSpinner';
+import { ProductFilters } from './components/ProductFilters';
 import { useToast } from './hooks/useToast';
 import { useDebounce } from './hooks/useDebounce';
 import { useCart } from './contexts/CartContext';
@@ -652,13 +653,9 @@ const ProductCard: React.FC<{
               className="w-full bg-primary-600 text-white px-4 py-2.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 hover:bg-primary-700 transition-colors shadow-lg min-h-[44px]"
               onClick={(e) => {
                 e.stopPropagation();
-                if (onQuickAdd) {
-                  onQuickAdd(product);
-                } else {
-                  onClick();
-                }
+                onClick(); // Sempre navega para a página do produto
               }}
-              aria-label="Adicionar ao carrinho"
+              aria-label="Ver detalhes do produto"
             >
               <ShoppingCart className="w-4 h-4" />
               Comprar
@@ -773,22 +770,27 @@ const HeroSlider = () => {
       </button>
 
       {/* Navigation Dots - Melhorado para Mobile */}
-      <div className="absolute bottom-3 sm:bottom-4 md:bottom-6 left-0 w-full flex justify-center gap-1.5 sm:gap-2 px-4">
+      <div className="absolute bottom-3 sm:bottom-4 md:bottom-6 left-0 w-full flex justify-center gap-0.5 sm:gap-1 px-4">
         {displayBanners.map((_, idx) => (
           <button
             key={idx}
-            className={`rounded-full transition-all duration-300 min-h-[44px] min-w-[44px] flex items-center justify-center ${
-              current === idx 
-                ? 'bg-white w-4 sm:w-4 md:w-3 h-1 sm:h-1 md:h-1' 
-                : 'bg-white/40 w-1 h-1 sm:w-1 md:w-1 sm:h-1 md:h-1 hover:bg-white/60'
-            }`}
+            className="rounded-full transition-all duration-300 min-h-[44px] min-w-[44px] flex items-center justify-center"
             onClick={() => {
               setIsAutoPlay(false);
               setCurrent(idx);
               setTimeout(() => setIsAutoPlay(true), 10000);
             }}
             aria-label={`Ir para slide ${idx + 1}`}
-          />
+          >
+            {/* Elemento visual interno - permite controle preciso do tamanho */}
+            <span
+              className={`rounded-full transition-all duration-300 block ${
+                current === idx 
+                  ? 'bg-white w-8 sm:w-8 md:w-6 h-2 sm:h-2 md:h-2' 
+                  : 'bg-white/40 w-2 h-2 sm:w-2 md:w-2 sm:h-2 md:h-2 hover:bg-white/60'
+              }`}
+            />
+          </button>
         ))}
       </div>
     </div>
@@ -1045,16 +1047,45 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
   const { products } = useProducts();
   const [isLoading, setIsLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [filteredProductsFromFilters, setFilteredProductsFromFilters] = useState<Product[]>(products);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [currentPage, setCurrentPage] = useState(1);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   
   const handleProductClick = (id: string) => {
     navigateRouter(`/produto/${id}`);
   };
-  const filteredProducts = products.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
-    const matchesCategory = activeCategory === 'all' || p.category === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
+
+  // Filtrar produtos baseado em busca e categoria primeiro
+  const productsByCategoryAndSearch = useMemo(() => {
+    return products.filter(p => {
+      const matchesSearch = debouncedSearchTerm === '' || p.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+      const matchesCategory = activeCategory === 'all' || p.category === activeCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, activeCategory, debouncedSearchTerm]);
+
+  // Produtos finais após aplicar filtros avançados
+  const filteredProducts = useMemo(() => {
+    return filteredProductsFromFilters;
+  }, [filteredProductsFromFilters]);
+
+  // Calcular produtos paginados
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredProducts.slice(startIndex, endIndex);
+  }, [filteredProducts, currentPage, itemsPerPage]);
+
+  // Calcular total de páginas
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredProducts.length / itemsPerPage);
+  }, [filteredProducts.length, itemsPerPage]);
+
+  // Resetar página quando filtros mudarem
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredProducts.length, itemsPerPage]);
   
   // Simular loading ao filtrar (pode ser removido quando houver API real)
   useEffect(() => {
@@ -1064,6 +1095,20 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
       setIsLoading(false);
     }
   }, [searchTerm, debouncedSearchTerm, activeCategory]);
+
+  const handleFilterChange = useCallback((filtered: Product[]) => {
+    setFilteredProductsFromFilters(filtered);
+    setIsLoading(false);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setFilteredProductsFromFilters(productsByCategoryAndSearch);
+  }, [productsByCategoryAndSearch]);
+
+  // Atualizar produtos filtrados quando categoria ou busca mudar
+  useEffect(() => {
+    setFilteredProductsFromFilters(productsByCategoryAndSearch);
+  }, [productsByCategoryAndSearch]);
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
@@ -1080,49 +1125,48 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-        <aside className={`w-full lg:w-64 flex-shrink-0 space-y-6 lg:space-y-8 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-          <div>
-            <h3 className="font-bold text-gray-900 mb-3 sm:mb-4 text-base sm:text-lg">Categorias</h3>
-            <ul className="space-y-1">
-              {CATEGORIES.map(cat => (
-                <li key={cat.id}>
-                  <button
-                    className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors text-sm min-h-[44px] ${
-                      activeCategory === cat.id 
-                        ? 'bg-primary-50 text-primary-700 font-bold' 
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                    onClick={() => {
-                      setActiveCategory(cat.id);
-                      setShowFilters(false); // Fechar filtros em mobile apÃ³s seleÃ§Ã£o
-                    }}
-                  >
-                    {cat.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-900 mb-3 sm:mb-4 text-base sm:text-lg">Filtrar por Preço</h3>
-            <div className="flex items-center space-x-2">
-              <input type="number" placeholder="Min" className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm min-h-[44px]" />
-              <span className="text-gray-400">-</span>
-              <input type="number" placeholder="Max" className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm min-h-[44px]" />
-            </div>
-            <Button size="sm" variant="outline" className="mt-3 w-full min-h-[44px]">Aplicar Filtro</Button>
-          </div>
+        <aside className={`w-full lg:w-80 flex-shrink-0 space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+          {/* Filtros Avançados */}
+          <ProductFilters
+            products={productsByCategoryAndSearch}
+            onFilterChange={handleFilterChange}
+            onClearFilters={handleClearFilters}
+          />
         </aside>
 
         <div className="flex-1">
           <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6 shadow-sm">
             <span className="text-gray-500 font-medium text-sm sm:text-base">{filteredProducts.length} produtos encontrados</span>
-            <select className="border-none text-xs sm:text-sm font-medium focus:ring-0 text-gray-700 bg-transparent cursor-pointer hover:text-primary-600 min-h-[44px]">
-              <option>Mais Relevantes</option>
-              <option>Menor Preço</option>
-              <option>Maior Preço</option>
-              <option>Mais Recentes</option>
-            </select>
+            <div className="flex items-center gap-3 sm:gap-4">
+              {/* Dropdown Exibir por página */}
+              <div className="flex items-center gap-2">
+                <label htmlFor="items-per-page" className="text-xs sm:text-sm font-medium text-gray-700 whitespace-nowrap">
+                  Exibir:
+                </label>
+                <select
+                  id="items-per-page"
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white cursor-pointer hover:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[44px]"
+                >
+                  <option value={20}>20 por página</option>
+                  <option value={40}>40 por página</option>
+                  <option value={60}>60 por página</option>
+                  <option value={80}>80 por página</option>
+                  <option value={100}>100 por página</option>
+                </select>
+              </div>
+              {/* Dropdown Ordenação */}
+              <select className="border-none text-xs sm:text-sm font-medium focus:ring-0 text-gray-700 bg-transparent cursor-pointer hover:text-primary-600 min-h-[44px]">
+                <option>Mais Relevantes</option>
+                <option>Menor Preço</option>
+                <option>Maior Preço</option>
+                <option>Mais Recentes</option>
+              </select>
+            </div>
           </div>
 
           {isLoading ? (
@@ -1133,17 +1177,71 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
               <p className="text-gray-400 text-sm mt-2">Tente ajustar os filtros de busca</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {filteredProducts.map(product => (
-                <ProductCard 
-                  key={product.id} 
-                  product={product} 
-                  onClick={() => handleProductClick(product.id)}
-                  onQuickView={onQuickView}
-                  onQuickAdd={onQuickAdd}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                {paginatedProducts.map(product => (
+                  <ProductCard 
+                    key={product.id} 
+                    product={product} 
+                    onClick={() => handleProductClick(product.id)}
+                    onQuickView={onQuickView}
+                    onQuickAdd={onQuickAdd}
+                  />
+                ))}
+              </div>
+              
+              {/* Controles de Paginação */}
+              {totalPages > 1 && (
+                <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="text-sm text-gray-600">
+                    Mostrando {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredProducts.length)} de {filteredProducts.length} produtos
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]"
+                    >
+                      Anterior
+                    </button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setCurrentPage(pageNum)}
+                            className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors min-h-[44px] min-w-[44px] ${
+                              currentPage === pageNum
+                                ? 'bg-primary-600 text-white'
+                                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]"
+                    >
+                      Próxima
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -1185,15 +1283,30 @@ const ProductDetailWrapper = () => {
 };
 
 const ProductDetail = ({ product }: { product: Product }) => {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:ProductDetail:entry',message:'ProductDetail rendered with product',data:{productId:product.id,productName:product.name,productNameLength:product.name?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'F'})}).catch(()=>{});
+  // #endregion
   const { addToCart } = useCart();
   const navigateRouter = useNavigateRouter();
   const { products } = useProducts();
   const { showSuccess } = useToast();
   const [quantity, setQuantity] = useState(1);
   const [selectedFlavor, setSelectedFlavor] = useState(product.flavors?.[0] || '');
+  const [selectedNicotine, setSelectedNicotine] = useState(product.nicotine?.[0] || '');
   const [isLoading, setIsLoading] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [hoveredFlavorImageIndex, setHoveredFlavorImageIndex] = useState<number | null>(null);
+  const [fixedFlavorImageIndex, setFixedFlavorImageIndex] = useState<number | null>(null);
+  // Estados para notificação de estoque
+  const [selectedFlavorsForNotification, setSelectedFlavorsForNotification] = useState<string[]>([]);
+  const [privacyPolicyAccepted, setPrivacyPolicyAccepted] = useState(false);
+  const [isFlavorsDropdownOpen, setIsFlavorsDropdownOpen] = useState(false);
+  const flavorsDropdownRef = useRef<HTMLDivElement>(null);
+  // Estado para controlar expansão da seção "Fora de Estoque"
+  const [isOutOfStockExpanded, setIsOutOfStockExpanded] = useState(false);
+  // Estados para produtos complementares/kit
+  const [selectedComplementaryProducts, setSelectedComplementaryProducts] = useState<string[]>([]);
   
   // Produtos relacionados (mesma categoria, excluindo o produto atual)
   const relatedProducts = (products || []).filter(
@@ -1205,10 +1318,10 @@ const ProductDetail = ({ product }: { product: Product }) => {
     {
       id: '1',
       productId: product.id,
-      customerName: 'JoÃ£o Silva',
-      customerPhoto: 'https://ui-avatars.com/api/?name=JoÃ£o+Silva&background=3765FF&color=fff',
+      customerName: 'João Silva',
+      customerPhoto: 'https://ui-avatars.com/api/?name=João+Silva&background=3765FF&color=fff',
       rating: 5,
-      comment: 'Produto excelente! Superou minhas expectativas. Qualidade premium e entrega rÃ¡pida. Recomendo muito!',
+      comment: 'Produto excelente! Superou minhas expectativas. Qualidade premium e entrega rápida. Recomendo muito!',
       date: '2024-01-15',
     },
     {
@@ -1217,7 +1330,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
       customerName: 'Maria Santos',
       customerPhoto: 'https://ui-avatars.com/api/?name=Maria+Santos&background=10b981&color=fff',
       rating: 4,
-      comment: 'Muito bom produto, recomendo! A Ãºnica coisa Ã© que poderia ter mais opÃ§Ãµes de sabores disponÃ­veis.',
+      comment: 'Muito bom produto, recomendo! A única coisa é que poderia ter mais opções de sabores disponíveis.',
       date: '2024-01-10',
     },
     {
@@ -1232,22 +1345,209 @@ const ProductDetail = ({ product }: { product: Product }) => {
   ]);
   
   const handleAddToCart = () => {
-    addToCart(product, quantity, { selectedFlavor });
+    addToCart(product, quantity, { selectedFlavor, selectedNicotine });
     showSuccess(`${product.name} adicionado ao carrinho!`);
   };
   
   const handleProductClick = (id: string) => {
     navigateRouter(`/produto/${id}`);
   };
+
+  // Função para alternar seleção de sabor para notificação
+  const toggleFlavorForNotification = (flavor: string) => {
+    setSelectedFlavorsForNotification(prev => {
+      if (prev.includes(flavor)) {
+        return prev.filter(f => f !== flavor);
+      } else {
+        return [...prev, flavor];
+      }
+    });
+  };
+
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (flavorsDropdownRef.current && !flavorsDropdownRef.current.contains(event.target as Node)) {
+        setIsFlavorsDropdownOpen(false);
+      }
+    };
+
+    if (isFlavorsDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isFlavorsDropdownOpen]);
+
+  // Função para obter índice da imagem baseado no sabor
+  const getImageIndexForFlavor = (flavor: string): number => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:getImageIndexForFlavor:entry',message:'getImageIndexForFlavor called',data:{flavor,flavorsLength:product.flavors?.length,imagesLength:product.images?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    if (!product.flavors || product.flavors.length === 0 || !product.images || product.images.length === 0) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:getImageIndexForFlavor:early-return',message:'Early return - missing data',data:{returnValue:0},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      return 0;
+    }
+    const flavorIndex = product.flavors.indexOf(flavor);
+    const result = flavorIndex % product.images.length;
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:getImageIndexForFlavor:exit',message:'getImageIndexForFlavor result',data:{flavor,flavorIndex,imagesLength:product.images.length,result},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    // Distribui os sabores entre as imagens disponíveis
+    return result;
+  };
+
+  // Função para lidar com hover no sabor
+  const handleFlavorHover = (flavor: string) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleFlavorHover:entry',message:'handleFlavorHover called',data:{flavor,fixedFlavorImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    const imageIndex = getImageIndexForFlavor(flavor);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleFlavorHover:before-setState',message:'About to set hoveredFlavorImageIndex',data:{flavor,imageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    setHoveredFlavorImageIndex(imageIndex);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleFlavorHover:after-setState',message:'setHoveredFlavorImageIndex called',data:{flavor,imageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+  };
+
+  // Função para lidar com saída do hover
+  const handleFlavorLeave = () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleFlavorLeave:entry',message:'handleFlavorLeave called',data:{fixedFlavorImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleFlavorLeave:resetting',message:'Resetting hoveredFlavorImageIndex',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    setHoveredFlavorImageIndex(null);
+  };
+
+  // Função para lidar com click no sabor (fixar imagem)
+  const handleFlavorClick = (flavor: string) => {
+    const imageIndex = getImageIndexForFlavor(flavor);
+    setFixedFlavorImageIndex(imageIndex);
+    setSelectedImageIndex(imageIndex);
+    setImageLoaded(false);
+    setHoveredFlavorImageIndex(null);
+  };
+
+  // Determinar qual imagem exibir (hover tem prioridade sobre fixado)
+  const displayImageIndex = useMemo(() => {
+    const result = hoveredFlavorImageIndex !== null
+      ? hoveredFlavorImageIndex
+      : (fixedFlavorImageIndex !== null ? fixedFlavorImageIndex : selectedImageIndex);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:displayImageIndex:calculation',message:'displayImageIndex being calculated',data:{result,hoveredFlavorImageIndex,fixedFlavorImageIndex,selectedImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
+    return result;
+  }, [hoveredFlavorImageIndex, fixedFlavorImageIndex, selectedImageIndex]);
+
+  // Monitorar mudanças no displayImageIndex
+  useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:displayImageIndex:changed',message:'displayImageIndex changed',data:{displayImageIndex,fixedFlavorImageIndex,hoveredFlavorImageIndex,selectedImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
+  }, [displayImageIndex, fixedFlavorImageIndex, hoveredFlavorImageIndex, selectedImageIndex]);
+
+  // Função para confirmar notificação
+  const handleConfirmNotification = () => {
+    if (!privacyPolicyAccepted) {
+      showSuccess('Por favor, autorize o recebimento de notificações.');
+      return;
+    }
+    if (selectedFlavorsForNotification.length === 0) {
+      showSuccess('Por favor, selecione pelo menos um sabor para receber notificação.');
+      return;
+    }
+    // Aqui você pode adicionar a lógica para salvar a notificação (localStorage, API, etc.)
+    showSuccess(`Você será notificado quando os sabores selecionados estiverem disponíveis!`);
+    // Limpar formulário
+    setSelectedFlavorsForNotification([]);
+    setPrivacyPolicyAccepted(false);
+  };
+
+  // Função para alternar seleção de produto complementar
+  const toggleComplementaryProduct = (productId: string) => {
+    setSelectedComplementaryProducts(prev => {
+      if (prev.includes(productId)) {
+        return prev.filter(id => id !== productId);
+      } else {
+        return [...prev, productId];
+      }
+    });
+  };
+
+  // Função para calcular o total dos produtos complementares selecionados
+  const calculateComplementaryTotal = () => {
+    if (!product.complementaryProducts || selectedComplementaryProducts.length === 0) {
+      return 0;
+    }
+    
+    const complementaryItems = (products || []).filter(p => 
+      product.complementaryProducts?.includes(p.id) && 
+      selectedComplementaryProducts.includes(p.id)
+    );
+    
+    return complementaryItems.reduce((total, item) => total + item.price, 0);
+  };
+
+  // Função para comprar todos os produtos (principal + complementares)
+  const handleBuyAllProducts = () => {
+    // Adiciona o produto principal
+    addToCart(product, quantity, { selectedFlavor, selectedNicotine });
+    
+    // Adiciona produtos complementares selecionados
+    const complementaryItems = (products || []).filter(p => 
+      selectedComplementaryProducts.includes(p.id)
+    );
+    
+    complementaryItems.forEach(item => {
+      addToCart(item, 1);
+    });
+    
+    const totalItems = complementaryItems.length + 1;
+    showSuccess(`${totalItems} produto(s) adicionado(s) ao carrinho!`);
+    setSelectedComplementaryProducts([]);
+  };
+
+  // Calcular totais
+  const totalComplementary = calculateComplementaryTotal();
+  const totalWithMainProduct = product.price + totalComplementary;
+  const pixDiscount = totalWithMainProduct * 0.02;
+  const totalWithPix = totalWithMainProduct - pixDiscount;
+  const installments = Math.ceil(totalWithMainProduct / 100);
+  const installmentValue = totalWithMainProduct / installments;
   
   useEffect(() => {
     setIsLoading(true);
     setImageLoaded(false);
     setSelectedImageIndex(0);
     setSelectedFlavor(product.flavors?.[0] || '');
+    setSelectedNicotine(product.nicotine?.[0] || '');
+    setHoveredFlavorImageIndex(null);
+    // Fixar imagem do primeiro sabor ao carregar o produto
+    if (product.flavors && product.flavors.length > 0 && product.images && product.images.length > 0) {
+      const firstFlavorImageIndex = getImageIndexForFlavor(product.flavors[0]);
+      setFixedFlavorImageIndex(firstFlavorImageIndex);
+      setSelectedImageIndex(firstFlavorImageIndex);
+    } else {
+      setFixedFlavorImageIndex(null);
+    }
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
-  }, [product.id, product.flavors]);
+  }, [product.id, product.flavors, product.nicotine]);
+
+  // Recarregar imagem quando displayImageIndex mudar (por hover ou fixação)
+  useEffect(() => {
+    if (hoveredFlavorImageIndex !== null || fixedFlavorImageIndex !== null) {
+      setImageLoaded(false);
+    }
+  }, [hoveredFlavorImageIndex, fixedFlavorImageIndex]);
   
   if (!product) {
     return (
@@ -1278,7 +1578,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
 
   const savings = calculateSavings();
 
-  // FunÃ§Ã£o para compartilhar
+  // Função para compartilhar
   const handleShare = (platform: string) => {
     const url = window.location.href;
     const text = `Confira ${product.name} na White Cloud Brasil!`;
@@ -1293,13 +1593,16 @@ const ProductDetail = ({ product }: { product: Product }) => {
       case 'facebook':
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
         break;
-      case 'email':
-        window.location.href = `mailto:?subject=${encodeURIComponent(text)}&body=${encodeURIComponent(url)}`;
+      case 'instagram':
+        // Instagram não permite compartilhamento direto via URL, então copiamos o link para área de transferência
+        navigator.clipboard.writeText(url).then(() => {
+          window.open('https://www.instagram.com/', '_blank');
+        });
         break;
     }
   };
 
-  // Scroll para avaliaÃ§Ãµes
+  // Scroll para avaliações
   const scrollToReviews = () => {
     const reviewsSection = document.getElementById('reviews-section');
     if (reviewsSection) {
@@ -1309,10 +1612,49 @@ const ProductDetail = ({ product }: { product: Product }) => {
 
   return (
     <div className="container mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8">
-      {/* Breadcrumb */}
-      <button onClick={() => navigateRouter('/catalogo')} className="text-gray-500 hover:text-gray-900 mb-4 sm:mb-6 flex items-center text-sm font-medium group min-h-[44px]">
-        <ArrowRight className="w-4 h-4 mr-1 rotate-180 group-hover:-translate-x-1 transition-transform" /> Voltar para loja
-      </button>
+      {/* Breadcrumb Navigation */}
+      <nav className="mb-4 sm:mb-6" aria-label="Breadcrumb">
+        <ol className="flex items-center flex-wrap gap-2 text-sm text-gray-500">
+          <li>
+            <button 
+              onClick={() => navigateRouter('/')}
+              className="hover:text-gray-900 transition-colors"
+            >
+              Início
+            </button>
+          </li>
+          <li className="text-gray-400">/</li>
+          <li>
+            <button 
+              onClick={() => navigateRouter('/catalogo')}
+              className="hover:text-gray-900 transition-colors"
+            >
+              loja
+            </button>
+          </li>
+          <li className="text-gray-400">/</li>
+          <li>
+            <button 
+              onClick={() => navigateRouter('/catalogo')}
+              className="hover:text-gray-900 transition-colors"
+            >
+              {CATEGORIES.find(c => c.id === product.category)?.name || product.category}
+            </button>
+          </li>
+          <li className="text-gray-400">/</li>
+          <li>
+            <span className="text-gray-900">
+              Ignite
+            </span>
+          </li>
+          <li className="text-gray-400">/</li>
+          <li>
+            <span className="text-gray-900 font-medium truncate max-w-[200px] sm:max-w-none">
+              {product.name}
+            </span>
+          </li>
+        </ol>
+      </nav>
 
       {/* 1. SEÃ‡ÃƒO PRINCIPAL: Galeria + InformaÃ§Ãµes */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 mb-12">
@@ -1324,25 +1666,37 @@ const ProductDetail = ({ product }: { product: Product }) => {
               <div className="absolute inset-0 bg-gray-200 animate-pulse" />
             )}
             <img 
-              src={product.images[selectedImageIndex] || product.images[0]} 
+              src={(() => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:img:src-calculation',message:'Image src being calculated',data:{displayImageIndex,imagesLength:product.images?.length,imageUrl:product.images?.[displayImageIndex] || product.images?.[0]},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'F'})}).catch(()=>{});
+                // #endregion
+                return product.images[displayImageIndex] || product.images[0];
+              })()}
               alt={product.name} 
               loading="eager"
               decoding="async"
               className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-              onLoad={() => setImageLoaded(true)}
+              onLoad={() => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:img:onLoad',message:'Image loaded',data:{displayImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+                // #endregion
+                setImageLoaded(true);
+              }}
             />
           </div>
           
           {/* Miniaturas das Imagens */}
-          <div className="grid grid-cols-4 gap-2 sm:gap-4">
+          <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-1.5 sm:gap-2">
             {product.images.map((img, idx) => (
               <div 
                 key={idx} 
                 onClick={() => {
                   setSelectedImageIndex(idx);
                   setImageLoaded(false);
+                  setFixedFlavorImageIndex(null); // Resetar fixação de sabor ao clicar em miniatura
+                  setHoveredFlavorImageIndex(null);
                 }}
-                className={`aspect-square bg-white border rounded-lg p-2 cursor-pointer hover:border-primary-500 transition-colors ${
+                className={`aspect-square bg-white border rounded-lg p-1 cursor-pointer hover:border-primary-500 transition-colors ${
                   selectedImageIndex === idx ? 'border-primary-500 border-2' : 'border-gray-100'
                 }`}
               >
@@ -1350,6 +1704,103 @@ const ProductDetail = ({ product }: { product: Product }) => {
               </div>
             ))}
           </div>
+
+          {/* PRODUTOS COMPLEMENTARES / KIT */}
+          {product.complementaryProducts && product.complementaryProducts.length > 0 && (() => {
+            const complementaryItems = (products || []).filter(p => 
+              product.complementaryProducts?.includes(p.id)
+            );
+            
+            if (complementaryItems.length === 0) return null;
+            
+            return (
+              <div className="mt-6 sm:mt-8">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">
+                  Complete seu Kit
+                </h3>
+                
+                <div className="space-y-3 border-b border-dashed border-gray-300 pb-4 mb-4">
+                  {complementaryItems.map((complementaryProduct) => {
+                    const isSelected = selectedComplementaryProducts.includes(complementaryProduct.id);
+                    
+                    return (
+                      <div 
+                        key={complementaryProduct.id}
+                        className={`flex items-start gap-3 p-3 border rounded-lg transition-colors ${
+                          isSelected 
+                            ? 'border-primary-500 bg-primary-50' 
+                            : 'border-gray-200 hover:border-primary-300'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleComplementaryProduct(complementaryProduct.id)}
+                          className="mt-1 w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 cursor-pointer"
+                        />
+                        
+                        <div className="flex-1 flex items-start gap-3">
+                          <img
+                            src={complementaryProduct.images[0]}
+                            alt={complementaryProduct.name}
+                            className="w-12 h-12 sm:w-16 sm:h-16 object-contain rounded-lg border border-gray-200 bg-white"
+                          />
+                          
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-500 mb-0.5 truncate">
+                              Cód.: {complementaryProduct.sku || 'N/A'}
+                            </p>
+                            <h4 className="text-xs sm:text-sm font-semibold text-gray-900 mb-1 line-clamp-2">
+                              {complementaryProduct.name}
+                            </h4>
+                            <p className="text-sm sm:text-base font-bold text-primary-600">
+                              R$ {complementaryProduct.price.toFixed(2).replace('.', ',')}
+                            </p>
+                            <button
+                              onClick={() => handleProductClick(complementaryProduct.id)}
+                              className="text-xs text-primary-600 hover:text-primary-700 mt-1"
+                            >
+                              Mais detalhes
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Resumo e Total */}
+                {selectedComplementaryProducts.length > 0 && (
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                    <div className="flex items-center justify-center mb-3">
+                      <span className="text-2xl text-gray-400">=</span>
+                    </div>
+                    
+                    <div className="text-center">
+                      <p className="text-xl sm:text-2xl font-bold text-primary-600 mb-1">
+                        R$ {totalWithMainProduct.toFixed(2).replace('.', ',')}
+                      </p>
+                      <p className="text-xs text-gray-600 mb-0.5">
+                        {installments}x de R$ {installmentValue.toFixed(2).replace('.', ',')} sem juros
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        R$ {totalWithPix.toFixed(2).replace('.', ',')} com PIX (-2%)
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Botão de compra */}
+                <Button
+                  onClick={handleBuyAllProducts}
+                  disabled={selectedComplementaryProducts.length === 0}
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold uppercase py-3 min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                >
+                  COMPRAR OS {selectedComplementaryProducts.length + 1} PRODUTOS
+                </Button>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Coluna Direita: InformaÃ§Ãµes Principais */}
@@ -1361,26 +1812,26 @@ const ProductDetail = ({ product }: { product: Product }) => {
           
           {/* 2. Marca do Produto */}
           {product.brand && (
-            <div className="mb-2">
-              <p className="text-sm sm:text-base text-gray-600">
-                <span className="font-semibold text-gray-700">Marca:</span>{' '}
-                <span className="text-primary-600 font-medium">{product.brand}</span>
-              </p>
+            <div className="mb-4 sm:mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 border border-primary-200 rounded-lg">
+                <span className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">Marca:</span>
+                <span className="text-base sm:text-lg font-bold text-primary-600">{product.brand}</span>
+              </div>
             </div>
           )}
 
-          {/* SKU e Categorias */}
+          {/* SKU e Marca */}
           <div className="mb-2 space-y-1 text-xs sm:text-sm text-gray-500">
             {product.sku && (
               <p><span className="font-medium">SKU:</span> {product.sku}</p>
             )}
             <p>
-              <span className="font-medium">Categorias:</span>{' '}
-              {CATEGORIES.find(c => c.id === product.category)?.name || product.category}
+              <span className="font-medium">Marca:</span>{' '}
+              <span className="text-primary-600 font-medium">Ignite</span>
             </p>
           </div>
           
-          {/* 3. AvaliaÃ§Ãµes */}
+          {/* 3. Avaliações */}
           <div className="flex items-center space-x-2 mb-4">
             <div className="flex text-amber-400">
               {[...Array(5)].map((_, i) => (
@@ -1396,7 +1847,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
               onClick={scrollToReviews}
               className="text-xs sm:text-sm text-gray-500 hover:text-primary-600 transition-colors underline"
             >
-              {product.rating.toFixed(2)} de 5 ({product.reviewsCount} {product.reviewsCount === 1 ? 'avaliaÃ§Ã£o' : 'avaliaÃ§Ãµes'})
+              {product.rating.toFixed(2)} de 5 ({product.reviewsCount} {product.reviewsCount === 1 ? 'avaliação' : 'avaliações'})
             </button>
           </div>
 
@@ -1429,39 +1880,139 @@ const ProductDetail = ({ product }: { product: Product }) => {
             </p>
           </div>
           
-          {/* DescriÃ§Ã£o Curta */}
-          <div className="mb-4 sm:mb-6">
-            <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{product.description}</p>
-          </div>
 
-          {/* 5. VariaÃ§Ãµes (Sabores/Cores/Modelos) */}
-          {product.flavors && product.flavors.length > 0 && (
+          {/* 5. Variações (Sabores/Cores/Modelos) */}
+          {(() => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:ProductDetail:flavors-section',message:'Rendering flavors section',data:{productId:product.id,hasFlavors:!!product.flavors,flavorsLength:product.flavors?.length,flavors:product.flavors},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+            return product.flavors && product.flavors.length > 0 && (() => {
+            // Definir quais sabores estão disponíveis (metade disponível, metade indisponível)
+            const totalFlavors = product.flavors.length;
+            const availableCount = Math.ceil(totalFlavors / 2);
+            
+            // Criar array com informações de disponibilidade
+            const flavorsWithAvailability = product.flavors.map((flavor, index) => ({
+              flavor,
+              available: index < availableCount // Primeira metade disponível
+            }));
+
+            // Separar em disponíveis e indisponíveis
+            const available = flavorsWithAvailability.filter(f => f.available);
+            const unavailable = flavorsWithAvailability.filter(f => !f.available);
+
+            return (
+              <div className="mb-6 sm:mb-8">
+                <label className="block text-sm sm:text-base font-semibold text-gray-900 mb-3">
+                  Sabores
+                </label>
+                
+                {/* Sabores Disponíveis - Destaque */}
+                {available.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                      <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Disponíveis em Estoque</p>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
+                      {available.map(({ flavor }) => {
+                        const isSelected = selectedFlavor === flavor;
+                        return (
+                          <button
+                            key={flavor}
+                            onClick={() => {
+                              setSelectedFlavor(flavor);
+                              handleFlavorClick(flavor);
+                            }}
+                            onMouseEnter={() => {
+                              // #region agent log
+                              fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:button:onMouseEnter',message:'onMouseEnter event fired',data:{flavor},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+                              // #endregion
+                              handleFlavorHover(flavor);
+                            }}
+                            onMouseLeave={() => {
+                              // #region agent log
+                              fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:button:onMouseLeave',message:'onMouseLeave event fired',data:{flavor},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+                              // #endregion
+                              handleFlavorLeave();
+                            }}
+                            className={`
+                              px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all
+                              min-h-[44px] flex items-center justify-center text-center shadow-sm
+                              ${isSelected
+                                ? 'bg-primary-600 text-white border-2 border-primary-600 shadow-md transform scale-105'
+                                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-primary-500 hover:bg-primary-50 hover:shadow-md'
+                              }
+                            `}
+                          >
+                            {flavor}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sabores Indisponíveis - Menos Destaque */}
+                {unavailable.length > 0 && (
+                  <div className="border-t border-gray-200 pt-4 mt-4">
+                    <button
+                      onClick={() => setIsOutOfStockExpanded(!isOutOfStockExpanded)}
+                      className="flex items-center gap-2 mb-3 w-full text-left hover:opacity-80 transition-opacity"
+                    >
+                      <div className="h-2 w-2 rounded-full bg-gray-400"></div>
+                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wide flex-1">Fora de Estoque</p>
+                      <ChevronDown 
+                        className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${
+                          isOutOfStockExpanded ? 'transform rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                    {isOutOfStockExpanded && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 opacity-50 animate-fade-in">
+                        {unavailable.map(({ flavor }) => (
+                          <button
+                            key={flavor}
+                            disabled
+                            className="px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium
+                              bg-gray-50 text-gray-400 border border-dashed border-gray-300 line-through cursor-not-allowed
+                              min-h-[44px] flex items-center justify-center text-center"
+                          >
+                            {flavor}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })();
+          })()}
+
+          {/* 5.5. Teor de Nicotina */}
+          {product.nicotine && product.nicotine.length > 0 && product.id !== '1' && (
             <div className="mb-6 sm:mb-8">
               <label className="block text-sm sm:text-base font-semibold text-gray-900 mb-3">
-                Sabores
+                Teor
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
-                {product.flavors.map((flavor) => {
-                  const isAvailable = Math.random() > 0.3; // Mock: 70% disponÃ­vel
-                  const isSelected = selectedFlavor === flavor;
-                  
+              <div className="flex flex-wrap gap-2 sm:gap-3">
+                {product.nicotine.map((nicotine) => {
+                  const isSelected = selectedNicotine === nicotine;
                   return (
                     <button
-                      key={flavor}
-                      onClick={() => isAvailable && setSelectedFlavor(flavor)}
-                      disabled={!isAvailable}
+                      key={nicotine}
+                      onClick={() => setSelectedNicotine(nicotine)}
                       className={`
-                        px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all
-                        min-h-[44px] flex items-center justify-center text-center
-                        ${isSelected && isAvailable
+                        px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all
+                        min-h-[44px] flex items-center justify-center
+                        ${isSelected
                           ? 'bg-primary-600 text-white border-2 border-primary-600 shadow-md'
-                          : isAvailable
-                          ? 'bg-white text-gray-700 border border-gray-300 hover:border-primary-500 hover:bg-primary-50'
-                          : 'bg-gray-100 text-gray-400 border border-gray-200 line-through cursor-not-allowed'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:border-primary-500 hover:bg-primary-50'
                         }
                       `}
                     >
-                      {flavor}
+                      {nicotine}
                     </button>
                   );
                 })}
@@ -1529,6 +2080,81 @@ const ProductDetail = ({ product }: { product: Product }) => {
               </Button>
             </div>
           </div>
+
+          {/* 7.5. Notificação de Reposição de Estoque */}
+          {product.flavors && product.flavors.length > 0 && (
+            <div className="bg-white p-4 sm:p-6 rounded-xl border border-gray-200">
+              <h3 className="text-sm sm:text-base font-semibold text-red-600 mb-4">Avise-me quando chegar</h3>
+
+              {/* Seleção de sabores com select customizado */}
+              <div className="mb-4 relative" ref={flavorsDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsFlavorsDropdownOpen(!isFlavorsDropdownOpen)}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white text-left flex items-center justify-between"
+                >
+                  <span className={selectedFlavorsForNotification.length === 0 ? 'text-gray-400' : 'text-gray-700'}>
+                    {selectedFlavorsForNotification.length === 0
+                      ? 'Selecione os sabores que deseja ser notificado'
+                      : `${selectedFlavorsForNotification.length} sabor(es) selecionado(s)`
+                    }
+                  </span>
+                  <ChevronDown 
+                    className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${
+                      isFlavorsDropdownOpen ? 'transform rotate-180' : ''
+                    }`}
+                  />
+                </button>
+                
+                {isFlavorsDropdownOpen && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                    <div className="p-2 space-y-1">
+                      {product.flavors.map((flavor) => {
+                        const isSelected = selectedFlavorsForNotification.includes(flavor);
+                        return (
+                          <label
+                            key={flavor}
+                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleFlavorForNotification(flavor)}
+                              className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 cursor-pointer"
+                            />
+                            <span className="text-xs sm:text-sm text-gray-700 flex-1">{flavor}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Checkbox de autorização */}
+              <div className="mb-4 flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  id="privacy-policy-notification"
+                  checked={privacyPolicyAccepted}
+                  onChange={(e) => setPrivacyPolicyAccepted(e.target.checked)}
+                  className="mt-1 w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 cursor-pointer"
+                />
+                <label htmlFor="privacy-policy-notification" className="text-xs sm:text-sm text-gray-600 cursor-pointer">
+                  Autorizo receber notificações de reposição deste produto
+                </label>
+              </div>
+
+              {/* Botão de confirmação */}
+              <Button
+                onClick={handleConfirmNotification}
+                disabled={!privacyPolicyAccepted || selectedFlavorsForNotification.length === 0}
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold uppercase py-3 min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                AVISAR AO CHEGAR!
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1541,21 +2167,21 @@ const ProductDetail = ({ product }: { product: Product }) => {
             <div>
               <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">Formas de Pagamento</h3>
               <p className="text-xs sm:text-sm text-gray-600">
-                {product.paymentOptions || 'Em atÃ© 12x sem juros'}
+                {product.paymentOptions || 'Em até 12x no cartão de crédito. 5% de desconto no pagamento via PIX.'}
               </p>
             </div>
           </div>
 
-          {/* AvaliaÃ§Ãµes */}
+          {/* Avaliações */}
           <div className="flex items-start gap-3">
             <Star className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 fill-amber-400 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">AvaliaÃ§Ãµes</h3>
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">Avaliações</h3>
               <button 
                 onClick={scrollToReviews}
                 className="text-xs sm:text-sm text-primary-600 hover:text-primary-700 underline"
               >
-                Ver todas as avaliaÃ§Ãµes
+                Ver todas as avaliações
               </button>
             </div>
           </div>
@@ -1571,7 +2197,9 @@ const ProductDetail = ({ product }: { product: Product }) => {
                   className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-colors"
                   aria-label="Compartilhar no WhatsApp"
                 >
-                  <span className="text-xs sm:text-sm font-bold">W</span>
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .96 4.534.96 10.089c0 1.87.487 3.697 1.411 5.312L0 24l8.554-2.289a11.882 11.882 0 003.496.515h.005c6.554 0 11.89-5.335 11.89-11.89a11.821 11.821 0 00-3.48-8.413Z"/>
+                  </svg>
                 </button>
                 <button
                   onClick={() => handleShare('twitter')}
@@ -1588,11 +2216,11 @@ const ProductDetail = ({ product }: { product: Product }) => {
                   <Facebook className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
                 <button
-                  onClick={() => handleShare('email')}
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-600 hover:bg-gray-700 text-white flex items-center justify-center transition-colors"
-                  aria-label="Compartilhar por email"
+                  onClick={() => handleShare('instagram')}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 hover:from-purple-700 hover:via-pink-700 hover:to-orange-600 text-white flex items-center justify-center transition-all"
+                  aria-label="Compartilhar no Instagram"
                 >
-                  <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Instagram className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
             </div>
@@ -1600,66 +2228,96 @@ const ProductDetail = ({ product }: { product: Product }) => {
         </div>
       </div>
 
-      {/* 9. DESCRIÃ‡ÃƒO DETALHADA */}
-      {product.detailedDescription && (
-          <section className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 mb-12">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 md:mb-8 pb-3 border-b-2 border-gray-200">
-            DescriÃ§Ã£o
-            </h2>
-          <div className="text-gray-700 leading-relaxed space-y-4">
-            {product.detailedDescription.split('\n').map((paragraph, idx) => {
-              if (!paragraph.trim()) return null;
+
+      {/* 9. DESCRIÇÃO */}
+      {(() => {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:ProductDetail:description-check',message:'Checking detailedDescription',data:{productId:product.id,hasDetailedDescription:!!product.detailedDescription,detailedDescriptionLength:product.detailedDescription?.length,detailedDescriptionPreview:product.detailedDescription?.substring(0,100)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+        // #endregion
+        return product.detailedDescription;
+      })() && (
+        <section className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 md:mb-8">
+            Descrição
+          </h2>
+          <div className="text-gray-700 leading-relaxed">
+            {product.detailedDescription.split('\n\n').map((paragraph, idx) => {
+              const trimmed = paragraph.trim();
+              if (!trimmed) return null;
               
-              // Detectar tÃ­tulos principais (linhas em maiÃºsculas ou curtas que parecem tÃ­tulos)
-              const isMainTitle = paragraph.length < 100 && (
-                paragraph === paragraph.toUpperCase() || 
-                (paragraph.match(/^[A-Z][^.!?]*$/) && paragraph.length < 80)
+              // Ignorar "DESCRIÇÃO" pois já temos o h2
+              if (trimmed.toUpperCase() === 'DESCRIÇÃO') {
+                return null;
+              }
+              
+              // Detectar títulos: linhas que começam com letra maiúscula, sem pontuação final, 
+              // não são listas, e têm características de título
+              const isLikelyTitle = (
+                trimmed.length < 100 && 
+                trimmed.length > 5 &&
+                !trimmed.match(/[.!?]$/) &&
+                !trimmed.startsWith('•') &&
+                !trimmed.startsWith('-') &&
+                !trimmed.startsWith('1.') &&
+                !trimmed.startsWith('2.') &&
+                !trimmed.startsWith('3.') &&
+                !trimmed.startsWith('4.') &&
+                !trimmed.startsWith('5.') &&
+                trimmed.match(/^[A-ZÁÊÔÇ]/) &&
+                !trimmed.includes('.') &&
+                !trimmed.includes('!') &&
+                !trimmed.includes('?')
               );
               
-              // Detectar subtÃ­tulos (linhas que comeÃ§am com nÃºmeros ou tÃªm padrÃ£o de tÃ­tulo)
-              const isSubtitle = paragraph.match(/^[\dâ€¢\-]/) || 
-                (paragraph.length < 60 && paragraph.match(/^[A-Z]/));
-              
-              if (isMainTitle) {
+              // Se for título claro, renderizar como h3
+              if (isLikelyTitle) {
                 return (
-                  <h3 key={idx} className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-6 mb-3 first:mt-0 pt-4 first:pt-0 border-t border-gray-200 first:border-t-0">
-                    {paragraph}
+                  <h3 key={idx} className="text-lg sm:text-xl font-bold text-gray-900 mb-3 mt-6 first:mt-0">
+                    {trimmed}
                   </h3>
                 );
               }
               
-              if (isSubtitle) {
-                return (
-                  <h4 key={idx} className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 mt-4 mb-2">
-                    {paragraph.replace(/^[â€¢\-\d.]+\s*/, '')}
-                  </h4>
-                );
+              // Se tiver dois pontos e for curto, pode ser título com conteúdo
+              if (trimmed.includes(':') && trimmed.length < 200) {
+                const colonIndex = trimmed.indexOf(':');
+                const titlePart = trimmed.substring(0, colonIndex).trim();
+                const contentPart = trimmed.substring(colonIndex + 1).trim();
+                
+                // Se a parte antes dos dois pontos parece um título (curto, sem pontuação)
+                if (titlePart.length < 80 && 
+                    titlePart.length > 3 && 
+                    !titlePart.match(/[.!?]$/) &&
+                    contentPart.length > 0) {
+                  return (
+                    <div key={idx} className="mb-6">
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 mt-6 first:mt-0">
+                        {titlePart}
+                      </h3>
+                      <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                        {contentPart}
+                      </p>
+                    </div>
+                  );
+                }
               }
               
-              // Detectar listas (linhas que comeÃ§am com â€¢, -, ou nÃºmeros)
-              if (paragraph.match(/^[â€¢\-\d]/)) {
-                return (
-                  <li key={idx} className="mb-2 ml-5 list-disc text-sm sm:text-base">
-                    {paragraph.replace(/^[â€¢\-\d.]+\s*/, '')}
-                  </li>
-                );
-              }
-              
+              // Parágrafo normal
               return (
-                <p key={idx} className="mb-3 last:mb-0 text-sm sm:text-base">
-                    {paragraph}
-                  </p>
-                );
-              })}
-            </div>
-          </section>
+                <p key={idx} className="text-sm sm:text-base text-gray-700 leading-relaxed mb-4">
+                  {trimmed}
+                </p>
+              );
+            })}
+          </div>
+        </section>
       )}
 
-      {/* 10. ESPECIFICAÃ‡Ã•ES TÃ‰CNICAS */}
+      {/* 10. ESPECIFICAÇÕES TÉCNICAS */}
       {product.specifications && Object.keys(product.specifications).length > 0 && (
         <section className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 md:mb-8">
-            EspecificaÃ§Ãµes TÃ©cnicas
+            Especificações Técnicas
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {Object.entries(product.specifications).map(([key, value], idx) => (
@@ -1739,12 +2397,12 @@ const ProductDetail = ({ product }: { product: Product }) => {
         </section>
       )}
 
-      {/* 14. AVALIAÃ‡Ã•ES DOS CLIENTES */}
+      {/* 14. AVALIAÇÕES DOS CLIENTES */}
       <section id="reviews-section" className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-8">AvaliaÃ§Ãµes dos Clientes</h2>
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-8">Avaliações dos Clientes</h2>
         
         {reviews.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">Ainda nÃ£o hÃ¡ avaliaÃ§Ãµes para este produto.</p>
+          <p className="text-gray-500 text-center py-8">Ainda não há avaliações para este produto.</p>
         ) : (
           <div className="space-y-6">
             {reviews.map((review) => (
@@ -2302,7 +2960,7 @@ const AccountPage = () => {
 
           {/* Modal */}
           <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg sm:rounded-xl shadow-2xl max-w-md w-full border border-gray-200 animate-fade-in">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-2xl max-w-lg w-full border border-gray-200 animate-fade-in">
               {/* Linha azul no topo */}
               <div className="border-b-2 border-primary-600"></div>
               
