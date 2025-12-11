@@ -1041,6 +1041,1278 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
 // --- OTHER VIEWS (Simplified for brevity, maintaining functionality) ---
 
+const FinalizeOrderPage = () => {
+  const { cart, cartTotal } = useCart();
+  const navigateRouter = useNavigateRouter();
+  const { showSuccess, showError } = useToast();
+  
+  // Estados do formulário
+  const [formData, setFormData] = useState({
+    firstName: 'Nicolas',
+    lastName: 'Rachid',
+    cpf: '134.729.036-27',
+    birthDate: '19/96/1219',
+    gender: '',
+    country: 'Brasil',
+    zipCode: '',
+    address: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: 'São Paulo',
+    phone: '(32) 99161-3714',
+    email: 'nicolasrachido@gmail.com',
+    orderNotes: '',
+  });
+
+  const [showCouponBanner, setShowCouponBanner] = useState(true);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [differentShippingAddress, setDifferentShippingAddress] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('pix');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
+  // Estados do cartão de crédito
+  const [cardData, setCardData] = useState({
+    cardNumber: '1234 1234 1234 1234',
+    cardholderName: '',
+    expiryMonth: '12',
+    expiryYear: '2025',
+    cvv: '123',
+    installments: '12',
+  });
+
+  // Estados do endereço de entrega
+  const [shippingAddress, setShippingAddress] = useState({
+    firstName: '',
+    lastName: '',
+    companyName: '',
+    country: 'Brasil',
+    zipCode: '',
+    address: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: 'São Paulo',
+  });
+
+  // Calcular subtotal
+  const subtotal = useMemo(() => {
+    return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  }, [cart]);
+
+  // Calcular desconto PIX (5%)
+  const pixDiscount = useMemo(() => {
+    return paymentMethod === 'pix' ? subtotal * 0.05 : 0;
+  }, [subtotal, paymentMethod]);
+
+  // Calcular total
+  const total = useMemo(() => {
+    return subtotal - pixDiscount;
+  }, [subtotal, pixDiscount]);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleShippingAddressChange = (field: string, value: string) => {
+    setShippingAddress(prev => ({ ...prev, [field]: value }));
+  };
+
+  const formatCPF = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 11) {
+      return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+    return value;
+  };
+
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 11) {
+      return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    }
+    return value;
+  };
+
+  const formatDate = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 8) {
+      return numbers.replace(/(\d{2})(\d{2})(\d{4})/, '$1/$2/$3');
+    }
+    return value;
+  };
+
+  const formatCEP = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 8) {
+      return numbers.replace(/(\d{5})(\d{3})/, '$1-$2');
+    }
+    return value;
+  };
+
+  const formatCardNumber = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 16) {
+      return numbers.replace(/(\d{4})(?=\d)/g, '$1 ');
+    }
+    return value;
+  };
+
+  const handleCardDataChange = (field: string, value: string) => {
+    setCardData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Calcular parcelas
+  const installments = useMemo(() => {
+    const installmentsList = [];
+    for (let i = 1; i <= 12; i++) {
+      const installmentValue = total / i;
+      const totalValue = total;
+      installmentsList.push({
+        value: i.toString(),
+        label: i === 1 
+          ? `À vista R$ ${totalValue.toFixed(2).replace('.', ',')}`
+          : `${i}x de R$ ${installmentValue.toFixed(2).replace('.', ',')} (R$ ${totalValue.toFixed(2).replace('.', ',')})`
+      });
+    }
+    return installmentsList;
+  }, [total]);
+
+  // Meses do ano
+  const months = [
+    { value: '01', label: '01 | Janeiro' },
+    { value: '02', label: '02 | Fevereiro' },
+    { value: '03', label: '03 | Março' },
+    { value: '04', label: '04 | Abril' },
+    { value: '05', label: '05 | Maio' },
+    { value: '06', label: '06 | Junho' },
+    { value: '07', label: '07 | Julho' },
+    { value: '08', label: '08 | Agosto' },
+    { value: '09', label: '09 | Setembro' },
+    { value: '10', label: '10 | Outubro' },
+    { value: '11', label: '11 | Novembro' },
+    { value: '12', label: '12 | Dezembro' },
+  ];
+
+  // Anos (próximos 10 anos)
+  const years = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 10 }, (_, i) => (currentYear + i).toString());
+  }, []);
+
+  const handleApplyCoupon = () => {
+    if (!couponCode.trim()) {
+      showError('Digite um código de cupom');
+      return;
+    }
+    setAppliedCoupon(couponCode);
+    showSuccess('Cupom aplicado com sucesso!');
+  };
+
+  const handleFinalizeOrder = () => {
+    if (!termsAccepted) {
+      showError('Você precisa aceitar os termos e condições');
+      return;
+    }
+    // Aqui você processaria o pedido
+    showSuccess('Pedido finalizado com sucesso!');
+    // navigateRouter('/pedido-confirmado');
+  };
+
+  if (cart.length === 0) {
+    return (
+      <div className="container mx-auto px-3 sm:px-4 py-8 sm:py-12">
+        <div className="text-center py-20">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Seu carrinho está vazio</h2>
+          <Button onClick={() => navigateRouter('/catalogo')} className="min-h-[44px]">
+            Continuar Comprando
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Estados brasileiros
+  const brazilianStates = [
+    'Acre', 'Alagoas', 'Amapá', 'Amazonas', 'Bahia', 'Ceará', 'Distrito Federal',
+    'Espírito Santo', 'Goiás', 'Maranhão', 'Mato Grosso', 'Mato Grosso do Sul',
+    'Minas Gerais', 'Pará', 'Paraíba', 'Paraná', 'Pernambuco', 'Piauí',
+    'Rio de Janeiro', 'Rio Grande do Norte', 'Rio Grande do Sul', 'Rondônia',
+    'Roraima', 'Santa Catarina', 'São Paulo', 'Sergipe', 'Tocantins'
+  ];
+
+  return (
+    <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
+      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Finalizar Compra</h1>
+
+      {/* Banner de Cupom */}
+      {showCouponBanner && (
+        <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="coupon-banner"
+              checked={false}
+              onChange={() => setShowCouponBanner(false)}
+              className="mt-1 w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+            />
+            <label htmlFor="coupon-banner" className="flex-1 text-sm text-gray-700 cursor-pointer">
+              Você tem um cupom de desconto? Clique aqui e informe o código do seu cupom de desconto
+            </label>
+            <button
+              onClick={() => setShowCouponBanner(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        {/* Coluna Esquerda - Detalhes de Cobrança */}
+        <div className="flex-1">
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Detalhes de cobrança</h2>
+
+            <div className="space-y-4">
+              {/* Nome e Sobrenome */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Nome* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="firstName"
+                    type="text"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Sobrenome* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="lastName"
+                    type="text"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+              </div>
+
+              {/* CPF e Data de Nascimento */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-2">
+                    CPF* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="cpf"
+                    type="text"
+                    value={formData.cpf}
+                    onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
+                    maxLength={14}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-2">
+                    Data de Nascimento* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="birthDate"
+                    type="text"
+                    value={formData.birthDate}
+                    onChange={(e) => handleInputChange('birthDate', formatDate(e.target.value))}
+                    placeholder="DD/MM/AAAA"
+                    maxLength={10}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+              </div>
+
+              {/* Gênero e País */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
+                    Gênero* <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="gender"
+                    value={formData.gender}
+                    onChange={(e) => handleInputChange('gender', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  >
+                    <option value="">Selecionar</option>
+                    <option value="masculino">Masculino</option>
+                    <option value="feminino">Feminino</option>
+                    <option value="outro">Outro</option>
+                    <option value="prefiro-nao-informar">Prefiro não informar</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
+                    País* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="country"
+                    type="text"
+                    value={formData.country}
+                    onChange={(e) => handleInputChange('country', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+              </div>
+
+              {/* CEP */}
+              <div>
+                <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-2">
+                  CEP* <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="zipCode"
+                  type="text"
+                  value={formData.zipCode}
+                  onChange={(e) => handleInputChange('zipCode', formatCEP(e.target.value))}
+                  maxLength={9}
+                  placeholder="00000-000"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                />
+              </div>
+
+              {/* Endereço e Número */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                    Endereço* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="address"
+                    type="text"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    placeholder="Nome da rua e número da casa"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-2">
+                    Número* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="number"
+                    type="text"
+                    value={formData.number}
+                    onChange={(e) => handleInputChange('number', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+              </div>
+
+              {/* Complemento e Bairro */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="complement" className="block text-sm font-medium text-gray-700 mb-2">
+                    Apartamento, suíte, unidade, etc. (opcional)
+                  </label>
+                  <input
+                    id="complement"
+                    type="text"
+                    value={formData.complement}
+                    onChange={(e) => handleInputChange('complement', e.target.value)}
+                    placeholder="Apartamento, suíte, unidade, etc."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="neighborhood" className="block text-sm font-medium text-gray-700 mb-2">
+                    Bairro (opcional)
+                  </label>
+                  <input
+                    id="neighborhood"
+                    type="text"
+                    value={formData.neighborhood}
+                    onChange={(e) => handleInputChange('neighborhood', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+              </div>
+
+              {/* Cidade e Estado */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
+                    Cidade* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="city"
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
+                    Estado* <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="state"
+                    value={formData.state}
+                    onChange={(e) => handleInputChange('state', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  >
+                    {brazilianStates.map(state => (
+                      <option key={state} value={state}>{state}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Telefone e Email */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                    Telefone* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="phone"
+                    type="text"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
+                    maxLength={15}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    Endereço de e-mail* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+              </div>
+
+              {/* Notas do Pedido */}
+              <div>
+                <label htmlFor="orderNotes" className="block text-sm font-medium text-gray-700 mb-2">
+                  Notas de Pedido (opcional)
+                </label>
+                <textarea
+                  id="orderNotes"
+                  value={formData.orderNotes}
+                  onChange={(e) => handleInputChange('orderNotes', e.target.value)}
+                  rows={4}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none"
+                  placeholder="Notas sobre seu pedido, por exemplo, instruções especiais para entrega."
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Coluna Direita - Resumo e Pagamento */}
+        <div className="w-full lg:w-96 flex-shrink-0">
+          {/* Checkbox Endereço Diferente */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={differentShippingAddress}
+                onChange={(e) => setDifferentShippingAddress(e.target.checked)}
+                className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              />
+              <span className="text-sm text-gray-700">Entregar em um endereço diferente?</span>
+            </label>
+          </div>
+
+          {/* Campos de Endereço de Entrega */}
+          {differentShippingAddress && (
+            <div className="bg-primary-50 rounded-lg border border-primary-200 p-6 mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Endereço de Entrega</h3>
+              
+              <div className="space-y-4">
+                {/* Nome e Sobrenome */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="shippingFirstName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Nome* <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="shippingFirstName"
+                      type="text"
+                      value={shippingAddress.firstName}
+                      onChange={(e) => handleShippingAddressChange('firstName', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="shippingLastName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Sobrenome* <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="shippingLastName"
+                      type="text"
+                      value={shippingAddress.lastName}
+                      onChange={(e) => handleShippingAddressChange('lastName', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Nome da Empresa */}
+                <div>
+                  <label htmlFor="shippingCompanyName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Nome da empresa (opcional)
+                  </label>
+                  <input
+                    id="shippingCompanyName"
+                    type="text"
+                    value={shippingAddress.companyName}
+                    onChange={(e) => handleShippingAddressChange('companyName', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                  />
+                </div>
+
+                {/* País */}
+                <div>
+                  <label htmlFor="shippingCountry" className="block text-sm font-medium text-gray-700 mb-2">
+                    País* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="shippingCountry"
+                    type="text"
+                    value={shippingAddress.country}
+                    onChange={(e) => handleShippingAddressChange('country', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                    readOnly
+                  />
+                </div>
+
+                {/* CEP */}
+                <div>
+                  <label htmlFor="shippingZipCode" className="block text-sm font-medium text-gray-700 mb-2">
+                    CEP* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="shippingZipCode"
+                    type="text"
+                    value={shippingAddress.zipCode}
+                    onChange={(e) => handleShippingAddressChange('zipCode', formatCEP(e.target.value))}
+                    maxLength={9}
+                    placeholder="00000-000"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                  />
+                </div>
+
+                {/* Endereço e Número */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="sm:col-span-2">
+                    <label htmlFor="shippingAddress" className="block text-sm font-medium text-gray-700 mb-2">
+                      Endereço* <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="shippingAddress"
+                      type="text"
+                      value={shippingAddress.address}
+                      onChange={(e) => handleShippingAddressChange('address', e.target.value)}
+                      placeholder="Nome da rua e número da casa"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="shippingNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                      Número* <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="shippingNumber"
+                      type="text"
+                      value={shippingAddress.number}
+                      onChange={(e) => handleShippingAddressChange('number', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Complemento e Bairro */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="shippingComplement" className="block text-sm font-medium text-gray-700 mb-2">
+                      Apartamento, suíte, unidade, etc. (opcional)
+                    </label>
+                    <input
+                      id="shippingComplement"
+                      type="text"
+                      value={shippingAddress.complement}
+                      onChange={(e) => handleShippingAddressChange('complement', e.target.value)}
+                      placeholder="Apartamento, suíte, sala, etc. (opcional)"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="shippingNeighborhood" className="block text-sm font-medium text-gray-700 mb-2">
+                      Bairro (opcional)
+                    </label>
+                    <input
+                      id="shippingNeighborhood"
+                      type="text"
+                      value={shippingAddress.neighborhood}
+                      onChange={(e) => handleShippingAddressChange('neighborhood', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Cidade e Estado */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="shippingCity" className="block text-sm font-medium text-gray-700 mb-2">
+                      Cidade* <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="shippingCity"
+                      type="text"
+                      value={shippingAddress.city}
+                      onChange={(e) => handleShippingAddressChange('city', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="shippingState" className="block text-sm font-medium text-gray-700 mb-2">
+                      Estado* <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="shippingState"
+                      value={shippingAddress.state}
+                      onChange={(e) => handleShippingAddressChange('state', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                    >
+                      {brazilianStates.map(state => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Resumo do Pedido */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Seu pedido</h2>
+            
+            <div className="border-b border-gray-200 pb-4 mb-4">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-2 text-sm font-semibold text-gray-900">PRODUTO</th>
+                    <th className="text-right py-2 text-sm font-semibold text-gray-900">SUBTOTAL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cart.map((item) => (
+                    <tr key={item.id} className="border-b border-gray-100">
+                      <td className="py-3 text-sm text-gray-700">
+                        {item.name} {item.selectedNicotine && `- ${item.selectedNicotine}`} * {item.quantity}
+                      </td>
+                      <td className="py-3 text-sm text-gray-700 text-right">
+                        R$ {(item.price * item.quantity).toFixed(2).replace('.', ',')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-700">SUBTOTAL</span>
+                <span className="text-sm font-bold text-gray-900">
+                  R$ {subtotal.toFixed(2).replace('.', ',')}
+                </span>
+              </div>
+              
+              {paymentMethod === 'pix' && pixDiscount > 0 && (
+                <div className="flex justify-between items-center text-green-600">
+                  <span className="text-sm font-medium">DESCONTO PARA PIX</span>
+                  <span className="text-sm font-bold">-R$ {pixDiscount.toFixed(2).replace('.', ',')}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                <span className="text-lg font-bold text-gray-900">TOTAL</span>
+                <span className="text-lg font-bold text-gray-900">
+                  R$ {total.toFixed(2).replace('.', ',')}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Métodos de Pagamento */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Métodos de pagamento</h2>
+            
+            <div className="space-y-4">
+              {/* PIX */}
+              <label className="flex items-start gap-3 cursor-pointer p-4 border-2 border-primary-500 rounded-lg bg-primary-50">
+                <input
+                  type="radio"
+                  name="payment"
+                  value="pix"
+                  checked={paymentMethod === 'pix'}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="mt-1 w-5 h-5 text-primary-600 border-gray-300 focus:ring-primary-500"
+                />
+                <div className="flex-1">
+                  <div className="font-semibold text-gray-900">Pix (5% de desconto)</div>
+                </div>
+              </label>
+
+              {/* Instruções PIX */}
+              {paymentMethod === 'pix' && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mt-4">
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
+                    <li>Finalize a sua compra e abra o app do banco na opção Pix.</li>
+                    <li>Aponte a câmera do celular para o QR Code ou copie e cole o código Pix.</li>
+                    <li>Confira os dados e confirme o seu pagamento pelo app do Banco.</li>
+                    <li>Assim que o pagamento for identificado, enviaremos uma mensagem de confirmação.</li>
+                  </ol>
+                </div>
+              )}
+
+              {/* Cartão de Crédito */}
+              <label className="flex items-center gap-3 cursor-pointer p-4 border border-gray-300 rounded-lg hover:border-primary-500 transition-colors">
+                <input
+                  type="radio"
+                  name="payment"
+                  value="credit"
+                  checked={paymentMethod === 'credit'}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-5 h-5 text-primary-600 border-gray-300 focus:ring-primary-500"
+                />
+                <div className="flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-gray-600" />
+                  <span className="font-medium text-gray-900">Cartão de Crédito</span>
+                </div>
+              </label>
+
+              {/* Formulário de Cartão de Crédito */}
+              {paymentMethod === 'credit' && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 mt-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Pague com o cartão de crédito.</h3>
+                  
+                  {/* Logos das Bandeiras */}
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="text-xs text-gray-600 font-medium">Bandeiras aceitas:</div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-6 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">VISA</div>
+                      <div className="w-10 h-6 bg-red-600 rounded flex items-center justify-center text-white text-xs font-bold">MC</div>
+                      <div className="w-10 h-6 bg-orange-600 rounded flex items-center justify-center text-white text-xs font-bold">ELO</div>
+                      <div className="w-10 h-6 bg-yellow-600 rounded flex items-center justify-center text-white text-xs font-bold">AMEX</div>
+                      <div className="w-10 h-6 bg-green-600 rounded flex items-center justify-center text-white text-xs font-bold">HIPER</div>
+                      <div className="w-10 h-6 bg-gray-700 rounded flex items-center justify-center text-white text-xs font-bold">DC</div>
+                    </div>
+                  </div>
+
+                  {/* Visualização do Cartão */}
+                  <div className="relative mb-6">
+                    <div className="bg-gradient-to-r from-blue-400 to-purple-500 rounded-xl p-6 text-white shadow-lg">
+                      <div className="flex items-start justify-between mb-8">
+                        <div className="w-12 h-8 bg-yellow-400 rounded flex items-center justify-center">
+                          <div className="w-8 h-6 bg-yellow-300 rounded-sm"></div>
+                        </div>
+                        <CreditCard className="w-8 h-8 opacity-80" />
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <div className="text-xs text-white/80 mb-1">NÚMERO DO CARTÃO</div>
+                          <div className="text-lg font-mono tracking-wider">
+                            {cardData.cardNumber || '•••• •••• •••• ••••'}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-white/80 mb-1">NOME DO TITULAR</div>
+                          <div className="text-base font-medium uppercase">
+                            {cardData.cardholderName || 'NOME DO TITULAR'}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-xs text-white/80 mb-1">VALID.</div>
+                            <div className="text-sm font-mono">
+                              {cardData.expiryMonth || 'MM'}/{cardData.expiryYear || 'AAAA'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-white/80 mb-1">CVV</div>
+                            <div className="text-sm font-mono">
+                              {cardData.cvv ? '•••' : '•••'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Campos do Formulário */}
+                  <div className="space-y-4">
+                    {/* Número do Cartão */}
+                    <div>
+                      <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                        Número do cartão* <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="cardNumber"
+                        type="text"
+                        value={cardData.cardNumber}
+                        onChange={(e) => handleCardDataChange('cardNumber', formatCardNumber(e.target.value))}
+                        maxLength={19}
+                        placeholder="1234 1234 1234 1234"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                      />
+                    </div>
+
+                    {/* Nome do Titular */}
+                    <div>
+                      <label htmlFor="cardholderName" className="block text-sm font-medium text-gray-700 mb-2">
+                        Nome e sobrenome do titular* <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="cardholderName"
+                        type="text"
+                        value={cardData.cardholderName}
+                        onChange={(e) => handleCardDataChange('cardholderName', e.target.value.toUpperCase())}
+                        placeholder="ex.: João Miguel"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                      />
+                    </div>
+
+                    {/* Mês e Ano de Expiração */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="expiryMonth" className="block text-sm font-medium text-gray-700 mb-2">
+                          Mês de Expiração* <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="expiryMonth"
+                          value={cardData.expiryMonth}
+                          onChange={(e) => handleCardDataChange('expiryMonth', e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                        >
+                          {months.map(month => (
+                            <option key={month.value} value={month.value}>{month.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label htmlFor="expiryYear" className="block text-sm font-medium text-gray-700 mb-2">
+                          Ano de Expiração* <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="expiryYear"
+                          value={cardData.expiryYear}
+                          onChange={(e) => handleCardDataChange('expiryYear', e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                        >
+                          {years.map(year => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* CVV e Parcelas */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="cvv" className="block text-sm font-medium text-gray-700 mb-2">
+                          Cod. de segurança (CVV)* <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="cvv"
+                          type="text"
+                          value={cardData.cvv}
+                          onChange={(e) => handleCardDataChange('cvv', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                          maxLength={4}
+                          placeholder="123"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="installments" className="block text-sm font-medium text-gray-700 mb-2">
+                          N° de Parcelas* <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="installments"
+                          value={cardData.installments}
+                          onChange={(e) => handleCardDataChange('installments', e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px] bg-white"
+                        >
+                          {installments.map(inst => (
+                            <option key={inst.value} value={inst.value}>{inst.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* EQUIPE - WCB */}
+              <label className="flex items-center gap-3 cursor-pointer p-4 border border-gray-300 rounded-lg hover:border-primary-500 transition-colors">
+                <input
+                  type="radio"
+                  name="payment"
+                  value="team"
+                  checked={paymentMethod === 'team'}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-5 h-5 text-primary-600 border-gray-300 focus:ring-primary-500"
+                />
+                <span className="font-medium text-gray-900">EQUIPE - WCB</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Termos e Condições */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <p className="text-xs text-gray-600 mb-4">
+              Seus dados pessoais serão usados para processar seu pedido, apoiar sua experiência em todo este site e para outros fins descritos em nossa política de privacidade.
+            </p>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-1 w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              />
+              <span className="text-sm text-gray-700">
+                Li e concordo com os termos e condições do site <span className="text-red-500">*</span>
+              </span>
+            </label>
+          </div>
+
+          {/* Botão Finalizar Pedido */}
+          <button
+            onClick={handleFinalizeOrder}
+            disabled={!termsAccepted}
+            className="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors min-h-[44px] text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            FINALIZAR PEDIDO
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CheckoutPage = () => {
+  const { cart, updateQuantity, removeFromCart, cartTotal } = useCart();
+  const navigateRouter = useNavigateRouter();
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [shippingCost, setShippingCost] = useState<number | null>(null);
+  const { showSuccess, showError } = useToast();
+
+  // Calcular subtotal
+  const subtotal = useMemo(() => {
+    return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  }, [cart]);
+
+  // Calcular total (subtotal + frete - desconto do cupom)
+  const total = useMemo(() => {
+    let finalTotal = subtotal;
+    if (shippingCost !== null) {
+      finalTotal += shippingCost;
+    }
+    // Aqui você pode adicionar lógica de desconto do cupom se necessário
+    return finalTotal;
+  }, [subtotal, shippingCost]);
+
+  const handleApplyCoupon = () => {
+    if (!couponCode.trim()) {
+      showError('Digite um código de cupom');
+      return;
+    }
+    // Simular aplicação de cupom (você pode implementar lógica real aqui)
+    setAppliedCoupon(couponCode);
+    showSuccess('Cupom aplicado com sucesso!');
+  };
+
+  const handleUpdateCart = () => {
+    showSuccess('Carrinho atualizado!');
+  };
+
+  const handleCalculateShipping = () => {
+    // Simular cálculo de frete (você pode implementar lógica real aqui)
+    setShippingCost(15.90);
+    showSuccess('Frete calculado!');
+  };
+
+  const handleCheckout = () => {
+    if (cart.length === 0) {
+      showError('Seu carrinho está vazio');
+      return;
+    }
+    navigateRouter('/finalizar-pedido');
+  };
+
+  if (cart.length === 0) {
+    return (
+      <div className="container mx-auto px-3 sm:px-4 py-8 sm:py-12">
+        <div className="text-center py-20">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Seu carrinho está vazio</h2>
+          <p className="text-gray-500 mb-8">Adicione produtos ao carrinho para continuar</p>
+          <Button onClick={() => navigateRouter('/catalogo')} className="min-h-[44px]">
+            Continuar Comprando
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
+      {/* Breadcrumb */}
+      <nav className="mb-6" aria-label="Breadcrumb">
+        <ol className="flex items-center gap-2 text-sm text-gray-500">
+          <li>
+            <button 
+              onClick={() => navigateRouter('/')}
+              className="hover:text-gray-900 transition-colors"
+            >
+              Início
+            </button>
+          </li>
+          <li className="text-gray-400">/</li>
+          <li>
+            <button 
+              onClick={() => navigateRouter('/catalogo')}
+              className="hover:text-gray-900 transition-colors"
+            >
+              Catálogo
+            </button>
+          </li>
+          <li className="text-gray-400">/</li>
+          <li>
+            <span className="text-gray-900 font-medium">Carrinho</span>
+          </li>
+        </ol>
+      </nav>
+
+      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Carrinho de Compras</h1>
+
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        {/* Coluna Principal - Produtos */}
+        <div className="flex-1">
+          {/* Tabela de Produtos */}
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-6">
+            {/* Cabeçalho da Tabela (Desktop) */}
+            <div className="hidden md:grid grid-cols-12 gap-4 bg-gray-50 px-4 py-3 border-b border-gray-200">
+              <div className="col-span-1"></div>
+              <div className="col-span-5 font-semibold text-gray-900 text-sm">PRODUTO</div>
+              <div className="col-span-2 font-semibold text-gray-900 text-sm text-center">PREÇO</div>
+              <div className="col-span-2 font-semibold text-gray-900 text-sm text-center">QUANTIDADE</div>
+              <div className="col-span-2 font-semibold text-gray-900 text-sm text-right">SUBTOTAL</div>
+            </div>
+
+            {/* Lista de Produtos */}
+            <div className="divide-y divide-gray-200">
+              {cart.map((item) => (
+                <div key={item.id} className="grid grid-cols-12 gap-4 p-4 hover:bg-gray-50 transition-colors">
+                  {/* Botão Remover */}
+                  <div className="col-span-12 md:col-span-1 flex items-start justify-start md:justify-center">
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      className="text-red-500 hover:text-red-700 transition-colors p-1"
+                      aria-label="Remover produto"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Imagem e Nome do Produto */}
+                  <div className="col-span-12 md:col-span-5 flex gap-4">
+                    <img
+                      src={item.images[0] || '/images/product-placeholder.png'}
+                      alt={item.name}
+                      className="w-16 h-16 sm:w-20 sm:h-20 object-contain rounded-lg border border-gray-200"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-gray-900 text-sm sm:text-base mb-1 line-clamp-2">
+                        {item.name}
+                      </h3>
+                      {item.selectedNicotine && (
+                        <p className="text-xs text-gray-500">Teor: {item.selectedNicotine}</p>
+                      )}
+                      {item.selectedFlavor && (
+                        <p className="text-xs text-gray-500">Sabor: {item.selectedFlavor}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Preço */}
+                  <div className="col-span-6 md:col-span-2 flex items-center">
+                    <div className="md:hidden text-xs text-gray-500 mr-2">Preço:</div>
+                    <span className="font-semibold text-gray-900 text-sm sm:text-base">
+                      R$ {item.price.toFixed(2).replace('.', ',')}
+                    </span>
+                  </div>
+
+                  {/* Quantidade */}
+                  <div className="col-span-6 md:col-span-2 flex items-center justify-center">
+                    <div className="flex items-center border border-gray-300 rounded-lg">
+                      <button
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        className="p-2 hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        aria-label="Diminuir quantidade"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) => {
+                          const newQuantity = parseInt(e.target.value) || 1;
+                          updateQuantity(item.id, newQuantity);
+                        }}
+                        min="1"
+                        className="w-12 sm:w-16 text-center border-0 focus:ring-0 text-sm font-medium text-gray-900"
+                      />
+                      <button
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        className="p-2 hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        aria-label="Aumentar quantidade"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Subtotal */}
+                  <div className="col-span-12 md:col-span-2 flex items-center justify-end">
+                    <div className="md:hidden text-xs text-gray-500 mr-2">Subtotal:</div>
+                    <span className="font-semibold text-gray-900 text-sm sm:text-base">
+                      R$ {(item.price * item.quantity).toFixed(2).replace('.', ',')}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Seção de Cupom e Atualizar */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+              {/* Cupom */}
+              <div className="flex-1 w-full sm:w-auto">
+                <label htmlFor="coupon" className="block text-sm font-medium text-gray-700 mb-2">
+                  Cupom
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="coupon"
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    placeholder="Cupom"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                  <button
+                    onClick={handleApplyCoupon}
+                    className="px-4 sm:px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors whitespace-nowrap min-h-[44px]"
+                  >
+                    APLICAR CUPOM
+                  </button>
+                </div>
+                {appliedCoupon && (
+                  <p className="text-xs text-green-600 mt-1">Cupom "{appliedCoupon}" aplicado!</p>
+                )}
+              </div>
+
+              {/* Botão Atualizar */}
+              <div className="w-full sm:w-auto">
+                <button
+                  onClick={handleUpdateCart}
+                  className="w-full sm:w-auto px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors min-h-[44px]"
+                >
+                  ATUALIZAR PRODUTOS
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Coluna Lateral - Resumo do Pedido */}
+        <div className="w-full lg:w-96 flex-shrink-0">
+          <div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-4">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Total no carrinho</h2>
+
+            {/* Subtotal */}
+            <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
+              <span className="text-sm font-medium text-gray-700">SUBTOTAL</span>
+              <span className="text-lg font-bold text-gray-900">
+                R$ {subtotal.toFixed(2).replace('.', ',')}
+              </span>
+            </div>
+
+            {/* Entrega */}
+            <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
+              <span className="text-sm font-medium text-gray-700">ENTREGA</span>
+              {shippingCost !== null ? (
+                <span className="text-lg font-bold text-gray-900">
+                  R$ {shippingCost.toFixed(2).replace('.', ',')}
+                </span>
+              ) : (
+                <button
+                  onClick={handleCalculateShipping}
+                  className="text-sm text-primary-600 hover:text-primary-700 underline"
+                >
+                  Calcular entrega
+                </button>
+              )}
+            </div>
+
+            {/* Total */}
+            <div className="flex justify-between items-center mb-6">
+              <span className="text-lg font-bold text-gray-900">TOTAL</span>
+              <span className="text-2xl font-bold text-gray-900">
+                R$ {total.toFixed(2).replace('.', ',')}
+              </span>
+            </div>
+
+            {/* Botão Finalizar Compra */}
+            <button
+              onClick={handleCheckout}
+              className="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors min-h-[44px] text-lg"
+            >
+              FINALIZAR COMPRA
+            </button>
+
+            {/* Link Voltar */}
+            <button
+              onClick={() => navigateRouter('/catalogo')}
+              className="w-full mt-3 text-sm text-gray-600 hover:text-gray-900 transition-colors underline"
+            >
+              Continuar comprando
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) => void; onQuickAdd?: (product: Product) => void }) => {
   const { searchTerm, activeCategory, setActiveCategory } = useApp();
   const navigateRouter = useNavigateRouter();
@@ -1298,6 +2570,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [hoveredFlavorImageIndex, setHoveredFlavorImageIndex] = useState<number | null>(null);
   const [fixedFlavorImageIndex, setFixedFlavorImageIndex] = useState<number | null>(null);
+  const [imageUpdateKey, setImageUpdateKey] = useState(0); // Contador para forçar atualização da imagem
   // Estados para notificação de estoque
   const [selectedFlavorsForNotification, setSelectedFlavorsForNotification] = useState<string[]>([]);
   const [privacyPolicyAccepted, setPrivacyPolicyAccepted] = useState(false);
@@ -1384,18 +2657,18 @@ const ProductDetail = ({ product }: { product: Product }) => {
   // Função para obter índice da imagem baseado no sabor
   const getImageIndexForFlavor = (flavor: string): number => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:getImageIndexForFlavor:entry',message:'getImageIndexForFlavor called',data:{flavor,flavorsLength:product.flavors?.length,imagesLength:product.images?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:getImageIndexForFlavor:entry',message:'getImageIndexForFlavor called',data:{flavor,flavorsLength:product.flavors?.length,imagesLength:product.images?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'B'})}).catch(()=>{});
     // #endregion
     if (!product.flavors || product.flavors.length === 0 || !product.images || product.images.length === 0) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:getImageIndexForFlavor:early-return',message:'Early return - missing data',data:{returnValue:0},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:getImageIndexForFlavor:early-return',message:'Early return - missing data',data:{returnValue:0},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'B'})}).catch(()=>{});
       // #endregion
       return 0;
     }
     const flavorIndex = product.flavors.indexOf(flavor);
     const result = flavorIndex % product.images.length;
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:getImageIndexForFlavor:exit',message:'getImageIndexForFlavor result',data:{flavor,flavorIndex,imagesLength:product.images.length,result},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:getImageIndexForFlavor:exit',message:'getImageIndexForFlavor result',data:{flavor,flavorIndex,imagesLength:product.images.length,result},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'B'})}).catch(()=>{});
     // #endregion
     // Distribui os sabores entre as imagens disponíveis
     return result;
@@ -1404,26 +2677,28 @@ const ProductDetail = ({ product }: { product: Product }) => {
   // Função para lidar com hover no sabor
   const handleFlavorHover = (flavor: string) => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleFlavorHover:entry',message:'handleFlavorHover called',data:{flavor,fixedFlavorImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    const logData = {location:'App.tsx:handleFlavorHover:entry',message:'handleFlavorHover called',data:{flavor},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'A'};
+    console.log('[DEBUG]', logData);
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
     // #endregion
     const imageIndex = getImageIndexForFlavor(flavor);
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleFlavorHover:before-setState',message:'About to set hoveredFlavorImageIndex',data:{flavor,imageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    const logData2 = {location:'App.tsx:handleFlavorHover:before-setState',message:'About to set hoveredFlavorImageIndex',data:{flavor,imageIndex,currentHovered:hoveredFlavorImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'A'};
+    console.log('[DEBUG]', logData2);
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData2)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
     // #endregion
     setHoveredFlavorImageIndex(imageIndex);
+    setImageUpdateKey(prev => prev + 1); // Incrementar contador para forçar atualização
+    setImageLoaded(false);
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleFlavorHover:after-setState',message:'setHoveredFlavorImageIndex called',data:{flavor,imageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    const logData3 = {location:'App.tsx:handleFlavorHover:after-setState',message:'setHoveredFlavorImageIndex called',data:{flavor,imageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'A'};
+    console.log('[DEBUG]', logData3);
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData3)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
     // #endregion
   };
 
   // Função para lidar com saída do hover
   const handleFlavorLeave = () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleFlavorLeave:entry',message:'handleFlavorLeave called',data:{fixedFlavorImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleFlavorLeave:resetting',message:'Resetting hoveredFlavorImageIndex',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     setHoveredFlavorImageIndex(null);
   };
 
@@ -1442,17 +2717,23 @@ const ProductDetail = ({ product }: { product: Product }) => {
       ? hoveredFlavorImageIndex
       : (fixedFlavorImageIndex !== null ? fixedFlavorImageIndex : selectedImageIndex);
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:displayImageIndex:calculation',message:'displayImageIndex being calculated',data:{result,hoveredFlavorImageIndex,fixedFlavorImageIndex,selectedImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
+    const logData = {location:'App.tsx:displayImageIndex:calculation',message:'displayImageIndex being calculated',data:{result,hoveredFlavorImageIndex,fixedFlavorImageIndex,selectedImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'C'};
+    console.log('[DEBUG]', logData);
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
     // #endregion
     return result;
   }, [hoveredFlavorImageIndex, fixedFlavorImageIndex, selectedImageIndex]);
 
-  // Monitorar mudanças no displayImageIndex
-  useEffect(() => {
+  // Calcular src da imagem baseado no displayImageIndex
+  const currentImageSrc = useMemo(() => {
+    const src = product.images[displayImageIndex] || product.images[0];
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:displayImageIndex:changed',message:'displayImageIndex changed',data:{displayImageIndex,fixedFlavorImageIndex,hoveredFlavorImageIndex,selectedImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
+    const logData = {location:'App.tsx:currentImageSrc:calculation',message:'currentImageSrc being calculated',data:{displayImageIndex,src,hoveredFlavorImageIndex,fixedFlavorImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'E'};
+    console.log('[DEBUG]', logData);
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
     // #endregion
-  }, [displayImageIndex, fixedFlavorImageIndex, hoveredFlavorImageIndex, selectedImageIndex]);
+    return src;
+  }, [displayImageIndex, product.images]);
 
   // Função para confirmar notificação
   const handleConfirmNotification = () => {
@@ -1533,6 +2814,11 @@ const ProductDetail = ({ product }: { product: Product }) => {
     // Fixar imagem do primeiro sabor ao carregar o produto
     if (product.flavors && product.flavors.length > 0 && product.images && product.images.length > 0) {
       const firstFlavorImageIndex = getImageIndexForFlavor(product.flavors[0]);
+      // #region agent log
+      const logData = {location:'App.tsx:useEffect:initialization',message:'Setting initial fixedFlavorImageIndex',data:{firstFlavorImageIndex,firstFlavor:product.flavors[0],initialImageSrc:product.images[firstFlavorImageIndex]},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'F'};
+      console.log('[DEBUG]', logData);
+      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
+      // #endregion
       setFixedFlavorImageIndex(firstFlavorImageIndex);
       setSelectedImageIndex(firstFlavorImageIndex);
     } else {
@@ -1542,12 +2828,15 @@ const ProductDetail = ({ product }: { product: Product }) => {
     return () => clearTimeout(timer);
   }, [product.id, product.flavors, product.nicotine]);
 
-  // Recarregar imagem quando displayImageIndex mudar (por hover ou fixação)
+  // Recarregar imagem quando displayImageIndex mudar
   useEffect(() => {
-    if (hoveredFlavorImageIndex !== null || fixedFlavorImageIndex !== null) {
-      setImageLoaded(false);
-    }
-  }, [hoveredFlavorImageIndex, fixedFlavorImageIndex]);
+    // #region agent log
+    const logData = {location:'App.tsx:useEffect:displayImageIndex',message:'displayImageIndex changed - resetting imageLoaded',data:{displayImageIndex,hoveredFlavorImageIndex,fixedFlavorImageIndex,selectedImageIndex,imageLoaded},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'D'};
+    console.log('[DEBUG]', logData);
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
+    // #endregion
+    setImageLoaded(false);
+  }, [displayImageIndex]);
   
   if (!product) {
     return (
@@ -1662,27 +2951,43 @@ const ProductDetail = ({ product }: { product: Product }) => {
         <div className="space-y-3 sm:space-y-4">
           {/* Foto Principal */}
           <div className="aspect-square bg-white border border-gray-100 rounded-xl sm:rounded-2xl overflow-hidden p-4 sm:p-8 flex items-center justify-center relative shadow-sm hover:shadow-md transition-shadow">
+            {(() => {
+              // #region agent log
+              const logData = {location:'App.tsx:img:render',message:'Image component rendering',data:{displayImageIndex,hoveredFlavorImageIndex,fixedFlavorImageIndex,selectedImageIndex,imageLoaded,imageSrc:product.images[displayImageIndex]},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'E'};
+              console.log('[DEBUG]', logData);
+              fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
+              // #endregion
+              return null;
+            })()}
             {!imageLoaded && (
               <div className="absolute inset-0 bg-gray-200 animate-pulse" />
             )}
-            <img 
-              src={(() => {
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:img:src-calculation',message:'Image src being calculated',data:{displayImageIndex,imagesLength:product.images?.length,imageUrl:product.images?.[displayImageIndex] || product.images?.[0]},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'F'})}).catch(()=>{});
-                // #endregion
-                return product.images[displayImageIndex] || product.images[0];
-              })()}
-              alt={product.name} 
-              loading="eager"
-              decoding="async"
-              className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-              onLoad={() => {
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:img:onLoad',message:'Image loaded',data:{displayImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
-                // #endregion
-                setImageLoaded(true);
-              }}
-            />
+            {(() => {
+              // #region agent log
+              const logData = {location:'App.tsx:img:render',message:'Image component rendering',data:{displayImageIndex,currentImageSrc,hoveredFlavorImageIndex,fixedFlavorImageIndex,selectedImageIndex,imageLoaded},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'E'};
+              console.log('[DEBUG]', logData);
+              fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
+              // #endregion
+              return (
+                <img 
+                  key={`product-image-${displayImageIndex}-${product.id}-${hoveredFlavorImageIndex !== null ? `hover-${hoveredFlavorImageIndex}-${imageUpdateKey}` : fixedFlavorImageIndex !== null ? `fixed-${fixedFlavorImageIndex}` : `selected-${selectedImageIndex}`}`}
+                  src={currentImageSrc}
+                  alt={product.name} 
+                  loading="eager"
+                  decoding="async"
+                  className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                  onLoad={() => {
+                    // #region agent log
+                    const logData = {location:'App.tsx:img:onLoad',message:'Image loaded',data:{displayImageIndex,currentImageSrc},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'E'};
+                    console.log('[DEBUG]', logData);
+                    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
+                    // #endregion
+                    setImageLoaded(true);
+                  }}
+                  onError={() => setImageLoaded(true)}
+                />
+              );
+            })()}
           </div>
           
           {/* Miniaturas das Imagens */}
@@ -1697,7 +3002,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
                   setHoveredFlavorImageIndex(null);
                 }}
                 className={`aspect-square bg-white border rounded-lg p-1 cursor-pointer hover:border-primary-500 transition-colors ${
-                  selectedImageIndex === idx ? 'border-primary-500 border-2' : 'border-gray-100'
+                  selectedImageIndex === idx && fixedFlavorImageIndex === null ? 'border-primary-500 border-2' : 'border-gray-100'
                 }`}
               >
                 <img src={img} alt="" className="w-full h-full object-contain" />
@@ -1924,18 +3229,8 @@ const ProductDetail = ({ product }: { product: Product }) => {
                               setSelectedFlavor(flavor);
                               handleFlavorClick(flavor);
                             }}
-                            onMouseEnter={() => {
-                              // #region agent log
-                              fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:button:onMouseEnter',message:'onMouseEnter event fired',data:{flavor},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
-                              // #endregion
-                              handleFlavorHover(flavor);
-                            }}
-                            onMouseLeave={() => {
-                              // #region agent log
-                              fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:button:onMouseLeave',message:'onMouseLeave event fired',data:{flavor},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
-                              // #endregion
-                              handleFlavorLeave();
-                            }}
+                            onMouseEnter={() => handleFlavorHover(flavor)}
+                            onMouseLeave={() => handleFlavorLeave()}
                             className={`
                               px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all
                               min-h-[44px] flex items-center justify-center text-center shadow-sm
@@ -3187,12 +4482,8 @@ export default function App() {
           <Route path="/produto/:id" element={<ProductDetailWrapper />} />
           <Route path="/carrinho" element={<Cart />} />
           <Route path="/favoritos" element={<Favorites onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
-          <Route path="/checkout" element={
-            <div className="text-center py-20">
-              <h2 className="text-2xl font-bold">Checkout Simulado</h2>
-              <Button onClick={() => navigateRouter('/')} className="mt-4">Voltar</Button>
-            </div>
-          } />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/finalizar-pedido" element={<FinalizeOrderPage />} />
           <Route path="/rastreamento" element={<TrackingPage />} />
           <Route path="/conta" element={<AccountPage />} />
           <Route path="*" element={<Home onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
