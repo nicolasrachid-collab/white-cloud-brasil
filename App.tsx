@@ -4,8 +4,8 @@ import {
   ShoppingCart, Search, Menu, X, User, Star, Truck, ShieldCheck, 
   CreditCard, ArrowRight, Minus, Plus, Trash2, 
   MapPin, CheckCircle, TrendingUp, DollarSign, 
-  Users, ChevronLeft, ChevronRight, Mail, Instagram, Facebook, Youtube, Twitter,
-  Heart, Eye, Share2
+  Users, ChevronLeft, ChevronRight, ChevronDown, Mail, Instagram, Facebook, Youtube, Twitter,
+  Heart, Eye, Share2, Calendar, MessageCircle
 } from './components/Icons';
 import { Button } from './components/Button';
 import Toast from './components/Toast';
@@ -14,6 +14,7 @@ import { CartBadge } from './components/CartBadge';
 import { FavoritesBadge } from './components/FavoritesBadge';
 import { QuickViewModal } from './components/QuickViewModal';
 import { AgeVerificationModal } from './components/AgeVerificationModal';
+import { CartDrawer } from './components/CartDrawer';
 import { ProductCardSkeleton, ProductGridSkeleton, ProductDetailSkeleton } from './components/Skeleton';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { useToast } from './hooks/useToast';
@@ -37,6 +38,10 @@ const Header = () => {
   const { searchTerm, setSearchTerm } = useApp();
   const navigateRouter = useNavigateRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [categorySearch, setCategorySearch] = useState<Record<string, string>>({});
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Fecha o menu se a tela for redimensionada para desktop
   useEffect(() => {
@@ -56,6 +61,47 @@ const Header = () => {
     }
     return () => { document.body.style.overflow = 'unset'; };
   }, [isMenuOpen]);
+
+  // Função para abrir dropdown com delay
+  const handleMouseEnter = (categoryId: string) => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setOpenDropdown(categoryId);
+  };
+
+  // Função para fechar dropdown com delay
+  const handleMouseLeave = () => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setOpenDropdown(null);
+    }, 200); // Delay de 200ms antes de fechar
+  };
+
+  // Limpar timeout ao desmontar
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Função para atualizar busca de uma categoria específica
+  const handleCategorySearch = (categoryKey: string, value: string) => {
+    setCategorySearch(prev => ({
+      ...prev,
+      [categoryKey]: value
+    }));
+  };
+
+  // Função para filtrar itens baseado na busca
+  const filterItems = (items: string[], searchValue: string) => {
+    if (!searchValue) return items;
+    return items.filter(item => 
+      item.toLowerCase().includes(searchValue.toLowerCase())
+    );
+  };
 
   return (
     <>
@@ -158,7 +204,7 @@ const Header = () => {
 
              <button 
               className="relative cursor-pointer flex items-center hover:text-primary-600 transition-colors min-h-[44px]"
-              onClick={() => navigateRouter('/carrinho')}
+              onClick={() => setIsCartOpen(true)}
               aria-label="Abrir carrinho"
              >
                 <div className="relative p-1">
@@ -177,57 +223,199 @@ const Header = () => {
           <div className="container mx-auto px-3 sm:px-4">
             <ul className="flex items-center justify-between gap-4 sm:gap-6 text-sm font-medium text-gray-600 py-3">
               {CATEGORIES.map(cat => (
-                <li key={cat.id} className="relative group">
+                <li 
+                  key={cat.id} 
+                  className="relative"
+                  onMouseEnter={() => cat.hasDropdown && handleMouseEnter(cat.id)}
+                  onMouseLeave={handleMouseLeave}
+                >
                   {cat.hasDropdown ? (
                     <>
-                      <button 
-                        className={`hover:text-primary-600 transition-colors py-1 relative uppercase ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
+                  <button 
+                        className={`hover:text-primary-600 transition-colors py-1 relative uppercase flex items-center gap-1 ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
                       >
                         <span className={cat.isHighlight ? 'relative z-10' : ''}>{cat.name}</span>
-                        {!cat.isHighlight && <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all group-hover:w-full"></span>}
+                        <ChevronDown className={`w-3 h-3 opacity-60 transition-all duration-300 ${openDropdown === cat.id ? 'opacity-100 rotate-180' : ''}`} />
+                        {!cat.isHighlight && <span className={`absolute bottom-0 left-0 h-0.5 bg-primary-500 transition-all ${openDropdown === cat.id ? 'w-full' : 'w-0'}`}></span>}
                       </button>
                       
-                      {/* Dropdown Menu */}
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[800px] bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[60]">
+                      {/* Dropdown Menu - Design Moderno */}
+                      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[900px] bg-white rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 z-[60] ${
+                        openDropdown === cat.id 
+                          ? 'opacity-100 visible translate-y-0' 
+                          : 'opacity-0 invisible -translate-y-2 pointer-events-none'
+                      }`}>
+                        {/* Padding invisível no topo para facilitar transição do mouse */}
+                        <div className="absolute -top-4 left-0 right-0 h-4 pointer-events-auto"></div>
+                        <div className="overflow-hidden">
+                        {/* Header do Dropdown com gradiente sutil e campo de busca */}
+                        <div className="bg-gradient-to-r from-primary-50 to-blue-50 border-b border-gray-100 px-6 py-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <h3 className="text-lg font-bold text-gray-900 uppercase tracking-wide">
+                                {cat.name}
+                              </h3>
+                              <p className="text-xs text-gray-500 mt-1">Explore nossa seleção completa</p>
+                            </div>
+                          </div>
+                          
+                          {/* Campo de busca único */}
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            <input
+                              type="text"
+                              placeholder="Buscar em todas as categorias..."
+                              value={categorySearch[cat.id] || ''}
+                              onChange={(e) => handleCategorySearch(cat.id, e.target.value)}
+                              className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        </div>
+
                         <div className="p-6">
-                          {cat.submenu?.sections ? (
-                            // Menu com seções (Juices e SaltNic) - Layout mais horizontal
+                          {cat.submenu?.categories ? (
+                            // Menu com categorias organizadas (Juices)
+                            <div className="grid grid-cols-5 gap-6">
+                              {cat.submenu.categories.map((category, idx) => {
+                                const searchValue = categorySearch[cat.id] || '';
+                                const filteredItems = filterItems(category.items, searchValue);
+                                
+                                return (
+                                  <div key={idx} className="group/category">
+                                    {/* Título da categoria com linha decorativa */}
+                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-primary-200 group-hover/category:border-primary-500 transition-colors">
+                                      <div className="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+                                      <h4 className="font-bold text-gray-900 text-xs uppercase tracking-wider">
+                                        {category.title}
+                                      </h4>
+                                    </div>
+                                    
+                                    {/* Lista de itens filtrados */}
+                                    <ul className="space-y-1.5 max-h-64 overflow-y-auto">
+                                      {filteredItems.length > 0 ? (
+                                        filteredItems.map((item, itemIdx) => (
+                                          <li key={itemIdx}>
+                                            <button
+                                              onClick={() => navigateRouter('/catalogo')}
+                                              className="text-xs text-gray-600 hover:text-primary-600 hover:bg-primary-50 transition-all duration-200 text-left w-full px-2 py-1.5 rounded-md group/item"
+                                            >
+                                              <span className="relative">
+                                                {item}
+                                                <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary-500 group-hover/item:w-full transition-all duration-200"></span>
+                                              </span>
+                                            </button>
+                                          </li>
+                                        ))
+                                      ) : (
+                                        <li className="text-xs text-gray-400 py-2 text-center">
+                                          Nenhum item encontrado
+                                        </li>
+                                      )}
+                                    </ul>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : cat.submenu?.sections ? (
+                            // Menu com seções (SaltNic) - Layout em 2 colunas
                             <div className="grid grid-cols-2 gap-8">
-                              {cat.submenu.sections.map((section, idx) => (
-                                <div key={idx}>
-                                  <h4 className="font-bold text-gray-900 text-sm mb-3 uppercase">
-                                    {section.title}
-                                  </h4>
-                                  <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                                    {section.items.map((item, itemIdx) => (
-                                      <li key={itemIdx}>
-                                        <button
-                                          onClick={() => navigateRouter('/catalogo')}
-                                          className="text-sm text-gray-600 hover:text-primary-600 transition-colors text-left w-full"
-                                        >
-                                          {item}
-                                        </button>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              ))}
+                              {cat.submenu.sections.map((section, idx) => {
+                                const searchValue = categorySearch[cat.id] || '';
+                                const filteredItems = filterItems(section.items, searchValue);
+                                
+                                return (
+                                  <div key={idx} className="group/section">
+                                    {/* Título da seção */}
+                                    <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-primary-200 group-hover/section:border-primary-500 transition-colors">
+                                      <div className="w-2 h-2 rounded-full bg-primary-500"></div>
+                                      <h4 className="font-bold text-gray-900 text-sm uppercase tracking-wider">
+                                        {section.title}
+                                      </h4>
+                                    </div>
+                                    
+                                    {/* Grid de itens em 2 colunas filtrados */}
+                                    <ul className="grid grid-cols-2 gap-x-4 gap-y-2 max-h-80 overflow-y-auto">
+                                      {filteredItems.length > 0 ? (
+                                        filteredItems.map((item, itemIdx) => (
+                                          <li key={itemIdx}>
+                                            <button
+                                              onClick={() => navigateRouter('/catalogo')}
+                                              className="text-sm text-gray-600 hover:text-primary-600 hover:bg-primary-50 transition-all duration-200 text-left w-full px-3 py-2 rounded-lg group/item"
+                                            >
+                                              <span className="relative">
+                                                {item}
+                                                <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary-500 group-hover/item:w-full transition-all duration-200"></span>
+                                              </span>
+                                            </button>
+                                          </li>
+                                        ))
+                                      ) : (
+                                        <li className="col-span-2 text-sm text-gray-400 py-4 text-center">
+                                          Nenhum item encontrado
+                                        </li>
+                                      )}
+                                    </ul>
+                                  </div>
+                                );
+                              })}
                             </div>
                           ) : (
-                            // Menu simples (lista única) - Organizar em múltiplas colunas
-                            <ul className="grid grid-cols-3 gap-x-4 gap-y-2">
-                              {cat.submenu?.items?.map((item, idx) => (
-                                <li key={idx}>
-                                  <button
-                                    onClick={() => navigateRouter('/catalogo')}
-                                    className="text-sm text-gray-600 hover:text-primary-600 transition-colors text-left w-full"
-                                  >
-                                    {item}
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
+                            // Menu simples (Pods, Coils, etc.) - Layout em grid moderno com busca
+                            <div>
+                              {/* Campo de busca global para menu simples */}
+                              <div className="mb-4">
+                                <div className="relative">
+                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                  <input
+                                    type="text"
+                                    placeholder="Buscar..."
+                                    value={categorySearch[cat.id] || ''}
+                                    onChange={(e) => handleCategorySearch(cat.id, e.target.value)}
+                                    className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                </div>
+                              </div>
+                              
+                              {/* Grid de itens filtrados */}
+                              <div className="grid grid-cols-4 gap-4">
+                                {filterItems(cat.submenu?.items || [], categorySearch[cat.id] || '').length > 0 ? (
+                                  filterItems(cat.submenu?.items || [], categorySearch[cat.id] || '').map((item, idx) => (
+                                    <button
+                                      key={idx}
+                                      onClick={() => navigateRouter('/catalogo')}
+                                      className="group/item relative p-4 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-gradient-to-br hover:from-primary-50 hover:to-blue-50 transition-all duration-200 text-left"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-gray-300 group-hover/item:bg-primary-500 transition-colors"></div>
+                                        <span className="text-sm font-medium text-gray-700 group-hover/item:text-primary-700 transition-colors">
+                                          {item}
+                                        </span>
+                                      </div>
+                                      <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 group-hover/item:w-full transition-all duration-200"></div>
+                                    </button>
+                                  ))
+                                ) : (
+                                  <div className="col-span-4 text-sm text-gray-400 py-4 text-center">
+                                    Nenhum item encontrado
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           )}
+                        </div>
+
+                        {/* Footer do Dropdown */}
+                        <div className="bg-gray-50 border-t border-gray-100 px-6 py-3">
+                          <button
+                            onClick={() => navigateRouter('/catalogo')}
+                            className="text-xs font-medium text-primary-600 hover:text-primary-700 flex items-center gap-1 group"
+                          >
+                            Ver todos os produtos
+                            <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                          </button>
+                        </div>
                         </div>
                       </div>
                     </>
@@ -238,8 +426,8 @@ const Header = () => {
                       className={`hover:text-primary-600 transition-colors py-1 relative uppercase ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
                     >
                       <span className={cat.isHighlight ? 'relative z-10' : ''}>{cat.name}</span>
-                      {!cat.isHighlight && <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all group-hover:w-full"></span>}
-                    </button>
+                    {!cat.isHighlight && <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all group-hover:w-full"></span>}
+                  </button>
                   )}
                 </li>
               ))}
@@ -346,6 +534,9 @@ const Header = () => {
           </div>
         </div>
       </aside>
+
+      {/* Cart Drawer */}
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   );
 };
@@ -504,46 +695,99 @@ const ProductCard: React.FC<{
 const HeroSlider = () => {
   const { navigate } = useApp();
   const [current, setCurrent] = useState(0);
+  const [isAutoPlay, setIsAutoPlay] = useState(true);
 
   const displayBanners = HERO_BANNERS;
 
   useEffect(() => {
-    if (displayBanners.length === 0) return;
+    if (displayBanners.length === 0 || !isAutoPlay) return;
     const timer = setInterval(() => {
       setCurrent(prev => (prev + 1) % displayBanners.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, [displayBanners.length]);
+  }, [displayBanners.length, isAutoPlay]);
+
+  const goToNext = () => {
+    setIsAutoPlay(false);
+    setCurrent(prev => (prev + 1) % displayBanners.length);
+    // Retomar autoplay após 10 segundos
+    setTimeout(() => setIsAutoPlay(true), 10000);
+  };
+
+  const goToPrev = () => {
+    setIsAutoPlay(false);
+    setCurrent(prev => (prev - 1 + displayBanners.length) % displayBanners.length);
+    // Retomar autoplay após 10 segundos
+    setTimeout(() => setIsAutoPlay(true), 10000);
+  };
 
   if (displayBanners.length === 0) {
     return null;
   }
 
   return (
-    <div className="relative h-[250px] sm:h-[300px] md:h-[400px] lg:h-[500px] w-full overflow-hidden bg-gray-900">
+    <div className="relative h-[250px] sm:h-[300px] md:h-[400px] lg:h-[500px] w-full overflow-hidden bg-gray-900 group">
       <div 
         className="flex transition-transform duration-700 ease-out h-full" 
         style={{ transform: `translateX(-${current * 100}%)` }}
       >
         {displayBanners.map((banner) => (
           <div key={banner.id} className="w-full h-full flex-shrink-0 relative">
-            {/* Background Image */}
-            <img 
-              src={banner.image} 
-              alt={banner.title} 
-              className="absolute inset-0 w-full h-full object-cover" 
-            />
+            {/* Background Image - Responsivo com Picture Element */}
+            <picture className="absolute inset-0 w-full h-full">
+              {/* Imagem Mobile (até 768px) */}
+              <source 
+                media="(max-width: 768px)" 
+                srcSet={banner.imageMobile || banner.image}
+              />
+              {/* Imagem Desktop (acima de 768px) */}
+              <source 
+                media="(min-width: 769px)" 
+                srcSet={banner.image}
+              />
+              {/* Fallback para navegadores que não suportam picture */}
+              <img 
+                src={banner.image} 
+                alt={banner.title} 
+                className="absolute inset-0 w-full h-full object-cover" 
+              />
+            </picture>
           </div>
         ))}
       </div>
 
-      {/* Navigation Dots */}
-      <div className="absolute bottom-6 left-0 w-full flex justify-center space-x-2">
+      {/* Navigation Arrows */}
+      <button
+        onClick={goToPrev}
+        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-2 sm:p-3 transition-all duration-300 opacity-0 group-hover:opacity-100 md:opacity-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
+        aria-label="Banner anterior"
+      >
+        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+      </button>
+      <button
+        onClick={goToNext}
+        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-2 sm:p-3 transition-all duration-300 opacity-0 group-hover:opacity-100 md:opacity-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
+        aria-label="Próximo banner"
+      >
+        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+      </button>
+
+      {/* Navigation Dots - Melhorado para Mobile */}
+      <div className="absolute bottom-3 sm:bottom-4 md:bottom-6 left-0 w-full flex justify-center gap-1.5 sm:gap-2 px-4">
         {displayBanners.map((_, idx) => (
           <button
             key={idx}
-            className={`w-2 h-2 rounded-full transition-all ${current === idx ? 'bg-white w-6' : 'bg-white/40'}`}
-            onClick={() => setCurrent(idx)}
+            className={`rounded-full transition-all duration-300 min-h-[44px] min-w-[44px] flex items-center justify-center ${
+              current === idx 
+                ? 'bg-white w-4 sm:w-4 md:w-3 h-1 sm:h-1 md:h-1' 
+                : 'bg-white/40 w-1 h-1 sm:w-1 md:w-1 sm:h-1 md:h-1 hover:bg-white/60'
+            }`}
+            onClick={() => {
+              setIsAutoPlay(false);
+              setCurrent(idx);
+              setTimeout(() => setIsAutoPlay(true), 10000);
+            }}
+            aria-label={`Ir para slide ${idx + 1}`}
           />
         ))}
       </div>
@@ -695,7 +939,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
     {/* 7. Best Offers */}
     <section className="container mx-auto px-3 sm:px-4">
-      <SectionHeader title="Ofertas RelÃ¢mpago" onLinkClick={() => navigateRouter('/catalogo')} />
+      <SectionHeader title="Ofertas Relâmpago" onLinkClick={() => navigateRouter('/catalogo')} />
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
         {(products || []).map(product => (
            <ProductCard 
@@ -860,7 +1104,7 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
             </ul>
           </div>
           <div>
-            <h3 className="font-bold text-gray-900 mb-3 sm:mb-4 text-base sm:text-lg">Filtrar por PreÃ§o</h3>
+            <h3 className="font-bold text-gray-900 mb-3 sm:mb-4 text-base sm:text-lg">Filtrar por Preço</h3>
             <div className="flex items-center space-x-2">
               <input type="number" placeholder="Min" className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm min-h-[44px]" />
               <span className="text-gray-400">-</span>
@@ -875,8 +1119,8 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
             <span className="text-gray-500 font-medium text-sm sm:text-base">{filteredProducts.length} produtos encontrados</span>
             <select className="border-none text-xs sm:text-sm font-medium focus:ring-0 text-gray-700 bg-transparent cursor-pointer hover:text-primary-600 min-h-[44px]">
               <option>Mais Relevantes</option>
-              <option>Menor PreÃ§o</option>
-              <option>Maior PreÃ§o</option>
+              <option>Menor Preço</option>
+              <option>Maior Preço</option>
               <option>Mais Recentes</option>
             </select>
           </div>
@@ -1156,7 +1400,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
             </button>
           </div>
 
-          {/* 4. PreÃ§o (DESTAQUE MÃXIMO) */}
+          {/* 4. Preço (DESTAQUE MÃXIMO) */}
           <div className="bg-gray-50 p-4 sm:p-6 rounded-xl mb-6 sm:mb-8 border border-gray-200">
             <div className="flex items-end gap-2 sm:gap-3 mb-2 flex-wrap">
               <span className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
@@ -1358,10 +1602,10 @@ const ProductDetail = ({ product }: { product: Product }) => {
 
       {/* 9. DESCRIÃ‡ÃƒO DETALHADA */}
       {product.detailedDescription && (
-        <section className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 mb-12">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 md:mb-8 pb-3 border-b-2 border-gray-200">
+          <section className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 md:mb-8 pb-3 border-b-2 border-gray-200">
             DescriÃ§Ã£o
-          </h2>
+            </h2>
           <div className="text-gray-700 leading-relaxed space-y-4">
             {product.detailedDescription.split('\n').map((paragraph, idx) => {
               if (!paragraph.trim()) return null;
@@ -1403,12 +1647,12 @@ const ProductDetail = ({ product }: { product: Product }) => {
               
               return (
                 <p key={idx} className="mb-3 last:mb-0 text-sm sm:text-base">
-                  {paragraph}
-                </p>
-              );
-            })}
-          </div>
-        </section>
+                    {paragraph}
+                  </p>
+                );
+              })}
+            </div>
+          </section>
       )}
 
       {/* 10. ESPECIFICAÃ‡Ã•ES TÃ‰CNICAS */}
@@ -1684,7 +1928,573 @@ const Cart = () => {
     );
 };
 
+const AccountPage = () => {
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [isHuman, setIsHuman] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  
+  // Estados do formulário de login
+  const [loginData, setLoginData] = useState({
+    usernameOrEmail: '',
+    password: ''
+  });
+
+  // Estados do formulário de cadastro
+  const [registerData, setRegisterData] = useState({
+    nome: '',
+    sobrenome: '',
+    cpf: '',
+    telefone: '',
+    dataNascimento: '',
+    email: '',
+    senha: ''
+  });
+
+  const { showSuccess, showError } = useToast();
+  const navigateRouter = useNavigateRouter();
+
+  // Prevenir scroll do body quando modal está aberto
+  useEffect(() => {
+    if (showForgotPasswordModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showForgotPasswordModal]);
+
+  // Fechar com ESC
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showForgotPasswordModal) {
+        setShowForgotPasswordModal(false);
+        setForgotPasswordEmail('');
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showForgotPasswordModal]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginData.usernameOrEmail || !loginData.password) {
+      showError('Por favor, preencha todos os campos obrigatórios');
+      return;
+    }
+    // Apenas visual - mostrar mensagem de sucesso
+    showSuccess('Login realizado com sucesso!');
+    navigateRouter('/');
+  };
+
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!registerData.nome || !registerData.sobrenome || !registerData.email || !registerData.senha) {
+      showError('Por favor, preencha todos os campos obrigatórios');
+      return;
+    }
+    if (!isHuman) {
+      showError('Por favor, confirme que você é humano');
+      return;
+    }
+    // Apenas visual - mostrar mensagem de sucesso
+    showSuccess('Cadastro realizado com sucesso!');
+    navigateRouter('/');
+  };
+
+  const formatCPF = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 11) {
+      return numbers;
+    }
+    return numbers.slice(0, 11);
+  };
+
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 11) {
+      return numbers;
+    }
+    return numbers.slice(0, 11);
+  };
+
+  const formatDate = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 8) {
+      if (numbers.length <= 2) return numbers;
+      if (numbers.length <= 4) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+      return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
+    }
+    return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
+  };
+
+  const handleForgotPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotPasswordEmail) {
+      showError('Por favor, digite seu nome de usuário ou e-mail');
+      return;
+    }
+    // Apenas visual - mostrar mensagem de sucesso
+    showSuccess('Link de redefinição de senha enviado para seu e-mail!');
+    setShowForgotPasswordModal(false);
+    setForgotPasswordEmail('');
+  };
+
+  return (
+    <div className="container mx-auto px-3 sm:px-4 py-8 sm:py-12">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-900 mb-8 sm:mb-12">
+        Minha Conta
+      </h1>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 max-w-6xl mx-auto">
+        {/* Seção de Login */}
+        <div className="bg-white border border-gray-200 rounded-lg sm:rounded-xl shadow-sm">
+          <div className="border-b-2 border-primary-600 mb-6"></div>
+          <div className="px-4 sm:px-6 md:px-8 py-6 sm:py-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6">Entrar</h2>
+            
+            <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
+              <div>
+                <label htmlFor="usernameOrEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                  Nome de usuário ou e-mail <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="usernameOrEmail"
+                  value={loginData.usernameOrEmail}
+                  onChange={(e) => setLoginData({ ...loginData, usernameOrEmail: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all min-h-[44px]"
+                  placeholder="Digite seu usuário ou e-mail"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="loginPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                  Senha <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showLoginPassword ? 'text' : 'password'}
+                    id="loginPassword"
+                    value={loginData.password}
+                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                    className="w-full px-4 py-2.5 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all min-h-[44px]"
+                    placeholder="Digite sua senha"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    aria-label={showLoginPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                  >
+                    <Eye className={`w-5 h-5 ${showLoginPassword ? 'text-primary-600' : ''}`} />
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors min-h-[44px]"
+              >
+                ACESSAR
+              </button>
+
+              <div className="flex items-center justify-between pt-2">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 cursor-pointer"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Lembre-me</span>
+                </label>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  className="text-sm text-gray-600 hover:text-primary-600 transition-colors"
+                  onClick={() => setShowForgotPasswordModal(true)}
+                >
+                  Perdeu sua senha?
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {/* Seção de Cadastro */}
+        <div className="bg-white border border-gray-200 rounded-lg sm:rounded-xl shadow-sm">
+          <div className="border-b-2 border-primary-600 mb-6"></div>
+          <div className="px-4 sm:px-6 md:px-8 py-6 sm:py-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6">Cadastre-se</h2>
+            
+            <form onSubmit={handleRegister} className="space-y-4 sm:space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-2">
+                    Nome<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="nome"
+                    value={registerData.nome}
+                    onChange={(e) => setRegisterData({ ...registerData, nome: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all min-h-[44px]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="sobrenome" className="block text-sm font-medium text-gray-700 mb-2">
+                    Sobrenome<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="sobrenome"
+                    value={registerData.sobrenome}
+                    onChange={(e) => setRegisterData({ ...registerData, sobrenome: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all min-h-[44px]"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-2">
+                  CPF
+                </label>
+                <input
+                  type="text"
+                  id="cpf"
+                  value={registerData.cpf}
+                  onChange={(e) => setRegisterData({ ...registerData, cpf: formatCPF(e.target.value) })}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all min-h-[44px]"
+                  placeholder="apenas números ou será inválido"
+                  maxLength={11}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="telefone" className="block text-sm font-medium text-gray-700 mb-2">
+                  Telefone
+                </label>
+                <input
+                  type="text"
+                  id="telefone"
+                  value={registerData.telefone}
+                  onChange={(e) => setRegisterData({ ...registerData, telefone: formatPhone(e.target.value) })}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all min-h-[44px]"
+                  placeholder="apenas números ou será inválido"
+                  maxLength={11}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="dataNascimento" className="block text-sm font-medium text-gray-700 mb-2">
+                  Data Nascimento
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    id="dataNascimento"
+                    value={registerData.dataNascimento}
+                    onChange={(e) => setRegisterData({ ...registerData, dataNascimento: formatDate(e.target.value) })}
+                    className="w-full px-4 py-2.5 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all min-h-[44px]"
+                    placeholder="dd/mm/aaaa"
+                    maxLength={10}
+                  />
+                  <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="registerEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                  Endereço de e-mail <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  id="registerEmail"
+                  value={registerData.email}
+                  onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all min-h-[44px]"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="registerPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                  Senha <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showRegisterPassword ? 'text' : 'password'}
+                    id="registerPassword"
+                    value={registerData.senha}
+                    onChange={(e) => setRegisterData({ ...registerData, senha: e.target.value })}
+                    className="w-full px-4 py-2.5 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all min-h-[44px]"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    aria-label={showRegisterPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                  >
+                    <Eye className={`w-5 h-5 ${showRegisterPassword ? 'text-primary-600' : ''}`} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-start">
+                <input
+                  type="checkbox"
+                  id="isHuman"
+                  checked={isHuman}
+                  onChange={(e) => setIsHuman(e.target.checked)}
+                  className="mt-1 w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 cursor-pointer"
+                />
+                <label htmlFor="isHuman" className="ml-2 text-sm text-gray-700">
+                  Sou humano
+                </label>
+              </div>
+
+              <div className="text-xs text-gray-500 space-y-1 pt-2">
+                <p>
+                  Seus dados pessoais serão usados para aprimorar a sua experiência em todo este site, para gerenciar o acesso a sua conta e para outros propósitos, como descritos em nossa{' '}
+                  <button
+                    type="button"
+                    className="text-primary-600 hover:underline"
+                    onClick={() => showError('Política de privacidade em desenvolvimento')}
+                  >
+                    política de privacidade
+                  </button>
+                  .
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors min-h-[44px] mt-4"
+              >
+                CADASTRE-SE
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal de Recuperação de Senha */}
+      {showForgotPasswordModal && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80] transition-opacity duration-300"
+            onClick={() => setShowForgotPasswordModal(false)}
+          />
+
+          {/* Modal */}
+          <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-2xl max-w-md w-full border border-gray-200 animate-fade-in">
+              {/* Linha azul no topo */}
+              <div className="border-b-2 border-primary-600"></div>
+              
+              <div className="p-6 sm:p-8">
+                {/* Texto explicativo */}
+                <p className="text-sm sm:text-base text-gray-700 mb-6 leading-relaxed">
+                  Perdeu sua senha? Digite seu nome de usuário ou endereço de e-mail. Você receberá um link por e-mail para criar uma nova senha.
+                </p>
+
+                {/* Formulário */}
+                <form onSubmit={handleForgotPassword} className="space-y-5">
+                  <div>
+                    <label htmlFor="forgotPasswordEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                      Nome de usuário ou e-mail <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="forgotPasswordEmail"
+                      value={forgotPasswordEmail}
+                      onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all min-h-[44px]"
+                      placeholder="Digite seu usuário ou e-mail"
+                      required
+                    />
+                  </div>
+
+                  {/* Botões */}
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowForgotPasswordModal(false);
+                        setForgotPasswordEmail('');
+                      }}
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors min-h-[44px]"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors min-h-[44px] uppercase"
+                    >
+                      REDEFINIR SENHA
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 const TrackingPage = () => <div className="p-12 text-center">Rastreamento (Simulado)</div>;
+
+// Chat Widget Flutuante
+const ChatWidget = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Prevenir scroll do body quando chat está aberto
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  // Fechar com ESC
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen]);
+
+  return (
+    <>
+      {/* Botão Flutuante */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-6 right-6 z-[70] bg-primary-600 hover:bg-primary-700 text-white rounded-full p-4 shadow-2xl transition-all duration-300 hover:scale-110 min-h-[60px] min-w-[60px] flex items-center justify-center group"
+        aria-label="Abrir chat de atendimento"
+      >
+        <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7" />
+        {/* Indicador de notificação (opcional) */}
+        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+      </button>
+
+      {/* Modal de Chat */}
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80] transition-opacity duration-300"
+            onClick={() => setIsOpen(false)}
+          />
+
+          {/* Chat Window */}
+          <div className="fixed bottom-6 right-6 z-[90] w-full max-w-md h-[600px] bg-white rounded-xl shadow-2xl flex flex-col animate-fade-in">
+            {/* Header do Chat */}
+            <div className="bg-primary-600 text-white p-4 rounded-t-xl flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-base">Atendimento</h3>
+                  <p className="text-xs text-white/80">Normalmente respondemos em alguns minutos</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-2 hover:bg-white/20 rounded-full transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Fechar chat"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Área de Mensagens */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+              {/* Mensagem de boas-vindas */}
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <MessageCircle className="w-4 h-4 text-white" />
+                </div>
+                <div className="bg-white rounded-lg p-3 shadow-sm max-w-[80%]">
+                  <p className="text-sm text-gray-700">
+                    Olá! 👋 Como posso ajudá-lo hoje?
+                  </p>
+                </div>
+              </div>
+
+              {/* Mensagem de exemplo do usuário */}
+              <div className="flex items-start gap-3 justify-end">
+                <div className="bg-primary-600 text-white rounded-lg p-3 shadow-sm max-w-[80%]">
+                  <p className="text-sm">
+                    Gostaria de saber sobre os produtos disponíveis
+                  </p>
+                </div>
+                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-4 h-4 text-gray-600" />
+                </div>
+              </div>
+
+              {/* Mensagem de resposta */}
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <MessageCircle className="w-4 h-4 text-white" />
+                </div>
+                <div className="bg-white rounded-lg p-3 shadow-sm max-w-[80%]">
+                  <p className="text-sm text-gray-700">
+                    Claro! Temos uma ampla variedade de produtos. Você pode navegar pelo catálogo ou me dizer qual produto específico você está procurando.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Input de Mensagem */}
+            <div className="border-t border-gray-200 p-4 bg-white rounded-b-xl">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Digite sua mensagem..."
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all min-h-[44px] text-sm"
+                />
+                <button
+                  className="bg-primary-600 hover:bg-primary-700 text-white rounded-lg p-2.5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  aria-label="Enviar mensagem"
+                >
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Horário de atendimento: Seg. a Sex. 9h às 18h
+              </p>
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  );
+};
 
 // --- MAIN APP ---
 
@@ -1726,7 +2536,7 @@ export default function App() {
             </div>
           } />
           <Route path="/rastreamento" element={<TrackingPage />} />
-          <Route path="/conta" element={<div className="text-center py-20 font-bold">Minha Conta</div>} />
+          <Route path="/conta" element={<AccountPage />} />
           <Route path="*" element={<Home onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
         </Routes>
       </main>
@@ -1824,6 +2634,9 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Chat Flutuante - Atendimento */}
+      <ChatWidget />
     </div>
   );
 }

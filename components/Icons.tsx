@@ -22,6 +22,7 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Mail,
   Instagram,
   Facebook,
@@ -45,7 +46,8 @@ import {
   Edit,
   Heart,
   Eye,
-  Share2
+  Share2,
+  MessageCircle
 } from 'lucide-react';
 
 export { 
@@ -72,6 +74,7 @@ export {
   Users,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Mail,
   Instagram,
   Facebook,
@@ -95,5 +98,6 @@ export {
   Edit,
   Heart,
   Eye,
-  Share2
+  Share2,
+  MessageCircle
 };

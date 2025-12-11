@@ -140,14 +140,28 @@ const Logos3 = ({
       <div className="pt-4 md:pt-6 lg:pt-8">
         <div className="relative mx-auto flex items-center justify-center">
           <Carousel
-            opts={{ loop: true }}
-            plugins={[AutoScroll({ playOnInit: true, speed: 1 })]}
+            opts={{ 
+              loop: true,
+              align: "start",
+              dragFree: true,
+            }}
+            plugins={[
+              AutoScroll({ 
+                playOnInit: true, 
+                speed: 1,
+                stopOnInteraction: false,
+                stopOnMouseEnter: false,
+                stopOnFocusIn: false,
+                direction: 'backward', // Garante que vai da direita para esquerda
+              })
+            ]}
             className="w-full"
           >
             <CarouselContent className="ml-0">
-              {displayLogos.map((logo) => (
+              {/* Duplicar logos para criar efeito de scroll infinito suave */}
+              {[...displayLogos, ...displayLogos].map((logo, index) => (
                 <CarouselItem
-                  key={logo.id}
+                  key={`${logo.id}-${index}`}
                   className="flex basis-1/3 justify-center pl-0 sm:basis-1/4 md:basis-1/5 lg:basis-1/6"
                 >
                   <div className="mx-4 sm:mx-6 md:mx-8 flex shrink-0 items-center justify-center">

@@ -6,6 +6,10 @@ export interface MenuItem {
   isHighlight?: boolean;
   hasDropdown?: boolean;
   submenu?: {
+    categories?: {
+      title: string;
+      items: string[];
+    }[];
     sections?: {
       title: string;
       items: string[];
@@ -33,7 +37,7 @@ export const CATEGORIES: MenuItem[] = [
         'Voopoo',
         'Geekvape',
         'Smok'
-      ]
+      ].sort()
     }
   },
   {
@@ -41,52 +45,60 @@ export const CATEGORIES: MenuItem[] = [
     name: 'Juices',
     hasDropdown: true,
     submenu: {
-      sections: [
+      categories: [
         {
-          title: 'Juices Nacionais',
+          title: 'Composição',
           items: [
-            'B-Side',
-            'Blends',
-            'Blue Jay',
-            'Br Liquid',
-            'Bulldogs',
-            'Capi Juice',
-            "Daddy's Juices",
-            'Dream Collab',
-            'LQD ART',
-            'MatiaMist',
-            'Radiola',
-            'Rainmaker',
-            'Rústico',
-            'Sierra Blends'
-          ]
+            'Free Base',
+            'Juice com CBD',
+            'Nic Salt'
+          ].sort()
         },
         {
-          title: 'Juices Importados',
+          title: 'Sabor',
           items: [
-            'Badger Hill Reserve',
-            'Basix',
-            'Blvk',
-            'Born to Vape',
-            'Coastal Clouds',
-            'Dinner Lady',
-            'FRYD',
-            'Jam Monster',
-            'Johnny Creampuff',
-            'Magna',
-            'Mints',
+            'Adocicado',
+            'Cafeinado',
+            'Frutado',
+            'Mentolado',
+            'Tabacado'
+          ].sort()
+        },
+        {
+          title: 'Marcas Famosas',
+          items: [
+            'BLVK Unicorn',
+            'Elf Bar',
+            'Ignite',
             'Mr. Freeze',
-            'Naked',
-            'Nasty',
-            "Nitro's Cold Brew",
-            'Reds',
-            'Sad Boy',
-            'Twist',
-            'Vapetasia',
-            'Vgod',
-            'Yogi',
-            'Zen Haus'
-          ]
+            'Naked 100',
+            'Nasty Juice',
+            'Nikbar',
+            'Zomo'
+          ].sort()
+        },
+        {
+          title: 'Nacionais',
+          items: [
+            'Apex',
+            'Bluejay',
+            'BrLiquid',
+            'CapiJuices',
+            'Caravela',
+            'Dream Collab',
+            'LQD Art',
+            'Radiola',
+            'Trust Juices'
+          ].sort()
+        },
+        {
+          title: 'Importados',
+          items: [
+            'Black Note',
+            'Hypnos',
+            'Joyetech',
+            'Magna'
+          ].sort()
         }
       ]
     }
@@ -101,7 +113,7 @@ export const CATEGORIES: MenuItem[] = [
         'Cartuchos',
         'Pod System',
         'Sub-ohm'
-      ]
+      ].sort()
     }
   },
   {
@@ -113,7 +125,7 @@ export const CATEGORIES: MenuItem[] = [
         'Mods',
         'Kits',
         'Atomizadores'
-      ]
+      ].sort()
     }
   },
   {
@@ -138,7 +150,7 @@ export const CATEGORIES: MenuItem[] = [
             'Radiola Salts',
             'Rainmaker Salts',
             'Sierra Blends Salts'
-          ]
+          ].sort()
         },
         {
           title: 'SaltNic Importado',
@@ -166,7 +178,7 @@ export const CATEGORIES: MenuItem[] = [
             'Vgod Salts',
             'Yogi Salts',
             'Zen Haus Salts'
-          ]
+          ].sort()
         }
       ]
     }
@@ -183,7 +195,7 @@ export const CATEGORIES: MenuItem[] = [
         'Smok',
         'Uwell',
         'Aspire'
-      ]
+      ].sort()
     }
   },
   {
@@ -199,7 +211,7 @@ export const CATEGORIES: MenuItem[] = [
         'Drip Tips',
         'Algodão',
         'Arame'
-      ]
+      ].sort()
     }
   },
   {
@@ -215,6 +227,7 @@ export const HERO_BANNERS = [
     title: "BLACK FRIDAY VAPE",
     subtitle: "Descontos de até 60% em toda a linha premium de Pods e Juices.",
     image: "https://placehold.co/1920x600/1a1a1a/FFF?text=BLACK+FRIDAY+VAPE+PROMO&font=roboto",
+    imageMobile: "https://placehold.co/800x600/1a1a1a/FFF?text=BLACK+FRIDAY+MOBILE&font=roboto",
     cta: "Aproveitar Agora",
     color: "from-purple-900 to-indigo-900"
   },
@@ -223,6 +236,7 @@ export const HERO_BANNERS = [
     title: "XROS SERIES: A EVOLUÇÃO DO SABOR",
     subtitle: "DISPOSITIVOS PREMIUM. SESSÕES INIGUALÁVEIS.",
     image: "https://placehold.co/1920x600/0a0a0a/FFF?text=XROS+SERIES&font=roboto",
+    imageMobile: "https://placehold.co/800x600/0a0a0a/FFF?text=XROS+MOBILE&font=roboto",
     cta: "Compre Agora",
     color: "from-blue-900 via-purple-900 to-orange-900"
   },
@@ -231,6 +245,7 @@ export const HERO_BANNERS = [
     title: "NOVO IGNITE V80",
     subtitle: "A revolução do sabor chegou. 8000 puffs de pura tecnologia.",
     image: "https://placehold.co/1920x600/064e3b/FFF?text=NEW+IGNITE+V80+LAUNCH&font=roboto",
+    imageMobile: "https://placehold.co/800x600/064e3b/FFF?text=IGNITE+MOBILE&font=roboto",
     cta: "Conhecer Lançamento",
     color: "from-blue-900 to-indigo-900"
   },
@@ -239,6 +254,7 @@ export const HERO_BANNERS = [
     title: "JUICES IMPORTADOS",
     subtitle: "As melhores marcas do mundo com preços do Brasil.",
     image: "https://placehold.co/1920x600/1e3a8a/FFF?text=PREMIUM+IMPORTED+JUICES&font=roboto",
+    imageMobile: "https://placehold.co/800x600/1e3a8a/FFF?text=JUICES+MOBILE&font=roboto",
     cta: "Ver Coleção",
     color: "from-blue-900 to-slate-900"
   }

@@ -287,4 +287,70 @@ nav ul li:first-child.group:hover .absolute {
   transform: translateX(0);
 }
 
+/* Melhorar navegação do dropdown */
+nav ul li.relative:hover .absolute {
+  pointer-events: auto;
+}
+
+/* Padding invisível para facilitar transição do mouse */
+nav ul li.relative .absolute::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: transparent;
+  pointer-events: auto;
+}
+
+/* Animação de entrada do dropdown */
+@keyframes dropdown-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Scrollbar personalizada para lista de itens */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Animação suave para carrossel de logos */
+.brand-logos-section [data-embla-viewport] {
+  overflow: hidden;
+  will-change: transform;
+}
+
+.brand-logos-section [data-embla-container] {
+  display: flex;
+  will-change: transform;
+  transition: transform 0.1s linear;
+}
+
+.brand-logos-section [data-embla-slide] {
+  flex: 0 0 auto;
+  min-width: 0;
+  will-change: transform;
+}
+
 
