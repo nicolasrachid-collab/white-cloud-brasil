@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, useParams, useNavigate as useNavigateRouter } from 'react-router-dom';
 import { 
   ShoppingCart, Search, Menu, X, User, Star, Truck, ShieldCheck, 
@@ -638,16 +638,13 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     </section>
 
     {/* 9. Brand Strip */}
-    <section className="border-t border-b border-gray-100 bg-white py-8 sm:py-12">
-      <div className="container mx-auto px-3 sm:px-4">
-        <h3 className="text-center font-bold text-gray-400 text-sm tracking-widest uppercase mb-8">As Melhores Marcas</h3>
-        <div className="flex flex-wrap justify-center md:justify-between items-center gap-8 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-           {BRANDS.map((brand, idx) => (
-             <img key={idx} src={brand.logo} alt={brand.name} className="h-8 md:h-12 object-contain hover:scale-110 transition-transform cursor-pointer" />
-           ))}
-        </div>
-      </div>
-    </section>
+    {/* #region agent log */}
+    {(() => {
+      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:641',message:'Rendering Logos3 component',data:{brandsFromConstants:BRANDS.length,firstBrandUrl:BRANDS[0]?.logo,firstBrandHas222:BRANDS[0]?.logo?.includes('/222/'),firstBrandHasFFFFFF:BRANDS[0]?.logo?.includes('/FFFFFF/')},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'H1'})}).catch(()=>{});
+      return null;
+    })()}
+    {/* #endregion */}
+    <Logos3 heading="As Melhores Marcas" />
 
     {/* 10. Category Banners */}
     <section className="container mx-auto px-3 sm:px-4">
@@ -1660,7 +1657,7 @@ export default function App() {
             <div>
               <h4 className="text-white font-bold text-lg mb-6 flex items-center">Atendimento</h4>
               <ul className="space-y-4 text-sm">
-                <li className="flex items-center"><Mail className="w-4 h-4 mr-2" /> suporte@whitecloudbrasil.com</li>
+                <li className="flex items-center"><Mail className="w-4 h-4 mr-2" /> sac@whitecloudbrasil.com</li>
                 <li className="flex items-center"><User className="w-4 h-4 mr-2" /> (11) 99999-9999</li>
                 <li className="flex items-center"><MapPin className="w-4 h-4 mr-2" /> Seg. a Sex. 9h às 18h</li>
               </ul>

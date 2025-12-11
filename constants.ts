@@ -48,13 +48,13 @@ export const HERO_BANNERS = [
 ];
 
 export const BRANDS = [
-  { name: "Ignite", logo: "https://placehold.co/150x60/222/FFF?text=IGNITE" },
-  { name: "Elfbar", logo: "https://placehold.co/150x60/222/FFF?text=ELFBAR" },
-  { name: "Vaporesso", logo: "https://placehold.co/150x60/222/FFF?text=VAPORESSO" },
-  { name: "Nasty", logo: "https://placehold.co/150x60/222/FFF?text=NASTY" },
-  { name: "Voopoo", logo: "https://placehold.co/150x60/222/FFF?text=VOOPOO" },
-  { name: "Smok", logo: "https://placehold.co/150x60/222/FFF?text=SMOK" },
-  { name: "Geekvape", logo: "https://placehold.co/150x60/222/FFF?text=GEEKVAPE" },
+  { name: "Ignite", logo: "https://placehold.co/150x60/FFFFFF/000000?text=IGNITE" },
+  { name: "Elfbar", logo: "https://placehold.co/150x60/FFFFFF/000000?text=ELFBAR" },
+  { name: "Vaporesso", logo: "https://placehold.co/150x60/FFFFFF/000000?text=VAPORESSO" },
+  { name: "Nasty", logo: "https://placehold.co/150x60/FFFFFF/000000?text=NASTY" },
+  { name: "Voopoo", logo: "https://placehold.co/150x60/FFFFFF/000000?text=VOOPOO" },
+  { name: "Smok", logo: "https://placehold.co/150x60/FFFFFF/000000?text=SMOK" },
+  { name: "Geekvape", logo: "https://placehold.co/150x60/FFFFFF/000000?text=GEEKVAPE" },
 ];
 
 export const MOCK_PRODUCTS: Product[] = [
