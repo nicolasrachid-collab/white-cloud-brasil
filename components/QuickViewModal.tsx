@@ -84,27 +84,27 @@ export function QuickViewModal({ product, isOpen, onClose, onViewFullDetails }: 
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl modal-animate"
+        className="bg-white rounded-xl sm:rounded-2xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden shadow-2xl modal-animate mx-2 sm:mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Exibição Rápida</h2>
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">Exibição Rápida</h2>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-            aria-label="Fechar"
+            className="p-2 text-gray-400 hover:text-gray-600 active:text-gray-700 hover:bg-gray-100 active:bg-gray-200 rounded-full transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
+            aria-label="Fechar modal"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-140px)]">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6">
+        <div className="overflow-y-auto max-h-[calc(95vh-120px)] sm:max-h-[calc(90vh-140px)]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 p-4 sm:p-6">
             {/* Imagem */}
-            <div className="space-y-4">
-              <div className="aspect-square bg-white border border-gray-100 rounded-xl overflow-hidden p-8 flex items-center justify-center relative">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="aspect-square bg-white border border-gray-100 rounded-lg sm:rounded-xl overflow-hidden p-4 sm:p-6 md:p-8 flex items-center justify-center relative">
                 {!imageLoaded && (
                   <div className="absolute inset-0 bg-gray-200 animate-pulse" />
                 )}
@@ -113,15 +113,17 @@ export function QuickViewModal({ product, isOpen, onClose, onViewFullDetails }: 
                   alt={product.name} 
                   className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                   onLoad={() => setImageLoaded(true)}
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
               
               {/* Miniaturas */}
               {product.images.length > 1 && (
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 gap-2 sm:gap-3">
                   {product.images.slice(0, 4).map((img, idx) => (
-                    <div key={idx} className="aspect-square bg-white border border-gray-100 rounded-lg p-2 cursor-pointer hover:border-primary-500 transition-colors">
-                      <img src={img} alt="" className="w-full h-full object-contain" />
+                    <div key={idx} className="aspect-square bg-white border border-gray-100 rounded-lg p-1.5 sm:p-2 cursor-pointer hover:border-primary-500 active:border-primary-600 transition-colors touch-manipulation min-h-[44px]">
+                      <img src={img} alt={`Vista ${idx + 1} de ${product.name}`} className="w-full h-full object-contain" loading="lazy" decoding="async" />
                     </div>
                   ))}
                 </div>
@@ -153,28 +155,25 @@ export function QuickViewModal({ product, isOpen, onClose, onViewFullDetails }: 
               </div>
 
               {/* Preço */}
-              <div className="bg-gray-50 p-4 rounded-xl mb-6">
-                <div className="flex items-end gap-3 mb-2">
-                  <span className="text-3xl font-bold text-gray-900">R$ {product.price.toFixed(2)}</span>
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-lg sm:rounded-xl mb-4 sm:mb-6">
+                <div className="flex items-end gap-2 sm:gap-3 mb-2 flex-wrap">
+                  <span className="text-2xl sm:text-3xl font-bold text-gray-900">R$ {product.price.toFixed(2)}</span>
                   {product.originalPrice && (
-                    <span className="text-lg text-gray-400 line-through mb-1">
+                    <span className="text-base sm:text-lg text-gray-400 line-through mb-1">
                       R$ {product.originalPrice.toFixed(2)}
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-primary-600 font-medium flex items-center">
-                  <CreditCard className="w-4 h-4 mr-1" /> 5% de desconto no PIX
+                <p className="text-xs sm:text-sm text-primary-600 font-medium flex items-center gap-1">
+                  <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" /> 5% de desconto no PIX
                 </p>
-                <p className="text-xs text-gray-400 mt-2">ou em até 12x no cartão</p>
+                <p className="text-[10px] sm:text-xs text-gray-400 mt-1 sm:mt-2">ou em até 12x no cartão</p>
               </div>
-
-              {/* Descrição */}
-              <p className="text-gray-600 mb-6 leading-relaxed text-sm">{product.description}</p>
 
               {/* Opções de Sabor */}
               {product.flavors && product.flavors.length > 0 && (
-                <div className="mb-6">
-                  <label className="block text-sm font-bold text-gray-900 mb-3">
+                <div className="mb-4 sm:mb-6">
+                  <label className="block text-xs sm:text-sm font-bold text-gray-900 mb-2 sm:mb-3">
                     Sabor: {selectedFlavor && <span className="text-primary-600 font-normal">({selectedFlavor})</span>}
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -182,11 +181,13 @@ export function QuickViewModal({ product, isOpen, onClose, onViewFullDetails }: 
                       <button
                         key={flavor}
                         onClick={() => setSelectedFlavor(flavor)}
-                        className={`px-3 py-1.5 rounded-lg border-2 text-sm font-medium transition-all ${
+                        className={`px-3 py-2 rounded-lg border-2 text-xs sm:text-sm font-medium transition-all touch-manipulation min-h-[44px] ${
                           selectedFlavor === flavor
-                            ? 'border-primary-600 bg-primary-50 text-primary-700'
-                            : 'border-gray-200 bg-white text-gray-700 hover:border-primary-300'
+                            ? 'border-primary-600 bg-primary-50 text-primary-700 active:bg-primary-100'
+                            : 'border-gray-200 bg-white text-gray-700 hover:border-primary-300 active:border-primary-400 active:bg-gray-50'
                         }`}
+                        aria-label={`Selecionar sabor ${flavor}`}
+                        aria-pressed={selectedFlavor === flavor}
                       >
                         {flavor}
                       </button>
@@ -196,20 +197,20 @@ export function QuickViewModal({ product, isOpen, onClose, onViewFullDetails }: 
               )}
 
               {/* Quantidade e Botões */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <label className="text-sm font-bold text-gray-900">Quantidade:</label>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <label className="text-xs sm:text-sm font-bold text-gray-900 whitespace-nowrap">Quantidade:</label>
                   <div className="flex items-center border border-gray-300 rounded-lg bg-white">
                     <button 
-                      className="p-2 hover:bg-gray-50 text-gray-600" 
+                      className="p-2 sm:p-2.5 hover:bg-gray-50 active:bg-gray-100 text-gray-600 transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center" 
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
                       aria-label="Diminuir quantidade"
                     >
                       <Minus className="w-4 h-4" />
                     </button>
-                    <span className="w-12 text-center font-bold">{quantity}</span>
+                    <span className="w-12 sm:w-14 text-center font-bold min-h-[44px] flex items-center justify-center" aria-label={`Quantidade: ${quantity}`}>{quantity}</span>
                     <button 
-                      className="p-2 hover:bg-gray-50 text-gray-600" 
+                      className="p-2 sm:p-2.5 hover:bg-gray-50 active:bg-gray-100 text-gray-600 transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center" 
                       onClick={() => setQuantity(quantity + 1)}
                       aria-label="Aumentar quantidade"
                     >
@@ -218,21 +219,22 @@ export function QuickViewModal({ product, isOpen, onClose, onViewFullDetails }: 
                   </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <Button 
                     variant="outline" 
-                    className="flex-1"
+                    className="flex-1 w-full sm:w-auto"
                     onClick={handleViewFullDetails}
                   >
-                    Ver Detalhes Completos
+                    <span className="hidden sm:inline">Ver Detalhes Completos</span>
+                    <span className="sm:hidden">Ver Detalhes</span>
                   </Button>
                   <Button 
                     size="lg" 
-                    className="flex-1 flex items-center justify-center gap-2"
+                    className="flex-1 w-full sm:w-auto flex items-center justify-center gap-2"
                     onClick={handleAddToCart}
                   >
-                    <ShoppingCart className="w-5 h-5" />
-                    Comprar
+                    <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                    <span>Comprar</span>
                   </Button>
                 </div>
               </div>

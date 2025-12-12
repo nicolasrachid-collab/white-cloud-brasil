@@ -490,45 +490,48 @@ export function ProductFilters({
     filters.priceRange[1] !== priceRange[1];
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 space-y-6">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header com botão Limpar */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-gray-900">Filtros</h3>
+        <h3 className="text-base sm:text-lg font-bold text-gray-900">Filtros</h3>
         {hasActiveFilters && (
           <button
             onClick={handleClearFilters}
-            className="text-sm text-gray-600 hover:text-primary-600 transition-colors flex items-center gap-1"
+            className="text-xs sm:text-sm text-gray-600 hover:text-primary-600 active:text-primary-700 transition-colors flex items-center gap-1 min-h-[44px] px-2 touch-manipulation"
+            aria-label="Limpar todos os filtros"
           >
             <X className="w-4 h-4" />
-            Limpar
+            <span>Limpar</span>
           </button>
         )}
       </div>
 
       {/* Filtro de Preço */}
-      <div className="border-b border-gray-200 pb-4">
+      <div className="border-b border-gray-200 pb-3 sm:pb-4">
         <button
           onClick={() => toggleGroup('price')}
-          className="w-full flex items-center justify-between text-left mb-3"
+          className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
+          aria-expanded={expandedGroups.price}
+          aria-controls="price-filter-content"
         >
-          <h4 className="font-semibold text-gray-900">Preço</h4>
+          <h4 className="text-sm sm:text-base font-semibold text-gray-900">Preço</h4>
           {expandedGroups.price ? (
-            <ChevronUp className="w-4 h-4 text-gray-500" />
+            <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-gray-500" />
+            <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
           )}
         </button>
         
         {expandedGroups.price && (
-          <div className="space-y-4">
+          <div id="price-filter-content" className="space-y-3 sm:space-y-4">
             {/* Slider Duplo */}
-            <div className="relative h-8">
+            <div className="relative h-10 sm:h-8 touch-manipulation">
               {/* Track de fundo */}
-              <div className="absolute top-1/2 left-0 right-0 h-2 bg-gray-200 rounded-lg -translate-y-1/2"></div>
+              <div className="absolute top-1/2 left-0 right-0 h-2.5 sm:h-2 bg-gray-200 rounded-lg -translate-y-1/2"></div>
               
               {/* Track ativo (entre os dois valores) */}
               <div 
-                className="absolute top-1/2 h-2 bg-primary-600 rounded-lg -translate-y-1/2"
+                className="absolute top-1/2 h-2.5 sm:h-2 bg-primary-600 rounded-lg -translate-y-1/2"
                 style={{
                   left: `${((filters.priceRange[0] - priceRange[0]) / (priceRange[1] - priceRange[0])) * 100}%`,
                   width: `${((filters.priceRange[1] - filters.priceRange[0]) / (priceRange[1] - priceRange[0])) * 100}%`,
@@ -545,7 +548,11 @@ export function ProductFilters({
                   const val = parseInt(e.target.value);
                   handlePriceChange(0, Math.min(val, filters.priceRange[1]));
                 }}
-                className="absolute top-1/2 w-full h-2 bg-transparent rounded-lg appearance-none cursor-pointer slider-thumb z-10 -translate-y-1/2"
+                className="absolute top-1/2 w-full h-6 sm:h-4 bg-transparent rounded-lg appearance-none cursor-pointer slider-thumb z-10 -translate-y-1/2 touch-manipulation"
+                aria-label="Preço mínimo"
+                aria-valuemin={priceRange[0]}
+                aria-valuemax={priceRange[1]}
+                aria-valuenow={filters.priceRange[0]}
               />
               
               {/* Slider máximo */}
@@ -558,38 +565,46 @@ export function ProductFilters({
                   const val = parseInt(e.target.value);
                   handlePriceChange(1, Math.max(val, filters.priceRange[0]));
                 }}
-                className="absolute top-1/2 w-full h-2 bg-transparent rounded-lg appearance-none cursor-pointer slider-thumb z-10 -translate-y-1/2"
+                className="absolute top-1/2 w-full h-6 sm:h-4 bg-transparent rounded-lg appearance-none cursor-pointer slider-thumb z-10 -translate-y-1/2 touch-manipulation"
+                aria-label="Preço máximo"
+                aria-valuemin={priceRange[0]}
+                aria-valuemax={priceRange[1]}
+                aria-valuenow={filters.priceRange[1]}
               />
             </div>
 
             {/* Valores */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-end justify-between gap-2 sm:gap-4">
               <div className="flex-1">
-                <label className="text-xs text-gray-600 mb-1 block">Mínimo</label>
+                <label className="text-xs text-gray-600 mb-1 block" htmlFor="price-min">Mínimo</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">R$</span>
+                  <span className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">R$</span>
                   <input
+                    id="price-min"
                     type="number"
                     min={priceRange[0]}
                     max={filters.priceRange[1]}
                     value={filters.priceRange[0]}
                     onChange={(e) => handlePriceChange(0, parseInt(e.target.value) || priceRange[0])}
-                    className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full pl-7 sm:pl-8 pr-2 sm:pr-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm min-h-[44px]"
+                    aria-label="Preço mínimo em reais"
                   />
                 </div>
               </div>
-              <span className="text-gray-400 mt-6">-</span>
+              <span className="text-gray-400 mb-2 sm:mb-0">-</span>
               <div className="flex-1">
-                <label className="text-xs text-gray-600 mb-1 block">Máximo</label>
+                <label className="text-xs text-gray-600 mb-1 block" htmlFor="price-max">Máximo</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">R$</span>
+                  <span className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">R$</span>
                   <input
+                    id="price-max"
                     type="number"
                     min={filters.priceRange[0]}
                     max={priceRange[1]}
                     value={filters.priceRange[1]}
                     onChange={(e) => handlePriceChange(1, parseInt(e.target.value) || priceRange[1])}
-                    className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full pl-7 sm:pl-8 pr-2 sm:pr-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm min-h-[44px]"
+                    aria-label="Preço máximo em reais"
                   />
                 </div>
               </div>
@@ -604,36 +619,40 @@ export function ProductFilters({
       </div>
 
       {/* Filtro de Estoque */}
-      <div className="border-b border-gray-200 pb-4">
+      <div className="border-b border-gray-200 pb-3 sm:pb-4">
         <button
           onClick={() => toggleGroup('stock')}
-          className="w-full flex items-center justify-between text-left mb-3"
+          className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
+          aria-expanded={expandedGroups.stock}
+          aria-controls="stock-filter-content"
         >
-          <h4 className="font-semibold text-gray-900">Disponibilidade</h4>
+          <h4 className="text-sm sm:text-base font-semibold text-gray-900">Disponibilidade</h4>
           {expandedGroups.stock ? (
-            <ChevronUp className="w-4 h-4 text-gray-500" />
+            <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-gray-500" />
+            <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
           )}
         </button>
         
         {expandedGroups.stock && (
-          <div className="space-y-3">
-            <label className="flex items-center gap-3 cursor-pointer">
+          <div id="stock-filter-content" className="space-y-2 sm:space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer min-h-[44px] px-1 touch-manipulation hover:bg-gray-50 rounded-lg transition-colors">
               <input
                 type="checkbox"
                 checked={filters.inStock}
                 onChange={(e) => setFilters(prev => ({ ...prev, inStock: e.target.checked }))}
-                className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                className="w-5 h-5 sm:w-5 sm:h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500 flex-shrink-0"
+                aria-label="Filtrar produtos em estoque"
               />
               <span className="text-sm text-gray-700">Em Estoque</span>
             </label>
-            <label className="flex items-center gap-3 cursor-pointer">
+            <label className="flex items-center gap-3 cursor-pointer min-h-[44px] px-1 touch-manipulation hover:bg-gray-50 rounded-lg transition-colors">
               <input
                 type="checkbox"
                 checked={filters.outOfStock}
                 onChange={(e) => setFilters(prev => ({ ...prev, outOfStock: e.target.checked }))}
-                className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                className="w-5 h-5 sm:w-5 sm:h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500 flex-shrink-0"
+                aria-label="Filtrar produtos fora de estoque"
               />
               <span className="text-sm text-gray-700">Fora de Estoque</span>
             </label>
@@ -643,32 +662,35 @@ export function ProductFilters({
 
       {/* Filtro de Perfis de Sabor */}
       {getAvailableFlavorProfiles().length > 0 && (
-        <div className="border-b border-gray-200 pb-4">
+        <div className="border-b border-gray-200 pb-3 sm:pb-4">
           <button
             onClick={() => toggleGroup('flavorProfiles')}
-            className="w-full flex items-center justify-between text-left mb-3"
+            className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
+            aria-expanded={expandedGroups.flavorProfiles}
+            aria-controls="flavorProfiles-filter-content"
           >
-            <h4 className="font-semibold text-gray-900">Perfis de Sabor</h4>
+            <h4 className="text-sm sm:text-base font-semibold text-gray-900">Perfis de Sabor</h4>
             {expandedGroups.flavorProfiles ? (
-              <ChevronUp className="w-4 h-4 text-gray-500" />
+              <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+              <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             )}
           </button>
           
           {expandedGroups.flavorProfiles && (
-            <div className="space-y-2">
+            <div id="flavorProfiles-filter-content" className="space-y-2">
               {Object.keys(FLAVOR_PROFILES).map(profile => {
                 const count = getFlavorProfileCount(profile);
                 if (count === 0) return null;
                 
                 return (
-                  <label key={profile} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <label key={profile} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 p-2 rounded min-h-[44px] touch-manipulation transition-colors">
                     <input
                       type="checkbox"
                       checked={filters.flavorProfiles.includes(profile)}
                       onChange={() => handleToggleFilter('flavorProfiles', profile)}
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500 flex-shrink-0"
+                      aria-label={`Filtrar por perfil de sabor ${profile}`}
                     />
                     <span className="text-sm text-gray-700 flex-1">{profile}</span>
                     <span className="text-xs text-gray-500">({count})</span>
@@ -682,42 +704,46 @@ export function ProductFilters({
 
       {/* Filtro de Sabores */}
       {availableOptions.flavors.length > 0 && (
-        <div className="border-b border-gray-200 pb-4">
+        <div className="border-b border-gray-200 pb-3 sm:pb-4">
           <button
             onClick={() => toggleGroup('flavors')}
-            className="w-full flex items-center justify-between text-left mb-3"
+            className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
+            aria-expanded={expandedGroups.flavors}
+            aria-controls="flavors-filter-content"
           >
-            <h4 className="font-semibold text-gray-900">Sabores</h4>
+            <h4 className="text-sm sm:text-base font-semibold text-gray-900">Sabores</h4>
             {expandedGroups.flavors ? (
-              <ChevronUp className="w-4 h-4 text-gray-500" />
+              <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+              <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             )}
           </button>
           
           {expandedGroups.flavors && (
-            <div className="space-y-3">
+            <div id="flavors-filter-content" className="space-y-3">
               {/* Busca */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" aria-hidden="true" />
                 <input
                   type="text"
                   placeholder="Buscar sabor..."
                   value={filterSearches.flavors || ''}
                   onChange={(e) => setFilterSearches(prev => ({ ...prev, flavors: e.target.value }))}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                  className="w-full pl-10 pr-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm min-h-[44px]"
+                  aria-label="Buscar sabor"
                 />
               </div>
 
               {/* Lista de opções */}
               <div className="max-h-64 overflow-y-auto space-y-2">
                 {getFilteredOptions('flavors').map(option => (
-                  <label key={option.value} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <label key={option.value} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 p-2 rounded min-h-[44px] touch-manipulation transition-colors">
                     <input
                       type="checkbox"
                       checked={filters.flavors.includes(option.value)}
                       onChange={() => handleToggleFilter('flavors', option.value)}
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500 flex-shrink-0"
+                      aria-label={`Filtrar por sabor ${option.label}`}
                     />
                     <span className="text-sm text-gray-700 flex-1">{option.label}</span>
                     <span className="text-xs text-gray-500">({option.count})</span>
@@ -731,42 +757,46 @@ export function ProductFilters({
 
       {/* Filtro de Nicotina */}
       {availableOptions.nicotine.length > 0 && (
-        <div className="border-b border-gray-200 pb-4">
+        <div className="border-b border-gray-200 pb-3 sm:pb-4">
           <button
             onClick={() => toggleGroup('nicotine')}
-            className="w-full flex items-center justify-between text-left mb-3"
+            className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
+            aria-expanded={expandedGroups.nicotine}
+            aria-controls="nicotine-filter-content"
           >
-            <h4 className="font-semibold text-gray-900">Teor de Nicotina</h4>
+            <h4 className="text-sm sm:text-base font-semibold text-gray-900">Teor de Nicotina</h4>
             {expandedGroups.nicotine ? (
-              <ChevronUp className="w-4 h-4 text-gray-500" />
+              <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+              <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             )}
           </button>
           
           {expandedGroups.nicotine && (
-            <div className="space-y-3">
+            <div id="nicotine-filter-content" className="space-y-3">
               {/* Busca */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" aria-hidden="true" />
                 <input
                   type="text"
                   placeholder="Buscar teor..."
                   value={filterSearches.nicotine || ''}
                   onChange={(e) => setFilterSearches(prev => ({ ...prev, nicotine: e.target.value }))}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                  className="w-full pl-10 pr-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm min-h-[44px]"
+                  aria-label="Buscar teor de nicotina"
                 />
               </div>
 
               {/* Lista de opções */}
               <div className="max-h-64 overflow-y-auto space-y-2">
                 {getFilteredOptions('nicotine').map(option => (
-                  <label key={option.value} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <label key={option.value} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 p-2 rounded min-h-[44px] touch-manipulation transition-colors">
                     <input
                       type="checkbox"
                       checked={filters.nicotine.includes(option.value)}
                       onChange={() => handleToggleFilter('nicotine', option.value)}
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500 flex-shrink-0"
+                      aria-label={`Filtrar por teor de nicotina ${option.label}`}
                     />
                     <span className="text-sm text-gray-700 flex-1">{option.label}</span>
                     <span className="text-xs text-gray-500">({option.count})</span>
@@ -780,42 +810,46 @@ export function ProductFilters({
 
       {/* Filtro de Marcas */}
       {availableOptions.brands.length > 0 && (
-        <div className="border-b border-gray-200 pb-4">
+        <div className="border-b border-gray-200 pb-3 sm:pb-4">
           <button
             onClick={() => toggleGroup('brands')}
-            className="w-full flex items-center justify-between text-left mb-3"
+            className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
+            aria-expanded={expandedGroups.brands}
+            aria-controls="brands-filter-content"
           >
-            <h4 className="font-semibold text-gray-900">Marcas</h4>
+            <h4 className="text-sm sm:text-base font-semibold text-gray-900">Marcas</h4>
             {expandedGroups.brands ? (
-              <ChevronUp className="w-4 h-4 text-gray-500" />
+              <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+              <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             )}
           </button>
           
           {expandedGroups.brands && (
-            <div className="space-y-3">
+            <div id="brands-filter-content" className="space-y-3">
               {/* Busca */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" aria-hidden="true" />
                 <input
                   type="text"
                   placeholder="Buscar marca..."
                   value={filterSearches.brands || ''}
                   onChange={(e) => setFilterSearches(prev => ({ ...prev, brands: e.target.value }))}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                  className="w-full pl-10 pr-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm min-h-[44px]"
+                  aria-label="Buscar marca"
                 />
               </div>
 
               {/* Lista de opções */}
               <div className="max-h-64 overflow-y-auto space-y-2">
                 {getFilteredOptions('brands').map(option => (
-                  <label key={option.value} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <label key={option.value} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 p-2 rounded min-h-[44px] touch-manipulation transition-colors">
                     <input
                       type="checkbox"
                       checked={filters.brands.includes(option.value)}
                       onChange={() => handleToggleFilter('brands', option.value)}
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500 flex-shrink-0"
+                      aria-label={`Filtrar por marca ${option.value}`}
                     />
                     <span className="text-sm text-gray-700 flex-1">{option.value}</span>
                     <span className="text-xs text-gray-500">({option.count})</span>
@@ -829,42 +863,46 @@ export function ProductFilters({
 
       {/* Filtro de Cores */}
       {availableOptions.colors.length > 0 && (
-        <div className="border-b border-gray-200 pb-4">
+        <div className="border-b border-gray-200 pb-3 sm:pb-4">
           <button
             onClick={() => toggleGroup('colors')}
-            className="w-full flex items-center justify-between text-left mb-3"
+            className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
+            aria-expanded={expandedGroups.colors}
+            aria-controls="colors-filter-content"
           >
-            <h4 className="font-semibold text-gray-900">Cores</h4>
+            <h4 className="text-sm sm:text-base font-semibold text-gray-900">Cores</h4>
             {expandedGroups.colors ? (
-              <ChevronUp className="w-4 h-4 text-gray-500" />
+              <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+              <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             )}
           </button>
           
           {expandedGroups.colors && (
-            <div className="space-y-3">
+            <div id="colors-filter-content" className="space-y-3">
               {/* Busca */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" aria-hidden="true" />
                 <input
                   type="text"
                   placeholder="Buscar cor..."
                   value={filterSearches.colors || ''}
                   onChange={(e) => setFilterSearches(prev => ({ ...prev, colors: e.target.value }))}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                  className="w-full pl-10 pr-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm min-h-[44px]"
+                  aria-label="Buscar cor"
                 />
               </div>
 
               {/* Lista de opções */}
               <div className="max-h-64 overflow-y-auto space-y-2">
                 {getFilteredOptions('colors').map(option => (
-                  <label key={option.value} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <label key={option.value} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 p-2 rounded min-h-[44px] touch-manipulation transition-colors">
                     <input
                       type="checkbox"
                       checked={filters.colors.includes(option.value)}
                       onChange={() => handleToggleFilter('colors', option.value)}
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500 flex-shrink-0"
+                      aria-label={`Filtrar por cor ${option.value}`}
                     />
                     <span className="text-sm text-gray-700 flex-1">{option.value}</span>
                     <span className="text-xs text-gray-500">({option.count})</span>
@@ -880,7 +918,8 @@ export function ProductFilters({
       {hasActiveFilters && (
         <button
           onClick={handleClearFilters}
-          className="w-full py-2 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          className="w-full py-3 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors min-h-[44px] touch-manipulation"
+          aria-label="Limpar todos os filtros aplicados"
         >
           Limpar Filtros
         </button>

@@ -128,8 +128,8 @@ const Header = () => {
         </div>
       </div>
 
-      <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
-        <div className="container mx-auto px-3 sm:px-4 h-20 sm:h-24 md:h-28 flex items-center justify-between gap-3 sm:gap-6 md:gap-8">
+      <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100 w-full overflow-x-hidden">
+        <div className="container mx-auto px-3 sm:px-4 h-20 sm:h-24 md:h-28 flex items-center justify-between gap-3 sm:gap-6 md:gap-8 max-w-full">
           {/* Logo */}
           <div 
             className="cursor-pointer flex-shrink-0"
@@ -241,7 +241,7 @@ const Header = () => {
                       </button>
                       
                       {/* Dropdown Menu - Design Moderno */}
-                      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[900px] bg-white rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 z-[60] ${
+                      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[90vw] max-w-[900px] bg-white rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 z-[60] ${
                         openDropdown === cat.id 
                           ? 'opacity-100 visible translate-y-0' 
                           : 'opacity-0 invisible -translate-y-2 pointer-events-none'
@@ -572,7 +572,7 @@ const ProductCard: React.FC<{
 
   return (
     <div 
-      className="group bg-white rounded-lg sm:rounded-xl border border-gray-100 overflow-hidden transition-all duration-300 cursor-pointer flex flex-col h-full relative hover:shadow-xl sm:hover:shadow-2xl hover:scale-[1.01] sm:hover:scale-[1.02] hover:border-primary-200 hover:z-10"
+      className="group bg-white rounded-lg sm:rounded-xl border border-gray-100 overflow-hidden transition-all duration-300 cursor-pointer flex flex-col h-full w-full relative hover:shadow-xl sm:hover:shadow-2xl hover:scale-[1.01] sm:hover:scale-[1.02] hover:border-primary-200 hover:z-10"
       onClick={onClick}
     >
       {/* Floating Badges */}
@@ -697,7 +697,7 @@ const ProductCard: React.FC<{
             <span className="text-[10px] sm:text-xs text-gray-500 mb-1">Ã  vista</span>
           </div>
           <p className="text-[9px] sm:text-[10px] text-gray-400 mt-1">
-            ou em atÃ© 12x no cartÃ£o
+            ou em até 12x no cartão
           </p>
         </div>
       </div>
@@ -885,10 +885,10 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     </section>
 
     {/* 4. New Arrivals */}
-    <section className="container mx-auto px-3 sm:px-4">
+    <section className="container mx-auto px-3 sm:px-4 md:px-6">
       <SectionHeader title="Novidades Chegando" onLinkClick={() => navigateRouter('/catalogo')} />
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-        {(products || []).slice(0, 5).map(product => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
+        {(products || []).slice(0, 12).map(product => (
           <ProductCard 
             key={product.id} 
             product={{...product, isNew: true}} 
@@ -922,43 +922,28 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
       </div>
     </section>
 
-    {/* 6. Best Sellers Layout (Banner Left + Grid Right) */}
+    {/* 6. Best Sellers Layout */}
     <section className="bg-gray-50 py-8 sm:py-12">
-      <div className="container mx-auto px-3 sm:px-4">
+      <div className="container mx-auto px-3 sm:px-4 md:px-6">
         <SectionHeader title="Os Mais Vendidos" onLinkClick={() => navigateRouter('/catalogo')} />
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
-          {/* Large Vertical Banner */}
-          <div className="hidden lg:block lg:col-span-1 relative rounded-xl overflow-hidden h-full min-h-[400px]">
-            <img src="https://placehold.co/400x800/0f172a/FFF?text=BEST+SELLER+POD" className="w-full h-full object-cover absolute inset-0" alt="Destaque" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-8 text-white">
-              <span className="text-amber-400 font-bold mb-2">TOP #1</span>
-              <h3 className="text-3xl font-bold leading-tight mb-4">O preferido da galera</h3>
-              <Button className="w-full bg-primary-600 text-white hover:bg-primary-700">Comprar Agora</Button>
-            </div>
-          </div>
-          
-          {/* Grid */}
-          <div className="col-span-1 lg:col-span-3">
-             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                {(products || []).filter(p => p.isBestSeller).slice(0, 6).map(product => (
-                  <ProductCard 
-                    key={product.id} 
-                    product={product} 
-                    onClick={() => handleProductClick(product.id)}
-                    onQuickView={onQuickView}
-                    onQuickAdd={onQuickAdd}
-                  />
-                ))}
-             </div>
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
+          {(products || []).filter(p => p.isBestSeller).slice(0, 12).map(product => (
+            <ProductCard 
+              key={product.id} 
+              product={product} 
+              onClick={() => handleProductClick(product.id)}
+              onQuickView={onQuickView}
+              onQuickAdd={onQuickAdd}
+            />
+          ))}
         </div>
       </div>
     </section>
 
     {/* 7. Best Offers */}
-    <section className="container mx-auto px-3 sm:px-4">
+    <section className="container mx-auto px-3 sm:px-4 md:px-6">
       <SectionHeader title="Ofertas Relâmpago" onLinkClick={() => navigateRouter('/catalogo')} />
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
         {(products || []).map(product => (
            <ProductCard 
              key={`offer-${product.id}`} 
@@ -967,15 +952,15 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
              onQuickView={onQuickView}
              onQuickAdd={onQuickAdd}
            />
-        )).slice(0, 6)}
+        )).slice(0, 12)}
       </div>
     </section>
 
     {/* 8. Customer Favorites */}
-    <section className="container mx-auto px-3 sm:px-4">
+    <section className="container mx-auto px-3 sm:px-4 md:px-6">
       <SectionHeader title="Queridinhos dos Clientes" onLinkClick={() => navigateRouter('/catalogo')} />
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
-        {(products || []).slice(2, 6).map(product => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
+        {(products || []).slice(0, 12).map(product => (
            <ProductCard 
              key={`fav-${product.id}`} 
              product={product} 
@@ -1048,9 +1033,6 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
         })}
       </div>
     </section>
-
-    {/* 10. Email Capture */}
-    <EmailCapture />
   </div>
   );
 };
@@ -4487,11 +4469,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans text-gray-900 bg-white">
+    <div className="min-h-screen flex flex-col font-sans text-gray-900 bg-white w-full overflow-x-hidden">
       <AgeVerificationModal />
       <Header />
 
-      <main className="flex-1">
+      <main className="flex-1 w-full overflow-x-hidden">
         <Routes>
           <Route path="/" element={<Home onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
           <Route path="/catalogo" element={<Catalog onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
@@ -4504,6 +4486,7 @@ export default function App() {
           <Route path="/conta" element={<AccountPage />} />
           <Route path="*" element={<Home onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
         </Routes>
+        <EmailCapture />
       </main>
 
       {/* Toast Notification */}
@@ -4557,36 +4540,36 @@ export default function App() {
               <h4 className="text-white font-bold text-lg mb-4">Pagamento</h4>
               <div className="flex flex-wrap gap-2">
                  {/* Visa */}
-                 <div className="h-10 w-16 bg-white rounded flex items-center justify-center px-1 shadow-sm">
-                   <span className="text-[10px] font-bold text-blue-900">VISA</span>
+                 <div className="h-10 w-16 rounded flex items-center justify-center px-1 border border-gray-700/50">
+                   <span className="text-[10px] font-bold text-white">VISA</span>
                  </div>
                  {/* Mastercard */}
-                 <div className="h-10 w-16 bg-white rounded flex items-center justify-center px-1 shadow-sm">
+                 <div className="h-10 w-16 rounded flex items-center justify-center px-1 border border-gray-700/50">
                    <div className="flex items-center gap-0.5">
                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
                      <div className="w-3 h-3 rounded-full bg-orange-500 -ml-1.5"></div>
                    </div>
                  </div>
                  {/* Elo */}
-                 <div className="h-10 w-16 bg-white rounded flex items-center justify-center px-1 shadow-sm">
-                   <span className="text-[9px] font-bold text-gray-900">elo</span>
+                 <div className="h-10 w-16 rounded flex items-center justify-center px-1 border border-gray-700/50">
+                   <span className="text-[9px] font-bold text-white">elo</span>
                  </div>
                  {/* American Express */}
-                 <div className="h-10 w-16 bg-blue-600 rounded flex items-center justify-center px-1 shadow-sm">
+                 <div className="h-10 w-16 rounded flex items-center justify-center px-1 border border-gray-700/50">
                    <span className="text-[7px] font-bold text-white">AMERICAN EXPRESS</span>
                  </div>
                  {/* Hipercard */}
-                 <div className="h-10 w-16 bg-red-600 rounded flex items-center justify-center px-1 shadow-sm">
+                 <div className="h-10 w-16 rounded flex items-center justify-center px-1 border border-gray-700/50">
                    <span className="text-[8px] font-bold text-white">Hipercard</span>
                  </div>
                  {/* PIX */}
-                 <div className="h-10 w-16 bg-white rounded flex items-center justify-center px-1 shadow-sm">
-                   <span className="text-[9px] font-bold text-gray-800">PIX</span>
+                 <div className="h-10 w-16 rounded flex items-center justify-center px-1 border border-gray-700/50">
+                   <span className="text-[9px] font-bold text-white">PIX</span>
                  </div>
                  {/* Boleto */}
-                 <div className="h-10 w-16 bg-white rounded flex flex-col items-center justify-center px-1 shadow-sm">
-                   <div className="w-full h-2 bg-gray-800 mb-0.5"></div>
-                   <span className="text-[7px] font-bold text-gray-800">BOLETO</span>
+                 <div className="h-10 w-16 rounded flex flex-col items-center justify-center px-1 border border-gray-700/50">
+                   <div className="w-full h-2 bg-white/20 mb-0.5"></div>
+                   <span className="text-[7px] font-bold text-white">BOLETO</span>
                  </div>
               </div>
             </div>
