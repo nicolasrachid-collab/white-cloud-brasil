@@ -506,118 +506,6 @@ export function ProductFilters({
         )}
       </div>
 
-      {/* Filtro de Preço */}
-      <div className="border-b border-gray-200 pb-3 sm:pb-4">
-        <button
-          onClick={() => toggleGroup('price')}
-          className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
-          aria-expanded={expandedGroups.price}
-          aria-controls="price-filter-content"
-        >
-          <h4 className="text-sm sm:text-base font-semibold text-gray-900">Preço</h4>
-          {expandedGroups.price ? (
-            <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
-          ) : (
-            <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
-          )}
-        </button>
-        
-        {expandedGroups.price && (
-          <div id="price-filter-content" className="space-y-3 sm:space-y-4">
-            {/* Slider Duplo */}
-            <div className="relative h-10 sm:h-8 touch-manipulation">
-              {/* Track de fundo */}
-              <div className="absolute top-1/2 left-0 right-0 h-2.5 sm:h-2 bg-gray-200 rounded-lg -translate-y-1/2"></div>
-              
-              {/* Track ativo (entre os dois valores) */}
-              <div 
-                className="absolute top-1/2 h-2.5 sm:h-2 bg-primary-600 rounded-lg -translate-y-1/2"
-                style={{
-                  left: `${((filters.priceRange[0] - priceRange[0]) / (priceRange[1] - priceRange[0])) * 100}%`,
-                  width: `${((filters.priceRange[1] - filters.priceRange[0]) / (priceRange[1] - priceRange[0])) * 100}%`,
-                }}
-              ></div>
-              
-              {/* Slider mínimo */}
-              <input
-                type="range"
-                min={priceRange[0]}
-                max={priceRange[1]}
-                value={filters.priceRange[0]}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value);
-                  handlePriceChange(0, Math.min(val, filters.priceRange[1]));
-                }}
-                className="absolute top-1/2 w-full h-6 sm:h-4 bg-transparent rounded-lg appearance-none cursor-pointer slider-thumb z-10 -translate-y-1/2 touch-manipulation"
-                aria-label="Preço mínimo"
-                aria-valuemin={priceRange[0]}
-                aria-valuemax={priceRange[1]}
-                aria-valuenow={filters.priceRange[0]}
-              />
-              
-              {/* Slider máximo */}
-              <input
-                type="range"
-                min={priceRange[0]}
-                max={priceRange[1]}
-                value={filters.priceRange[1]}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value);
-                  handlePriceChange(1, Math.max(val, filters.priceRange[0]));
-                }}
-                className="absolute top-1/2 w-full h-6 sm:h-4 bg-transparent rounded-lg appearance-none cursor-pointer slider-thumb z-10 -translate-y-1/2 touch-manipulation"
-                aria-label="Preço máximo"
-                aria-valuemin={priceRange[0]}
-                aria-valuemax={priceRange[1]}
-                aria-valuenow={filters.priceRange[1]}
-              />
-            </div>
-
-            {/* Valores */}
-            <div className="flex items-end justify-between gap-2 sm:gap-4">
-              <div className="flex-1">
-                <label className="text-xs text-gray-600 mb-1 block" htmlFor="price-min">Mínimo</label>
-                <div className="relative">
-                  <span className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">R$</span>
-                  <input
-                    id="price-min"
-                    type="number"
-                    min={priceRange[0]}
-                    max={filters.priceRange[1]}
-                    value={filters.priceRange[0]}
-                    onChange={(e) => handlePriceChange(0, parseInt(e.target.value) || priceRange[0])}
-                    className="w-full pl-7 sm:pl-8 pr-2 sm:pr-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm min-h-[44px]"
-                    aria-label="Preço mínimo em reais"
-                  />
-                </div>
-              </div>
-              <span className="text-gray-400 mb-2 sm:mb-0">-</span>
-              <div className="flex-1">
-                <label className="text-xs text-gray-600 mb-1 block" htmlFor="price-max">Máximo</label>
-                <div className="relative">
-                  <span className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">R$</span>
-                  <input
-                    id="price-max"
-                    type="number"
-                    min={filters.priceRange[0]}
-                    max={priceRange[1]}
-                    value={filters.priceRange[1]}
-                    onChange={(e) => handlePriceChange(1, parseInt(e.target.value) || priceRange[1])}
-                    className="w-full pl-7 sm:pl-8 pr-2 sm:pr-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm min-h-[44px]"
-                    aria-label="Preço máximo em reais"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Display atual */}
-            <div className="text-center text-sm font-medium text-primary-600">
-              R$ {filters.priceRange[0]} – R$ {filters.priceRange[1]}
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* Filtro de Estoque */}
       <div className="border-b border-gray-200 pb-3 sm:pb-4">
         <button
@@ -913,6 +801,118 @@ export function ProductFilters({
           )}
         </div>
       )}
+
+      {/* Filtro de Preço - Sempre o último */}
+      <div className="border-b border-gray-200 pb-3 sm:pb-4">
+        <button
+          onClick={() => toggleGroup('price')}
+          className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
+          aria-expanded={expandedGroups.price}
+          aria-controls="price-filter-content"
+        >
+          <h4 className="text-sm sm:text-base font-semibold text-gray-900">Preço</h4>
+          {expandedGroups.price ? (
+            <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
+          ) : (
+            <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
+          )}
+        </button>
+        
+        {expandedGroups.price && (
+          <div id="price-filter-content" className="space-y-3 sm:space-y-4">
+            {/* Slider Duplo */}
+            <div className="relative h-10 sm:h-8 touch-manipulation">
+              {/* Track de fundo */}
+              <div className="absolute top-1/2 left-0 right-0 h-2.5 sm:h-2 bg-gray-200 rounded-lg -translate-y-1/2"></div>
+              
+              {/* Track ativo (entre os dois valores) */}
+              <div 
+                className="absolute top-1/2 h-2.5 sm:h-2 bg-primary-600 rounded-lg -translate-y-1/2"
+                style={{
+                  left: `${((filters.priceRange[0] - priceRange[0]) / (priceRange[1] - priceRange[0])) * 100}%`,
+                  width: `${((filters.priceRange[1] - filters.priceRange[0]) / (priceRange[1] - priceRange[0])) * 100}%`,
+                }}
+              ></div>
+              
+              {/* Slider mínimo */}
+              <input
+                type="range"
+                min={priceRange[0]}
+                max={priceRange[1]}
+                value={filters.priceRange[0]}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  handlePriceChange(0, Math.min(val, filters.priceRange[1]));
+                }}
+                className="absolute top-1/2 w-full h-6 sm:h-4 bg-transparent rounded-lg appearance-none cursor-pointer slider-thumb z-10 -translate-y-1/2 touch-manipulation"
+                aria-label="Preço mínimo"
+                aria-valuemin={priceRange[0]}
+                aria-valuemax={priceRange[1]}
+                aria-valuenow={filters.priceRange[0]}
+              />
+              
+              {/* Slider máximo */}
+              <input
+                type="range"
+                min={priceRange[0]}
+                max={priceRange[1]}
+                value={filters.priceRange[1]}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  handlePriceChange(1, Math.max(val, filters.priceRange[0]));
+                }}
+                className="absolute top-1/2 w-full h-6 sm:h-4 bg-transparent rounded-lg appearance-none cursor-pointer slider-thumb z-10 -translate-y-1/2 touch-manipulation"
+                aria-label="Preço máximo"
+                aria-valuemin={priceRange[0]}
+                aria-valuemax={priceRange[1]}
+                aria-valuenow={filters.priceRange[1]}
+              />
+            </div>
+
+            {/* Valores */}
+            <div className="flex items-end justify-between gap-2 sm:gap-4">
+              <div className="flex-1">
+                <label className="text-xs text-gray-600 mb-1 block" htmlFor="price-min">Mínimo</label>
+                <div className="relative">
+                  <span className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">R$</span>
+                  <input
+                    id="price-min"
+                    type="number"
+                    min={priceRange[0]}
+                    max={filters.priceRange[1]}
+                    value={filters.priceRange[0]}
+                    onChange={(e) => handlePriceChange(0, parseInt(e.target.value) || priceRange[0])}
+                    className="w-full pl-7 sm:pl-8 pr-2 sm:pr-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm min-h-[44px]"
+                    aria-label="Preço mínimo em reais"
+                  />
+                </div>
+              </div>
+              <span className="text-gray-400 mb-2 sm:mb-0">-</span>
+              <div className="flex-1">
+                <label className="text-xs text-gray-600 mb-1 block" htmlFor="price-max">Máximo</label>
+                <div className="relative">
+                  <span className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">R$</span>
+                  <input
+                    id="price-max"
+                    type="number"
+                    min={filters.priceRange[0]}
+                    max={priceRange[1]}
+                    value={filters.priceRange[1]}
+                    onChange={(e) => handlePriceChange(1, parseInt(e.target.value) || priceRange[1])}
+                    className="w-full pl-7 sm:pl-8 pr-2 sm:pr-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm min-h-[44px]"
+                    aria-label="Preço máximo em reais"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Display atual */}
+            <div className="text-center text-sm font-medium text-primary-600">
+              R$ {filters.priceRange[0]} – R$ {filters.priceRange[1]}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Botão Limpar no final */}
       {hasActiveFilters && (

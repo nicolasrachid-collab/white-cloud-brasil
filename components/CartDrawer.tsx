@@ -47,7 +47,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       />
 
       {/* Drawer */}
-      <div className="fixed top-0 right-0 h-full w-full sm:w-full sm:max-w-md bg-white shadow-2xl z-[90] transform transition-transform duration-300 ease-in-out flex flex-col">
+      <div className="fixed top-[147px] sm:top-[163px] lg:top-[221px] right-0 h-[calc(100vh-147px)] sm:h-[calc(100vh-163px)] lg:h-[calc(100vh-221px)] w-full sm:w-full sm:max-w-md bg-white shadow-2xl z-[90] transform transition-transform duration-300 ease-in-out flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">

@@ -20,6 +20,7 @@ export interface Product {
   includedItems?: string[]; // Itens inclusos na embalagem
   warranty?: string; // Texto de garantia
   paymentOptions?: string; // Opções de pagamento (ex: "Em até 12x sem juros")
+  complementaryProducts?: string[]; // IDs dos produtos complementares que fazem parte do kit
 }
 
 export interface CartItem extends Product {

@@ -48,7 +48,9 @@ import {
   Heart,
   Eye,
   Share2,
-  MessageCircle
+  MessageCircle,
+  Grid3x3,
+  List
 } from 'lucide-react';
 
 export { 
@@ -101,5 +103,7 @@ export {
   Heart,
   Eye,
   Share2,
-  MessageCircle
+  MessageCircle,
+  Grid3x3,
+  List
 };

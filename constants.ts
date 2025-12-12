@@ -343,7 +343,8 @@ A White Cloud Brasil trabalha exclusivamente com produtos originais e autenticad
       '1 Certificado de garantia'
     ],
     warranty: 'Garantia de 6 meses contra defeitos de fabricação, contados a partir da data de entrega. Não cobre mau uso, quedas ou danos causados por líquidos de má qualidade.',
-    paymentOptions: 'Em até 12x sem juros no cartão de crédito. 5% de desconto no pagamento via PIX.'
+    paymentOptions: 'Em até 12x sem juros no cartão de crédito. 5% de desconto no pagamento via PIX.',
+    complementaryProducts: ['2', '4'] // Juice NicSalt Mint Freeze + Coil Mesh Reposição
   },
   {
     id: '2',

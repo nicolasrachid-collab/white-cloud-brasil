@@ -12,6 +12,8 @@ interface AppContextType {
   selectedProductId: string | null;
   setSelectedProductId: (id: string | null) => void;
   navigate: (view: ViewState | string, productId?: string) => void;
+  isBannerVisible: boolean;
+  setIsBannerVisible: (visible: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -56,6 +58,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
+  
+  // Estado para controlar visibilidade do banner promocional
+  const [isBannerVisible, setIsBannerVisible] = useState(() => {
+    const bannerClosed = localStorage.getItem('promo-banner-closed');
+    return bannerClosed !== 'true';
+  });
   
   // Determinar view baseado na URL
   const getViewFromUrl = (): ViewState => {
@@ -146,6 +154,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     selectedProductId,
     setSelectedProductId,
     navigate,
+    isBannerVisible,
+    setIsBannerVisible,
   };
 
   return (

@@ -5,7 +5,7 @@ import {
   CreditCard, ArrowRight, Minus, Plus, Trash2, 
   MapPin, CheckCircle, TrendingUp, DollarSign, 
   Users, ChevronLeft, ChevronRight, ChevronDown, Mail, Instagram, Facebook, Youtube, Twitter,
-  Heart, Eye, Share2, Calendar, MessageCircle
+  Heart, Eye, Share2, Calendar, MessageCircle, Grid3x3, List
 } from './components/Icons';
 import { Button } from './components/Button';
 import Toast from './components/Toast';
@@ -35,7 +35,7 @@ const LOGO_URL = "/images/logo-whitecloud.png";
 // --- COMPONENTS ---
 
 const Header = () => {
-  const { searchTerm, setSearchTerm } = useApp();
+  const { searchTerm, setSearchTerm, isBannerVisible, setIsBannerVisible } = useApp();
   const navigateRouter = useNavigateRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -71,8 +71,9 @@ const Header = () => {
   useEffect(() => {
     const applyFlexWrap = () => {
       if (navListRef.current) {
-        navListRef.current.style.flexWrap = 'wrap';
+        navListRef.current.style.setProperty('flex-wrap', 'wrap', 'important');
         navListRef.current.classList.add('flex-wrap');
+        navListRef.current.classList.remove('flex-nowrap');
       }
     };
     
@@ -84,6 +85,40 @@ const Header = () => {
       requestAnimationFrame(() => {
         applyFlexWrap();
       });
+    });
+    
+    // Usar MutationObserver para detectar quando o estilo é alterado e forçar wrap novamente
+    // Aguardar um frame para garantir que o elemento está montado
+    requestAnimationFrame(() => {
+      if (navListRef.current) {
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
+              const target = mutation.target as HTMLElement;
+              if (target === navListRef.current) {
+                const computed = window.getComputedStyle(target);
+                if (computed.flexWrap === 'nowrap') {
+                  applyFlexWrap();
+                  
+                  // #region agent log
+                  fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:MutationObserver',message:'MutationObserver detected nowrap and applied wrap',data:{flexWrap:computed.flexWrap,inlineStyle:navListRef.current.style.flexWrap},timestamp:Date.now(),sessionId:'debug-session',runId:'run5',hypothesisId:'O'})}).catch(()=>{});
+                  // #endregion
+                }
+              }
+            }
+          });
+        });
+        
+        observer.observe(navListRef.current, {
+          attributes: true,
+          attributeFilter: ['style', 'class']
+        });
+        
+        // Limpar observer quando o componente for desmontado
+        return () => {
+          observer.disconnect();
+        };
+      }
     });
     
     const measureHierarchy = () => {
@@ -98,9 +133,53 @@ const Header = () => {
         return;
       }
       
-      // Garantir que flex-wrap está aplicado
-      navListRef.current.style.flexWrap = 'wrap';
-      navListRef.current.classList.add('flex-wrap');
+      // Forçar flex-wrap: wrap repetidamente para garantir que seja aplicado
+      const forceFlexWrap = () => {
+        if (navListRef.current) {
+          // Remover qualquer classe que possa estar forçando nowrap
+          navListRef.current.classList.remove('flex-nowrap');
+          navListRef.current.classList.add('flex-wrap');
+          // Forçar via estilo inline com !important
+          navListRef.current.style.setProperty('flex-wrap', 'wrap', 'important');
+          // Também forçar via style.flexWrap como fallback
+          navListRef.current.style.flexWrap = 'wrap';
+          
+          // #region agent log
+          const computed = window.getComputedStyle(navListRef.current);
+          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:forceFlexWrap',message:'forceFlexWrap executed',data:{flexWrap:computed.flexWrap,inlineStyle:navListRef.current.style.flexWrap,hasFlexWrapClass:navListRef.current.classList.contains('flex-wrap'),hasFlexNowrapClass:navListRef.current.classList.contains('flex-nowrap'),className:navListRef.current.className},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'N'})}).catch(()=>{});
+          // #endregion
+        }
+      };
+      
+      // Aplicar imediatamente
+      forceFlexWrap();
+      
+      // Aplicar após um pequeno delay para garantir que seja aplicado após qualquer outro código
+      setTimeout(forceFlexWrap, 0);
+      setTimeout(forceFlexWrap, 10);
+      setTimeout(forceFlexWrap, 50);
+      setTimeout(forceFlexWrap, 100);
+      setTimeout(forceFlexWrap, 200);
+      setTimeout(forceFlexWrap, 500);
+      
+      // Forçar estilos nos itens li e botões para garantir que sejam aplicados
+      const allListItemsForced = Array.from(navListRef.current.querySelectorAll('li'));
+      allListItemsForced.forEach((li) => {
+        const element = li as HTMLElement;
+        element.style.setProperty('flex-shrink', '1', 'important');
+        element.style.setProperty('min-width', '0', 'important');
+        element.style.setProperty('max-width', '100%', 'important');
+        element.style.setProperty('overflow', 'hidden', 'important');
+        
+        const button = element.querySelector('button') as HTMLElement;
+        if (button) {
+          button.style.setProperty('flex-shrink', '1', 'important');
+          button.style.setProperty('min-width', '0', 'important');
+          button.style.setProperty('max-width', '100%', 'important');
+          button.style.setProperty('overflow', 'hidden', 'important');
+          button.style.setProperty('text-overflow', 'ellipsis', 'important');
+        }
+      });
       
       const navRect = navRef.current.getBoundingClientRect();
       const containerRect = navContainerRef.current.getBoundingClientRect();
@@ -108,6 +187,10 @@ const Header = () => {
       const computedNav = window.getComputedStyle(navRef.current);
       const computedContainer = window.getComputedStyle(navContainerRef.current);
       const computedList = window.getComputedStyle(navListRef.current);
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:measureHierarchy',message:'measureHierarchy - flexWrap check',data:{flexWrap:computedList.flexWrap,inlineStyle:navListRef.current.style.flexWrap,hasFlexWrapClass:navListRef.current.classList.contains('flex-wrap'),hasFlexNowrapClass:navListRef.current.classList.contains('flex-nowrap'),className:navListRef.current.className,allClasses:Array.from(navListRef.current.classList)},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'N'})}).catch(()=>{});
+      // #endregion
       
       // Medir apenas os itens principais do menu (não os dropdowns)
       const allListItems = Array.from(navListRef.current.querySelectorAll('li'));
@@ -146,6 +229,85 @@ const Header = () => {
       const navHasOverflow = navRef.current ? navRef.current.scrollWidth > navRef.current.clientWidth : false;
       const containerHasOverflow = navContainerRef.current ? navContainerRef.current.scrollWidth > navContainerRef.current.clientWidth : false;
       const listHasOverflow = navListRef.current ? navListRef.current.scrollWidth > navListRef.current.clientWidth : false;
+      
+      // Verificar estilos dos itens li
+      const liStyles = listItems.map((li, idx) => {
+        const element = li as HTMLElement;
+        const computed = window.getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        const buttonEl = element.querySelector('button') as HTMLElement;
+        const buttonComputed = buttonEl ? window.getComputedStyle(buttonEl) : null;
+        const buttonRect = buttonEl ? buttonEl.getBoundingClientRect() : null;
+        return {
+          index: idx,
+          flexShrink: computed.flexShrink,
+          whiteSpace: computed.whiteSpace,
+          width: computed.width,
+          minWidth: computed.minWidth,
+          maxWidth: computed.maxWidth,
+          rectWidth: rect.width,
+          scrollWidth: element.scrollWidth,
+          clientWidth: element.clientWidth,
+          buttonStyles: buttonEl ? {
+            flexShrink: buttonComputed?.flexShrink,
+            whiteSpace: buttonComputed?.whiteSpace,
+            width: buttonComputed?.width,
+            minWidth: buttonComputed?.minWidth,
+            maxWidth: buttonComputed?.maxWidth,
+            rectWidth: buttonRect?.width,
+            scrollWidth: buttonEl.scrollWidth,
+            clientWidth: buttonEl.clientWidth,
+            inlineStyle: buttonEl.getAttribute('style') || '',
+            className: buttonEl.className
+          } : null
+        };
+      });
+      
+      // Verificar se as regras CSS estão sendo aplicadas
+      const firstLi = listItems[0] as HTMLElement;
+      const firstButton = firstLi?.querySelector('button') as HTMLElement;
+      const cssApplied = firstLi ? {
+        liInlineStyle: firstLi.getAttribute('style') || '',
+        liComputedFlexShrink: window.getComputedStyle(firstLi).flexShrink,
+        liComputedMaxWidth: window.getComputedStyle(firstLi).maxWidth,
+        buttonInlineStyle: firstButton?.getAttribute('style') || '',
+        buttonComputedFlexShrink: firstButton ? window.getComputedStyle(firstButton).flexShrink : null,
+        buttonComputedMaxWidth: firstButton ? window.getComputedStyle(firstButton).maxWidth : null,
+        cssRules: firstLi ? Array.from(document.styleSheets).flatMap(sheet => {
+          try {
+            return Array.from(sheet.cssRules || []).map((rule: any) => {
+              if (rule.selectorText && (rule.selectorText.includes('header > nav > div > ul > li') || rule.selectorText.includes('header > nav > div > ul > li > button'))) {
+                return {
+                  selector: rule.selectorText,
+                  cssText: rule.cssText,
+                  style: rule.style ? {
+                    flexShrink: rule.style.flexShrink,
+                    maxWidth: rule.style.maxWidth,
+                    minWidth: rule.style.minWidth
+                  } : null
+                };
+              }
+              return null;
+            }).filter(Boolean);
+          } catch (e) {
+            return [];
+          }
+        }).filter(Boolean) : []
+      } : null;
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:89',message:'Navigation overflow investigation v3 - CSS rules check',data:{
+        viewportWidth: window.innerWidth,
+        htmlOverflow: {scrollWidth: htmlElement.scrollWidth, clientWidth: htmlElement.clientWidth, hasOverflow: htmlHasOverflow, overflowX: htmlComputed.overflowX},
+        bodyOverflow: {scrollWidth: bodyElement.scrollWidth, clientWidth: bodyElement.clientWidth, hasOverflow: bodyHasOverflow, overflowX: bodyComputed.overflowX},
+        headerOverflow: headerElement ? {scrollWidth: headerElement.scrollWidth, clientWidth: headerElement.clientWidth, hasOverflow: headerHasOverflow, overflowX: headerComputed?.overflowX, width: headerComputed?.width, maxWidth: headerComputed?.maxWidth} : null,
+        navOverflow: {scrollWidth: navRef.current?.scrollWidth, clientWidth: navRef.current?.clientWidth, hasOverflow: navHasOverflow, overflowX: computedNav.overflowX, width: computedNav.width, maxWidth: computedNav.maxWidth, rect: {width: navRect.width, left: navRect.left}},
+        containerOverflow: {scrollWidth: navContainerRef.current?.scrollWidth, clientWidth: navContainerRef.current?.clientWidth, hasOverflow: containerHasOverflow, overflowX: computedContainer.overflowX, width: computedContainer.width, maxWidth: computedContainer.maxWidth, paddingLeft: computedContainer.paddingLeft, paddingRight: computedContainer.paddingRight, boxSizing: computedContainer.boxSizing, rect: {width: containerRect.width, left: containerRect.left}},
+        listOverflow: {scrollWidth: navListRef.current?.scrollWidth, clientWidth: navListRef.current?.clientWidth, hasOverflow: listHasOverflow, overflowX: computedList.overflowX, width: computedList.width, maxWidth: computedList.maxWidth, flexWrap: computedList.flexWrap, rect: {width: listRect.width, left: listRect.left}},
+        itemsInfo: {count: listItems.length, totalItemsWidth, estimatedTotalWidth, gap, itemWidths, liStyles},
+        cssApplied
+      },timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'I,J'})}).catch(()=>{});
+      // #endregion
     };
     
     // Executar imediatamente após um pequeno delay para garantir que o DOM está renderizado
@@ -163,16 +325,112 @@ const Header = () => {
 
   // Função para abrir dropdown com delay
   const handleMouseEnter = (categoryId: string) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter',message:'handleMouseEnter called',data:{categoryId,currentOpenDropdown:openDropdown},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU8'})}).catch(()=>{});
+    // #endregion
     if (closeTimeoutRef.current) {
       clearTimeout(closeTimeoutRef.current);
       closeTimeoutRef.current = null;
     }
+    
+    // Atualizar o estado PRIMEIRO
     setOpenDropdown(categoryId);
+    
+    // Forçar visibilidade ANTES de atualizar o estado React
+    const dropdownEl = document.querySelector(`[data-dropdown-id="${categoryId}"]`) as HTMLElement;
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:beforeForce',message:'Before forcing visibility',data:{categoryId,dropdownFound:!!dropdownEl,dropdownExists:dropdownEl ? {tagName:dropdownEl.tagName,className:dropdownEl.className,hasDataAttr:dropdownEl.hasAttribute('data-dropdown-open'),dataAttrValue:dropdownEl.getAttribute('data-dropdown-open'),computedVisibility:window.getComputedStyle(dropdownEl).visibility,computedOpacity:window.getComputedStyle(dropdownEl).opacity} : null},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'AO'})}).catch(()=>{});
+    // #endregion
+    if (dropdownEl) {
+      dropdownEl.setAttribute('data-dropdown-open', 'true');
+      dropdownEl.classList.remove('invisible', 'dropdown-closed');
+      dropdownEl.classList.add('visible', 'dropdown-open');
+      dropdownEl.style.setProperty('visibility', 'visible', 'important');
+      dropdownEl.style.setProperty('opacity', '1', 'important');
+      dropdownEl.style.setProperty('pointer-events', 'auto', 'important');
+      dropdownEl.style.setProperty('height', 'auto', 'important');
+      dropdownEl.style.setProperty('overflow', 'visible', 'important');
+      // #region agent log
+      const computedAfter = window.getComputedStyle(dropdownEl);
+      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:forceVisible',message:'Forced dropdown visibility in handleMouseEnter',data:{categoryId,hasDataAttr:dropdownEl.hasAttribute('data-dropdown-open'),dataAttrValue:dropdownEl.getAttribute('data-dropdown-open'),hasVisibleClass:dropdownEl.classList.contains('visible'),hasInvisibleClass:dropdownEl.classList.contains('invisible'),computedVisibility:computedAfter.visibility,computedOpacity:computedAfter.opacity,computedPointerEvents:computedAfter.pointerEvents,inlineVisibility:dropdownEl.style.visibility,inlineOpacity:dropdownEl.style.opacity,inlinePointerEvents:dropdownEl.style.pointerEvents},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'AI'})}).catch(()=>{});
+      // #endregion
+    } else {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:dropdownNotFound',message:'Dropdown element not found',data:{categoryId,allDropdowns:Array.from(document.querySelectorAll('[data-dropdown-id]')).map(el => ({id:(el as HTMLElement).getAttribute('data-dropdown-id'),tagName:el.tagName}))},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'AO'})}).catch(()=>{});
+      // #endregion
+    }
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:setState',message:'setOpenDropdown called',data:{categoryId,previousOpenDropdown:openDropdown},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU6'})}).catch(()=>{});
+    // #endregion
+    
+    // Forçar novamente após um pequeno delay para garantir
+    setTimeout(() => {
+      const dropdownElAfter = document.querySelector(`[data-dropdown-id="${categoryId}"]`) as HTMLElement;
+      if (dropdownElAfter) {
+        dropdownElAfter.setAttribute('data-dropdown-open', 'true');
+        dropdownElAfter.classList.remove('invisible', 'dropdown-closed');
+        dropdownElAfter.classList.add('visible', 'dropdown-open');
+        dropdownElAfter.style.setProperty('visibility', 'visible', 'important');
+        dropdownElAfter.style.setProperty('opacity', '1', 'important');
+        dropdownElAfter.style.setProperty('pointer-events', 'auto', 'important');
+        dropdownElAfter.style.setProperty('height', 'auto', 'important');
+        dropdownElAfter.style.setProperty('overflow', 'visible', 'important');
+      }
+    }, 10);
+    
+    // #region agent log
+    setTimeout(() => {
+      const dropdownEl = document.querySelector(`[data-dropdown-id="${categoryId}"]`) as HTMLElement;
+      const navEl = navRef.current;
+      const liEl = dropdownEl?.closest('li') as HTMLElement;
+      const navComputed = navEl ? window.getComputedStyle(navEl) : null;
+      const liComputed = liEl ? window.getComputedStyle(liEl) : null;
+      const dropdownComputed = dropdownEl ? window.getComputedStyle(dropdownEl) : null;
+      
+      // Verificar todos os elementos fixos na página
+      const allFixedElements = Array.from(document.querySelectorAll('*')).filter(el => {
+        const style = window.getComputedStyle(el);
+        return style.position === 'fixed' || style.position === 'sticky';
+      }).map(el => {
+        const style = window.getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        return {
+          tag: el.tagName,
+          className: el.className,
+          zIndex: style.zIndex,
+          position: style.position,
+          rect: {top: rect.top, left: rect.left, width: rect.width, height: rect.height}
+        };
+      });
+      
+      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:165',message:'Dropdown z-index check',data:{
+        categoryId,
+        dropdownZIndex: dropdownComputed?.zIndex || 'none',
+        dropdownPosition: dropdownComputed?.position || 'none',
+        dropdownVisibility: dropdownComputed?.visibility || 'none',
+        dropdownOpacity: dropdownComputed?.opacity || 'none',
+        navZIndex: navComputed?.zIndex || 'none',
+        liZIndex: liComputed?.zIndex || 'none',
+        dropdownRect: dropdownEl ? {top: dropdownEl.getBoundingClientRect().top, left: dropdownEl.getBoundingClientRect().left, width: dropdownEl.getBoundingClientRect().width, height: dropdownEl.getBoundingClientRect().height} : null,
+        navOverflow: navComputed?.overflow || 'none',
+        liOverflow: liComputed?.overflow || 'none',
+        allFixedElements
+      },timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
+    }, 100);
+    // #endregion
   };
 
   // Função para fechar dropdown com delay
   const handleMouseLeave = () => {
     closeTimeoutRef.current = setTimeout(() => {
+      // Remover atributo de dados e classes antes de atualizar o estado
+      const allDropdowns = document.querySelectorAll('[data-dropdown-id]') as NodeListOf<HTMLElement>;
+      allDropdowns.forEach(dropdown => {
+        dropdown.removeAttribute('data-dropdown-open');
+        dropdown.classList.remove('visible', 'dropdown-open');
+        dropdown.classList.add('invisible', 'dropdown-closed');
+      });
       setOpenDropdown(null);
     }, 200); // Delay de 200ms antes de fechar
   };
@@ -185,6 +443,246 @@ const Header = () => {
       }
     };
   }, []);
+
+  // Adicionar event listeners diretos no DOM para garantir que os eventos sejam capturados
+  useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:directEventListener:setup',message:'Setting up direct event listeners',data:{navListRefExists:!!navListRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU9'})}).catch(()=>{});
+    // #endregion
+    
+    const setupListeners = () => {
+      const navList = navListRef.current;
+      if (!navList) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:directEventListener:navListNotFound',message:'navList not found',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU9'})}).catch(()=>{});
+        // #endregion
+        return;
+      }
+
+      const handleLiMouseEnter = (e: MouseEvent) => {
+        const li = (e.target as HTMLElement).closest('li');
+        if (!li) return;
+        
+        const categoryId = li.getAttribute('data-category-id');
+        if (!categoryId) return;
+        
+        const cat = CATEGORIES.find(c => c.id === categoryId);
+        if (cat && cat.hasDropdown) {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:directEventListener',message:'Direct event listener triggered',data:{categoryId,hasDropdown:cat.hasDropdown},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU9'})}).catch(()=>{});
+          // #endregion
+          handleMouseEnter(categoryId);
+        }
+      };
+
+      // Adicionar data-category-id aos li elements
+      const listItems = navList.querySelectorAll('li');
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:directEventListener:foundItems',message:'Found list items',data:{listItemsCount:listItems.length},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU9'})}).catch(()=>{});
+      // #endregion
+      
+      listItems.forEach((li, index) => {
+        const cat = CATEGORIES[index];
+        if (cat) {
+          li.setAttribute('data-category-id', cat.id);
+          li.addEventListener('mouseenter', handleLiMouseEnter);
+        }
+      });
+
+      return () => {
+        listItems.forEach(li => {
+          li.removeEventListener('mouseenter', handleLiMouseEnter);
+        });
+      };
+    };
+
+    // Tentar configurar imediatamente
+    const cleanup = setupListeners();
+    
+    // Se não encontrou, tentar novamente após um delay
+    if (!navListRef.current) {
+      setTimeout(() => {
+        setupListeners();
+      }, 100);
+      setTimeout(() => {
+        setupListeners();
+      }, 500);
+    }
+
+    return cleanup;
+  }, []);
+
+  // Monitorar mudanças no estado openDropdown e forçar visibilidade
+  useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:openDropdown',message:'openDropdown state changed',data:{openDropdown,allDropdownsInDom:Array.from(document.querySelectorAll('[data-dropdown-id]')).map(el => (el as HTMLElement).getAttribute('data-dropdown-id'))},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU10'})}).catch(()=>{});
+    // #endregion
+    
+    // Fechar apenas os dropdowns que NÃO são o que está sendo aberto
+    const allDropdowns = document.querySelectorAll('[data-dropdown-id]') as NodeListOf<HTMLElement>;
+    allDropdowns.forEach((dropdown) => {
+      const dropdownId = dropdown.getAttribute('data-dropdown-id');
+      // Se este dropdown NÃO é o que está sendo aberto, fechá-lo
+      if (dropdownId !== openDropdown) {
+        // NÃO adicionar classes 'dropdown-closed' ou 'invisible' aqui
+        // Essas classes podem estar sendo usadas por regras CSS que sobrescrevem nossos estilos
+        dropdown.removeAttribute('data-dropdown-open');
+        dropdown.classList.remove('dropdown-open', 'visible', 'dropdown-closed', 'invisible');
+        dropdown.style.setProperty('visibility', 'hidden', 'important');
+        dropdown.style.setProperty('opacity', '0', 'important');
+        dropdown.style.setProperty('pointer-events', 'none', 'important');
+        dropdown.style.setProperty('display', 'none', 'important');
+      }
+    });
+    
+    // Forçar visibilidade do dropdown que está sendo aberto
+    if (openDropdown) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:openDropdown:beforeRAF',message:'Before requestAnimationFrame',data:{openDropdown},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'H'})}).catch(()=>{});
+      // #endregion
+      // Forçar imediatamente também
+      const dropdownElImmediate = document.querySelector(`[data-dropdown-id="${openDropdown}"]`) as HTMLElement;
+      if (dropdownElImmediate) {
+        // Remover classes de fechado
+        dropdownElImmediate.classList.remove('invisible', 'dropdown-closed');
+        // Adicionar classes de aberto
+        dropdownElImmediate.classList.add('visible', 'dropdown-open');
+        // Adicionar atributo de dados
+        dropdownElImmediate.setAttribute('data-dropdown-open', 'true');
+        // Forçar estilos inline
+        dropdownElImmediate.style.setProperty('visibility', 'visible', 'important');
+        dropdownElImmediate.style.setProperty('opacity', '1', 'important');
+        dropdownElImmediate.style.setProperty('pointer-events', 'auto', 'important');
+        dropdownElImmediate.style.setProperty('height', 'auto', 'important');
+        dropdownElImmediate.style.setProperty('overflow', 'visible', 'important');
+        dropdownElImmediate.style.setProperty('display', 'block', 'important');
+        // Também usar setProperty como fallback
+        dropdownElImmediate.style.setProperty('visibility', 'visible', 'important');
+        dropdownElImmediate.style.setProperty('opacity', '1', 'important');
+        dropdownElImmediate.style.setProperty('pointer-events', 'auto', 'important');
+        dropdownElImmediate.style.setProperty('height', 'auto', 'important');
+        dropdownElImmediate.style.setProperty('overflow', 'visible', 'important');
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:openDropdown:immediate',message:'Forced dropdown visibility immediately',data:{openDropdown,styleAttribute:dropdownElImmediate.getAttribute('style'),computedVisibility:window.getComputedStyle(dropdownElImmediate).visibility,computedOpacity:window.getComputedStyle(dropdownElImmediate).opacity,hasVisibleClass:dropdownElImmediate.classList.contains('visible')},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU10'})}).catch(()=>{});
+        // #endregion
+      }
+      requestAnimationFrame(() => {
+        const dropdownEl = document.querySelector(`[data-dropdown-id="${openDropdown}"]`) as HTMLElement;
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:openDropdown:inRAF',message:'Inside requestAnimationFrame',data:{openDropdown,dropdownFound:!!dropdownEl},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU10'})}).catch(()=>{});
+        // #endregion
+        if (dropdownEl) {
+          const computed = window.getComputedStyle(dropdownEl);
+          // Remover classes de fechado
+          dropdownEl.classList.remove('invisible', 'dropdown-closed');
+          // Adicionar classes de aberto
+          dropdownEl.classList.add('visible', 'dropdown-open');
+          // Adicionar atributo de dados
+          dropdownEl.setAttribute('data-dropdown-open', 'true');
+          // Forçar estilos inline
+          dropdownEl.style.setProperty('visibility', 'visible', 'important');
+          dropdownEl.style.setProperty('opacity', '1', 'important');
+          dropdownEl.style.setProperty('pointer-events', 'auto', 'important');
+          dropdownEl.style.setProperty('height', 'auto', 'important');
+          dropdownEl.style.setProperty('overflow', 'visible', 'important');
+          dropdownEl.style.setProperty('display', 'block', 'important');
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:openDropdown:forceVisible',message:'Forced dropdown visibility in useEffect',data:{openDropdown,computedVisibility:computed.visibility,computedOpacity:computed.opacity,afterVisibility:window.getComputedStyle(dropdownEl).visibility,afterOpacity:window.getComputedStyle(dropdownEl).opacity,styleAttribute:dropdownEl.getAttribute('style'),hasVisibleClass:dropdownEl.classList.contains('visible')},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU10'})}).catch(()=>{});
+          // #endregion
+        } else {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:openDropdown:dropdownNotFound',message:'Dropdown element not found',data:{openDropdown,allDropdowns:Array.from(document.querySelectorAll('[data-dropdown-id]')).map(el => (el as HTMLElement).getAttribute('data-dropdown-id'))},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU10'})}).catch(()=>{});
+          // #endregion
+        }
+      });
+      
+      // Usar MutationObserver para garantir que as classes sejam mantidas mesmo se o React tentar removê-las
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && (mutation.attributeName === 'class' || mutation.attributeName === 'style')) {
+            const target = mutation.target as HTMLElement;
+            if (target.hasAttribute('data-dropdown-id') && target.getAttribute('data-dropdown-id') === openDropdown) {
+              // Verificar se as classes foram removidas
+              if (!target.classList.contains('dropdown-open') || !target.classList.contains('visible')) {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:MutationObserver:classRemoved',message:'Classes removed by React, re-applying',data:{categoryId:openDropdown,hasDropdownOpen:target.classList.contains('dropdown-open'),hasVisible:target.classList.contains('visible'),allClasses:Array.from(target.classList)},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'BH'})}).catch(()=>{});
+                // #endregion
+                target.classList.remove('invisible', 'dropdown-closed');
+                target.classList.add('visible', 'dropdown-open');
+                target.setAttribute('data-dropdown-open', 'true');
+                target.style.setProperty('visibility', 'visible', 'important');
+                target.style.setProperty('opacity', '1', 'important');
+                target.style.setProperty('pointer-events', 'auto', 'important');
+                target.style.setProperty('height', 'auto', 'important');
+                target.style.setProperty('overflow', 'visible', 'important');
+                target.style.setProperty('display', 'block', 'important');
+              }
+            }
+          }
+        });
+      });
+      
+      // Observar todos os dropdowns
+      const allDropdownsToObserve = document.querySelectorAll('[data-dropdown-id]') as NodeListOf<HTMLElement>;
+      allDropdownsToObserve.forEach((dropdown) => {
+        observer.observe(dropdown, {
+          attributes: true,
+          attributeFilter: ['class', 'style'],
+          subtree: false
+        });
+      });
+      
+      // Também usar setInterval como backup para forçar continuamente
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:setInterval:setup',message:'Setting up setInterval',data:{openDropdown},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'BL'})}).catch(()=>{});
+      // #endregion
+      const forceInterval = setInterval(() => {
+        const dropdownEl = document.querySelector(`[data-dropdown-id="${openDropdown}"]`) as HTMLElement;
+        if (dropdownEl) {
+          const computed = window.getComputedStyle(dropdownEl);
+          // Sempre forçar, mesmo se as classes estiverem corretas, pois o React pode estar removendo os estilos inline
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:setInterval:forceVisible',message:'setInterval forcing visibility',data:{categoryId:openDropdown,computedVisibility:computed.visibility,computedOpacity:computed.opacity,computedDisplay:computed.display,hasDropdownOpen:dropdownEl.classList.contains('dropdown-open'),hasVisible:dropdownEl.classList.contains('visible'),inlineVisibility:dropdownEl.style.visibility,inlineOpacity:dropdownEl.style.opacity,inlineDisplay:dropdownEl.style.display},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'BL'})}).catch(()=>{});
+          // #endregion
+          dropdownEl.classList.remove('invisible', 'dropdown-closed');
+          dropdownEl.classList.add('visible', 'dropdown-open');
+          dropdownEl.setAttribute('data-dropdown-open', 'true');
+          dropdownEl.style.setProperty('visibility', 'visible', 'important');
+          dropdownEl.style.setProperty('opacity', '1', 'important');
+          dropdownEl.style.setProperty('pointer-events', 'auto', 'important');
+          dropdownEl.style.setProperty('height', 'auto', 'important');
+          dropdownEl.style.setProperty('overflow', 'visible', 'important');
+          dropdownEl.style.setProperty('display', 'block', 'important');
+          // Forçar novamente após um pequeno delay para garantir que seja aplicado
+          setTimeout(() => {
+            dropdownEl.style.setProperty('visibility', 'visible', 'important');
+            dropdownEl.style.setProperty('opacity', '1', 'important');
+            dropdownEl.style.setProperty('display', 'block', 'important');
+          }, 0);
+        } else {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:setInterval:dropdownNotFound',message:'Dropdown element not found in setInterval',data:{openDropdown,allDropdowns:Array.from(document.querySelectorAll('[data-dropdown-id]')).map(el => (el as HTMLElement).getAttribute('data-dropdown-id'))},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'BL'})}).catch(()=>{});
+          // #endregion
+        }
+      }, 16); // ~60fps
+      
+      // Limpar observer e interval quando o dropdown fechar
+      return () => {
+        observer.disconnect();
+        clearInterval(forceInterval);
+      };
+    } else {
+      // Fechar todos os dropdowns quando openDropdown é null
+      const allDropdowns = document.querySelectorAll('[data-dropdown-id]') as NodeListOf<HTMLElement>;
+      allDropdowns.forEach(dropdown => {
+        dropdown.classList.remove('visible');
+        dropdown.classList.add('invisible');
+        dropdown.style.setProperty('visibility', 'hidden', 'important');
+        dropdown.style.setProperty('opacity', '0', 'important');
+        dropdown.style.setProperty('pointer-events', 'none', 'important');
+      });
+    }
+  }, [openDropdown]);
 
   // Função para atualizar busca de uma categoria específica
   const handleCategorySearch = (categoryKey: string, value: string) => {
@@ -202,36 +700,79 @@ const Header = () => {
     );
   };
 
+  // #region agent log
+  useEffect(() => {
+    const logNavRender = () => {
+      if (navRef.current && navContainerRef.current && navListRef.current) {
+        const navComputed = window.getComputedStyle(navRef.current);
+        const containerComputed = window.getComputedStyle(navContainerRef.current);
+        const listComputed = window.getComputedStyle(navListRef.current);
+        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:262',message:'Nav render initial state',data:{
+          viewportWidth: window.innerWidth,
+          navStyles: {width: navComputed.width, maxWidth: navComputed.maxWidth, overflowX: navComputed.overflowX, boxSizing: navComputed.boxSizing},
+          containerStyles: {width: containerComputed.width, maxWidth: containerComputed.maxWidth, overflowX: containerComputed.overflowX, paddingLeft: containerComputed.paddingLeft, paddingRight: containerComputed.paddingRight, boxSizing: containerComputed.boxSizing},
+          listStyles: {width: listComputed.width, maxWidth: listComputed.maxWidth, overflowX: listComputed.overflowX, boxSizing: listComputed.boxSizing}
+        },timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B'})}).catch(()=>{});
+      }
+    };
+    const timeout = setTimeout(logNavRender, 200);
+    return () => clearTimeout(timeout);
+  }, []);
+  // #endregion
+
+  // Função para fechar o banner
+  const handleCloseBanner = () => {
+    setIsBannerVisible(false);
+    // Salvar preferência no localStorage
+    localStorage.setItem('promo-banner-closed', 'true');
+  };
+
   return (
     <>
       {/* Mini Banner de Destaque */}
-      <div ref={miniBannerRef} className="fixed top-0 left-0 right-0 bg-gradient-to-r from-primary-600 via-primary-700 to-blue-600 border-b border-primary-800 z-[10000] banner-shimmer overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, width: '100%' }}>
-        <div className="container mx-auto px-4 sm:px-6 py-2 sm:py-2.5 relative z-10">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
-            <div className="text-center">
-              <p className="text-sm sm:text-base md:text-lg font-extrabold text-white mb-0.5 sm:mb-0.5 tracking-tight">
-                🎉 Mega Promoção Monstrinho Misterioso
-              </p>
-              <p className="text-[10px] sm:text-xs text-white/95 font-medium leading-tight">
-                A cada <span className="font-bold text-white">R$400,00</span> em compra, leve um <span className="font-bold text-white">Labubu Misterioso</span> grátis!
-              </p>
+      {isBannerVisible && (
+        <div 
+          ref={miniBannerRef} 
+          className="fixed top-0 left-0 right-0 bg-gradient-to-r from-primary-600 via-primary-700 to-blue-600 border-b border-primary-800 z-[10000] banner-shimmer overflow-hidden animate-fade-in" 
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, width: '100%' }}
+        >
+          <div className="container mx-auto px-4 sm:px-6 py-2 sm:py-2.5 relative z-10">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 relative">
+              {/* Botão de fechar */}
+              <button
+                onClick={handleCloseBanner}
+                className="absolute right-0 sm:right-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50 z-20"
+                aria-label="Fechar banner"
+              >
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+
+              <div className="text-center pr-6 sm:pr-8 md:pr-12 flex-1 min-w-0">
+                <p className="text-xs sm:text-sm md:text-base lg:text-lg font-extrabold text-white mb-1 sm:mb-0.5 tracking-tight leading-tight">
+                  🎉 Mega Promoção Monstrinho Misterioso
+                </p>
+                <p className="text-[9px] sm:text-[10px] md:text-xs text-white/95 font-medium leading-tight px-1">
+                  A cada <span className="font-bold text-white">R$400,00</span> em compra, leve um <span className="font-bold text-white">Labubu Misterioso</span> grátis!
+                </p>
+              </div>
+              
+              <button 
+                onClick={() => navigateRouter('/catalogo')}
+                className="group bg-white hover:bg-gray-50 active:bg-gray-100 text-primary-600 font-semibold px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg transition-all duration-300 whitespace-nowrap text-[9px] sm:text-[10px] md:text-xs shadow-md hover:shadow-lg hover:scale-105 active:scale-100 relative z-10 border border-transparent hover:border-white/20 touch-manipulation min-h-[36px] sm:min-h-[40px]"
+              >
+                <span className="flex items-center gap-1 sm:gap-1.5">
+                  <span className="hidden sm:inline">Confira Agora</span>
+                  <span className="sm:hidden">Ver</span>
+                  <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 transform group-hover:translate-x-1 transition-transform" />
+                </span>
+              </button>
             </div>
-            
-            <button 
-              onClick={() => navigateRouter('/catalogo')}
-              className="group bg-white hover:bg-gray-50 active:bg-gray-100 text-primary-600 font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all duration-300 whitespace-nowrap text-[10px] sm:text-xs shadow-md hover:shadow-lg hover:scale-105 active:scale-100 relative z-10 border border-transparent hover:border-white/20"
-            >
-              <span className="flex items-center gap-1.5">
-                Confira Agora
-                <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
-              </span>
-            </button>
           </div>
         </div>
-      </div>
+      )}
 
-      <header ref={headerRef} className="fixed left-0 right-0 z-[9998] bg-white shadow-sm border-b border-gray-100 w-full overflow-x-hidden top-[67px] h-16 sm:h-20 md:h-24" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
-        <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 grid grid-cols-[auto_1fr_auto] lg:grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4 md:gap-6 lg:gap-8 h-16 sm:h-20 md:h-24" style={{ maxWidth: 'min(100%, 1536px)', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
+      <header ref={headerRef} className={`fixed left-0 right-0 z-[9998] bg-white shadow-sm border-b border-gray-100 w-full overflow-x-hidden h-14 sm:h-16 md:h-20 lg:h-24 transition-all duration-300 ${isBannerVisible ? 'top-[67px]' : 'top-0'}`} style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
+        <div className="container mx-auto px-2 sm:px-3 md:px-4 lg:px-6 xl:px-8 flex items-center justify-between gap-2 sm:gap-3 md:gap-4 lg:gap-6 h-14 sm:h-16 md:h-20 lg:h-24" style={{ maxWidth: 'min(100%, 1536px)', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
           {/* Logo */}
           <div 
             className="cursor-pointer flex-shrink-0 min-w-0"
@@ -240,17 +781,17 @@ const Header = () => {
             <img 
               src={LOGO_URL} 
               alt="White Cloud Brasil" 
-              className="h-10 sm:h-12 md:h-14 w-auto object-contain transition-transform hover:scale-105"
+              className="h-10 sm:h-12 md:h-16 lg:h-[70px] w-auto object-contain transition-transform hover:scale-105"
               onError={(e) => {
-                // Fallback caso a imagem nÃ£o exista
+                // Fallback caso a imagem não exista
                 e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement!.innerHTML = '<span class="text-lg sm:text-xl md:text-2xl font-black tracking-tighter text-gray-900">WHITE CLOUD <span class="text-primary-600">BRASIL</span></span>';
+                e.currentTarget.parentElement!.innerHTML = '<span class="text-base sm:text-lg md:text-xl lg:text-2xl font-black tracking-tighter text-gray-900">WHITE CLOUD <span class="text-primary-600">BRASIL</span></span>';
               }}
             />
           </div>
 
           {/* Search Bar (Desktop) */}
-          <div className="hidden lg:flex flex-1 max-w-2xl relative min-w-0 w-full">
+          <div className="hidden lg:flex flex-1 max-w-2xl relative min-w-0">
             <input
               type="text"
               placeholder="Pesquise seu produto na White Cloud :)"
@@ -266,78 +807,124 @@ const Header = () => {
             </button>
           </div>
 
-          {/* User Actions */}
-          <div className="flex items-center justify-end gap-2 sm:gap-3 md:gap-4 text-sm font-medium text-gray-700 flex-shrink-0 min-w-0">
-             {/* Mobile Menu Trigger */}
+          {/* User Actions - Mobile Optimized */}
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-4 text-sm font-medium text-gray-700 flex-shrink-0 min-w-0">
+             {/* Login/Cadastro Button - Hidden on mobile */}
              <button 
-               className="lg:hidden p-2 -mr-2 text-gray-700 min-h-[44px] min-w-[44px] flex items-center justify-center" 
-               onClick={() => setIsMenuOpen(true)}
-               aria-label="Abrir menu"
-               aria-expanded={isMenuOpen}
-             >
-                <Menu className="w-6 h-6 sm:w-7 sm:h-7" />
-             </button>
-
-             {/* Login/Cadastro Button */}
-             <button 
-              className="hidden sm:flex items-center hover:text-primary-600 transition-colors min-h-[44px] cursor-pointer"
+              className="hidden md:flex items-center hover:text-primary-600 transition-colors min-h-[44px] cursor-pointer"
               onClick={() => navigateRouter('/conta')}
               aria-label="Entrar ou criar conta"
              >
-               <User className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
+               <User className="w-5 h-5 md:w-6 md:h-6 mr-2" />
                <div className="flex flex-col items-start leading-tight">
-                 <span className="text-xs sm:text-sm font-medium">Entrar</span>
+                 <span className="text-xs md:text-sm font-medium">Entrar</span>
                  <span className="text-[10px] text-gray-500">ou criar conta</span>
                </div>
              </button>
 
+             {/* White Club Button - Hidden on mobile */}
              <button 
-              className="relative cursor-pointer flex items-center hover:text-primary-600 transition-colors min-h-[44px]"
+              className="hidden md:flex items-center hover:text-primary-600 transition-colors min-h-[44px] cursor-pointer"
+              onClick={() => navigateRouter('/white-club')}
+              aria-label="White Club"
+             >
+               <div className="relative">
+                 <Star className="w-5 h-5 md:w-6 md:h-6" />
+               </div>
+               <span className="ml-2 leading-none text-xs md:text-sm">
+                 White Club
+               </span>
+             </button>
+
+             {/* Mobile Actions - Right side */}
+             <button 
+              className="relative cursor-pointer flex items-center justify-center hover:text-primary-600 transition-colors min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] p-1.5 sm:p-2 touch-manipulation"
               onClick={() => navigateRouter('/favoritos')}
               aria-label="Ver favoritos"
              >
-                <div className="relative p-1">
+                <div className="relative">
                    <Heart className="w-5 h-5 sm:w-6 sm:h-6" />
                    <FavoritesBadge />
                 </div>
-                <span className="hidden sm:block lg:block ml-2 leading-none">
-                   Favoritos
-                </span>
              </button>
 
              <button 
-              className="relative cursor-pointer flex items-center hover:text-primary-600 transition-colors min-h-[44px]"
+              className="relative cursor-pointer flex items-center justify-center hover:text-primary-600 transition-colors min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] p-1.5 sm:p-2 touch-manipulation"
               onClick={() => setIsCartOpen(true)}
               aria-label="Abrir carrinho"
              >
-                <div className="relative p-1">
+                <div className="relative">
                    <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
                    <CartBadge />
                 </div>
-                <span className="hidden sm:block lg:block ml-2 leading-none">
-                   Carrinho
-                </span>
+             </button>
+
+             {/* Mobile Menu Trigger - Moved to right */}
+             <button 
+               className="lg:hidden p-1.5 sm:p-2 text-gray-700 min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] flex items-center justify-center touch-manipulation" 
+               onClick={() => setIsMenuOpen(true)}
+               aria-label="Abrir menu"
+               aria-expanded={isMenuOpen}
+             >
+                <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
              </button>
           </div>
         </div>
 
         {/* Desktop Navigation Bar */}
-        <nav ref={navRef} className="hidden lg:block border-t border-gray-100 bg-white fixed left-0 right-0 z-[9997] w-full overflow-x-hidden top-[163px]" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', position: 'fixed', boxSizing: 'border-box' }}>
-          <div ref={navContainerRef} className="w-full px-3 sm:px-4 lg:px-6 xl:px-8 overflow-x-hidden flex justify-center" style={{ overflowX: 'hidden', width: '100%', boxSizing: 'border-box', textAlign: 'center', display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <ul ref={navListRef} className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm font-medium text-gray-600 py-4 sm:py-5 overflow-x-hidden w-full" style={{ maxWidth: '100%', overflowX: 'hidden', width: '100%', flexWrap: 'wrap', boxSizing: 'border-box', display: 'flex', margin: 0, padding: 0, listStyle: 'none', minHeight: '58px', textAlign: 'center', verticalAlign: 'middle' }}>
-              {CATEGORIES.map(cat => (
-                <li 
+        <nav ref={navRef} className={`hidden lg:block border-t border-gray-100 bg-white fixed left-0 right-0 z-[9997] w-full overflow-x-hidden transition-all duration-300 ${isBannerVisible ? 'top-[163px]' : 'top-[96px]'}`} style={{ overflowX: 'hidden', width: '100%', position: 'fixed', boxSizing: 'border-box' }}>
+          <div ref={navContainerRef} className="w-full px-3 sm:px-4 lg:px-6 xl:px-8 overflow-x-hidden flex justify-center" style={{ overflowX: 'hidden', width: '100%', maxWidth: '100%', boxSizing: 'border-box', textAlign: 'center', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', minWidth: 0 }}>
+            <ul 
+              ref={(el) => {
+                navListRef.current = el;
+                if (el) {
+                  // Forçar flex-wrap: wrap imediatamente quando o elemento é montado
+                  el.style.setProperty('flex-wrap', 'wrap', 'important');
+                  el.classList.add('flex-wrap');
+                  el.classList.remove('flex-nowrap');
+                }
+              }}
+              className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm font-medium text-gray-600 py-4 sm:py-5 overflow-x-hidden" 
+              style={{ maxWidth: '100%', overflowX: 'hidden', flexWrap: 'wrap', boxSizing: 'border-box', display: 'flex', margin: 0, padding: 0, listStyle: 'none', minHeight: '58px', textAlign: 'center', verticalAlign: 'middle' }}>
+              {CATEGORIES.map(cat => {
+                // #region agent log
+                if (cat.hasDropdown) {
+                  fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:category:render',message:'Category render',data:{categoryId:cat.id,hasDropdown:cat.hasDropdown,openDropdown,isOpen:openDropdown === cat.id,hasSubmenu:!!cat.submenu,submenuType:cat.submenu ? (cat.submenu.categories ? 'categories' : cat.submenu.sections ? 'sections' : cat.submenu.items ? 'items' : 'none') : 'none',submenuCategoriesCount:cat.submenu?.categories?.length || 0,submenuSectionsCount:cat.submenu?.sections?.length || 0,submenuItemsCount:cat.submenu?.items?.length || 0},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU1'})}).catch(()=>{});
+                }
+                // #endregion
+                return (
+                  <li 
                   key={cat.id} 
                   className="relative z-[100]"
-                  onMouseEnter={() => cat.hasDropdown && handleMouseEnter(cat.id)}
-                  onMouseLeave={handleMouseLeave}
-                  style={{ flexShrink: 0, minWidth: 0, maxWidth: 'fit-content', whiteSpace: 'nowrap', margin: 0, padding: 0 }}
+                  onMouseEnter={(e) => {
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:li:onMouseEnter',message:'Mouse entered li element',data:{categoryId:cat.id,hasDropdown:cat.hasDropdown,willCallHandleMouseEnter:cat.hasDropdown,targetTagName:e.target.tagName,targetClassName:(e.target as HTMLElement).className},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU5'})}).catch(()=>{});
+                    // #endregion
+                    // Não usar stopPropagation aqui para permitir que o evento chegue ao botão também
+                    if (cat.hasDropdown) {
+                      handleMouseEnter(cat.id);
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.stopPropagation();
+                    handleMouseLeave();
+                  }}
+                  style={{ flexShrink: 1, minWidth: 0, maxWidth: '100%', whiteSpace: 'nowrap', margin: 0, padding: 0, overflow: 'visible', position: 'relative', pointerEvents: 'auto' }}
                 >
                   {cat.hasDropdown ? (
                     <>
                   <button 
                         className={`hover:text-primary-600 transition-colors py-1 px-2 relative uppercase flex items-center gap-1 whitespace-nowrap text-xs ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-2 sm:px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
-                        style={{ maxWidth: 'fit-content', overflow: 'visible', flexShrink: 0, minWidth: 0, margin: 0 }}
+                        style={{ overflow: 'hidden', flexShrink: 1, minWidth: 0, maxWidth: '100%', width: 'auto', margin: 0, textOverflow: 'ellipsis', pointerEvents: 'auto' }}
+                        onMouseEnter={(e) => {
+                          // #region agent log
+                          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:button:onMouseEnter',message:'Mouse entered button element',data:{categoryId:cat.id,hasDropdown:cat.hasDropdown,willCallHandleMouseEnter:cat.hasDropdown},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU7'})}).catch(()=>{});
+                          // #endregion
+                          e.stopPropagation();
+                          if (cat.hasDropdown) {
+                            handleMouseEnter(cat.id);
+                          }
+                        }}
                       >
                         <span className={cat.isHighlight ? 'relative z-10' : ''}>{cat.name}</span>
                         <ChevronDown className={`w-3 h-3 opacity-60 transition-all duration-300 ${openDropdown === cat.id ? 'opacity-100 rotate-180' : ''}`} />
@@ -345,75 +932,231 @@ const Header = () => {
                       </button>
                       
                       {/* Dropdown Menu - Design Moderno */}
-                      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[90vw] max-w-[900px] bg-white rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 z-[99999] overflow-x-hidden ${
-                        openDropdown === cat.id 
-                          ? 'opacity-100 visible translate-y-0' 
-                          : 'opacity-0 invisible -translate-y-2 pointer-events-none'
-                      }`}>
+                      <div 
+                        data-dropdown-id={cat.id}
+                        className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[90vw] max-w-[900px] bg-white rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 z-[99999] overflow-x-hidden ${
+                          openDropdown === cat.id 
+                            ? 'opacity-100 !visible translate-y-0 !pointer-events-auto block' 
+                            : 'opacity-0 invisible -translate-y-2 pointer-events-none'
+                        }`}
+                        style={{
+                          position: 'absolute',
+                          zIndex: 99999,
+                          display: openDropdown === cat.id ? 'block' : 'block',
+                          visibility: openDropdown === cat.id ? 'visible' : 'hidden',
+                          opacity: openDropdown === cat.id ? 1 : 0,
+                          pointerEvents: openDropdown === cat.id ? 'auto' : 'none'
+                        }}
+                        // NÃO controlar dropdown-open/dropdown-closed aqui
+                        // O React sobrescreve as classes que adicionamos via JavaScript
+                        // Essas serão controladas apenas via JavaScript direto no DOM
+                        onMouseEnter={() => {
+                          // #region agent log
+                          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:dropdown:onMouseEnter',message:'Dropdown onMouseEnter',data:{categoryId:cat.id,openDropdown},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'B'})}).catch(()=>{});
+                          // #endregion
+                          // Cancelar o timeout quando o mouse entra no dropdown
+                          if (closeTimeoutRef.current) {
+                            clearTimeout(closeTimeoutRef.current);
+                            closeTimeoutRef.current = null;
+                          }
+                          // Garantir que o dropdown permaneça aberto
+                          setOpenDropdown(cat.id);
+                        }}
+                        onMouseLeave={handleMouseLeave}
+                        // #region agent log
+                        ref={(el) => {
+                          // Log de renderização sempre
+                          if (el) {
+                            const isOpen = openDropdown === cat.id;
+                            const hasDataAttr = el.getAttribute('data-dropdown-open') === 'true';
+                            const computed = window.getComputedStyle(el);
+                            // Forçar visibilidade se o estado indica que está aberto OU se o atributo de dados indica que está aberto
+                            if (isOpen || hasDataAttr) {
+                              // Forçar imediatamente
+                              el.setAttribute('data-dropdown-open', 'true');
+                              el.classList.remove('invisible', 'dropdown-closed');
+                              el.classList.add('visible', 'dropdown-open');
+                              el.style.setProperty('visibility', 'visible', 'important');
+                              el.style.setProperty('opacity', '1', 'important');
+                              el.style.setProperty('pointer-events', 'auto', 'important');
+                              el.style.setProperty('height', 'auto', 'important');
+                              el.style.setProperty('overflow', 'visible', 'important');
+                              el.style.setProperty('display', 'block', 'important');
+                              // #region agent log
+                              fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:dropdown:render:forceVisible',message:'Forced dropdown visibility',data:{categoryId:cat.id,openDropdown,isOpen,hasDataAttr},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'G'})}).catch(()=>{});
+                              // #endregion
+                              // Usar setInterval para forçar continuamente enquanto estiver aberto
+                              const forceInterval = setInterval(() => {
+                                if (el && (openDropdown === cat.id || el.getAttribute('data-dropdown-open') === 'true')) {
+                                  const currentComputed = window.getComputedStyle(el);
+                                  if (currentComputed.visibility === 'hidden' || currentComputed.opacity === '0' || currentComputed.display === 'none') {
+                                    el.setAttribute('data-dropdown-open', 'true');
+                                    el.classList.remove('invisible', 'dropdown-closed');
+                                    el.classList.add('visible', 'dropdown-open');
+                                    el.style.setProperty('visibility', 'visible', 'important');
+                                    el.style.setProperty('opacity', '1', 'important');
+                                    el.style.setProperty('pointer-events', 'auto', 'important');
+                                    el.style.setProperty('height', 'auto', 'important');
+                                    el.style.setProperty('overflow', 'visible', 'important');
+                                    el.style.setProperty('display', 'block', 'important');
+                                  }
+                                } else {
+                                  clearInterval(forceInterval);
+                                }
+                              }, 16); // ~60fps
+                              // Armazenar o interval no elemento para limpar depois
+                              (el as any).__forceInterval = forceInterval;
+                              // Verificar novamente após requestAnimationFrame
+                              requestAnimationFrame(() => {
+                                const currentComputed = window.getComputedStyle(el);
+                                if (currentComputed.visibility === 'hidden' || currentComputed.opacity === '0') {
+                                  el.setAttribute('data-dropdown-open', 'true');
+                                  el.classList.remove('invisible', 'dropdown-closed');
+                                  el.classList.add('visible', 'dropdown-open');
+                                  el.style.setProperty('visibility', 'visible', 'important');
+                                  el.style.setProperty('opacity', '1', 'important');
+                                  el.style.setProperty('pointer-events', 'auto', 'important');
+                                  el.style.setProperty('height', 'auto', 'important');
+                                  el.style.setProperty('overflow', 'visible', 'important');
+                                  el.style.setProperty('display', 'block', 'important');
+                                  // #region agent log
+                                  fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:dropdown:render:forceVisible:raf',message:'Forced dropdown visibility after RAF',data:{categoryId:cat.id,openDropdown,isOpen,computedVisibility:currentComputed.visibility,computedOpacity:currentComputed.opacity},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'G'})}).catch(()=>{});
+                                  // #endregion
+                                }
+                              });
+                            } else {
+                              // Limpar interval se existir
+                              if ((el as any).__forceInterval) {
+                                clearInterval((el as any).__forceInterval);
+                                delete (el as any).__forceInterval;
+                              }
+                            }
+                            fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:dropdown:render',message:'Dropdown render check',data:{categoryId:cat.id,openDropdown,isOpen,hasDropdownOpenClass:el.classList.contains('dropdown-open'),hasDropdownClosedClass:el.classList.contains('dropdown-closed'),allClasses:Array.from(el.classList),computedVisibility:computed.visibility,computedOpacity:computed.opacity,computedDisplay:computed.display,inlineVisibility:el.style.visibility,inlineOpacity:el.style.opacity,inlineDisplay:el.style.display},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'C'})}).catch(()=>{});
+                          }
+                          // Medição detalhada quando aberto
+                          if (el && openDropdown === cat.id) {
+                            setTimeout(() => {
+                              const computed = window.getComputedStyle(el);
+                              const rect = el.getBoundingClientRect();
+                              const navEl = navRef.current;
+                              const liEl = el.closest('li') as HTMLElement;
+                              const navComputed = navEl ? window.getComputedStyle(navEl) : null;
+                              const liComputed = liEl ? window.getComputedStyle(liEl) : null;
+                              
+                              fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:367',message:'Dropdown rendered and measured',data:{
+                                categoryId: cat.id,
+                                dropdownZIndex: computed.zIndex,
+                                dropdownPosition: computed.position,
+                                dropdownDisplay: computed.display,
+                                dropdownVisibility: computed.visibility,
+                                dropdownOpacity: computed.opacity,
+                                dropdownRect: {top: rect.top, left: rect.left, width: rect.width, height: rect.height, bottom: rect.bottom, right: rect.right},
+                                viewportHeight: window.innerHeight,
+                                viewportWidth: window.innerWidth,
+                                navZIndex: navComputed?.zIndex || 'none',
+                                navPosition: navComputed?.position || 'none',
+                                navOverflow: navComputed?.overflow || 'none',
+                                liZIndex: liComputed?.zIndex || 'none',
+                                liPosition: liComputed?.position || 'none',
+                                liOverflow: liComputed?.overflow || 'none',
+                                parentOverflow: el.parentElement ? window.getComputedStyle(el.parentElement).overflow : 'none'
+                              },timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C,D'})}).catch(()=>{});
+                            }, 50);
+                          }
+                        }}
+                        // #endregion
+                      >
                         {/* Padding invisível no topo para facilitar transição do mouse */}
-                        <div className="absolute -top-4 left-0 right-0 h-4 pointer-events-auto"></div>
+                        <div 
+                          className="absolute -top-4 left-0 right-0 h-4 pointer-events-auto"
+                          onMouseEnter={() => {
+                            // #region agent log
+                            fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:dropdown:paddingArea:onMouseEnter',message:'Mouse entered padding area',data:{categoryId:cat.id,openDropdown},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU2'})}).catch(()=>{});
+                            // #endregion
+                            // Cancelar o timeout quando o mouse entra na área de transição
+                            if (closeTimeoutRef.current) {
+                              clearTimeout(closeTimeoutRef.current);
+                              closeTimeoutRef.current = null;
+                            }
+                            // Garantir que o dropdown permaneça aberto
+                            setOpenDropdown(cat.id);
+                          }}
+                        ></div>
                         <div className="overflow-hidden">
-                        {/* Header do Dropdown com gradiente sutil e campo de busca */}
-                        <div className="bg-gradient-to-r from-primary-50 to-blue-50 border-b border-gray-100 px-6 py-4">
-                          <div className="flex items-center justify-between mb-3">
+                          {/* #region agent log */}
+                          {(() => {
+                            fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:dropdown:content:render',message:'Dropdown content rendering',data:{categoryId:cat.id,hasCategories:!!cat.submenu?.categories,categoriesCount:cat.submenu?.categories?.length || 0,hasSections:!!cat.submenu?.sections,sectionsCount:cat.submenu?.sections?.length || 0,hasItems:!!cat.submenu?.items,itemsCount:cat.submenu?.items?.length || 0},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU3'})}).catch(()=>{});
+                            return null;
+                          })()}
+                          {/* #endregion */}
+                        {/* Header do Dropdown melhorado com gradiente sutil e campo de busca */}
+                        <div className="bg-gradient-to-r from-primary-50 via-blue-50 to-primary-50 border-b-2 border-primary-100 px-6 sm:px-8 py-5 sm:py-6">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
                             <div>
-                              <h3 className="text-lg font-bold text-gray-900 uppercase tracking-wide">
+                              <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 uppercase tracking-wide">
                                 {cat.name}
                               </h3>
-                              <p className="text-xs text-gray-500 mt-1">Explore nossa seleção completa</p>
+                              <p className="text-xs sm:text-sm text-gray-600 mt-1.5 font-medium">Explore nossa seleção completa</p>
                             </div>
                           </div>
                           
-                          {/* Campo de busca único */}
+                          {/* Campo de busca único melhorado */}
                           <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                             <input
                               type="text"
                               placeholder="Buscar em todas as categorias..."
                               value={categorySearch[cat.id] || ''}
                               onChange={(e) => handleCategorySearch(cat.id, e.target.value)}
-                              className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white"
+                              className="w-full pl-11 pr-4 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white shadow-sm hover:shadow-md"
                               onClick={(e) => e.stopPropagation()}
                             />
                           </div>
                         </div>
 
-                        <div className="p-6">
+                        <div className="p-6 sm:p-8">
                           {cat.submenu?.categories ? (
-                            // Menu com categorias organizadas (Juices)
-                            <div className="grid grid-cols-5 gap-6">
+                            // Menu com categorias organizadas (Juices) - Layout melhorado
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 lg:gap-8">
                               {cat.submenu.categories.map((category, idx) => {
+                                // #region agent log
+                                fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:dropdown:category:render',message:'Rendering category in dropdown',data:{categoryId:cat.id,categoryTitle:category.title,categoryItemsCount:category.items.length,items:category.items.slice(0,5)},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU4'})}).catch(()=>{});
+                                // #endregion
                                 const searchValue = categorySearch[cat.id] || '';
                                 const filteredItems = filterItems(category.items, searchValue);
                                 
                                 return (
                                   <div key={idx} className="group/category">
-                                    {/* Título da categoria com linha decorativa */}
-                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-primary-200 group-hover/category:border-primary-500 transition-colors">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
-                                      <h4 className="font-bold text-gray-900 text-xs uppercase tracking-wider">
+                                    {/* Título da categoria melhorado */}
+                                    <div className="flex items-center gap-2.5 mb-4 pb-3 border-b-2 border-primary-200 group-hover/category:border-primary-500 transition-colors duration-300">
+                                      <div className="w-2 h-2 rounded-full bg-primary-500 group-hover/category:bg-primary-600 transition-colors duration-300"></div>
+                                      <h4 className="font-bold text-gray-900 text-xs sm:text-sm uppercase tracking-wider">
                                         {category.title}
                                       </h4>
                                     </div>
                                     
-                                    {/* Lista de itens filtrados */}
-                                    <ul className="space-y-1.5 max-h-64 overflow-y-auto">
+                                    {/* Lista de itens filtrados melhorada */}
+                                    <ul className="space-y-1.5 max-h-72 overflow-y-auto custom-scrollbar pr-1">
                                       {filteredItems.length > 0 ? (
                                         filteredItems.map((item, itemIdx) => (
                                           <li key={itemIdx}>
                                             <button
-                                              onClick={() => navigateRouter('/catalogo')}
-                                              className="text-xs text-gray-600 hover:text-primary-600 hover:bg-primary-50 transition-all duration-200 text-left w-full px-2 py-1.5 rounded-md group/item"
+                                              onClick={() => {
+                                                navigateRouter('/catalogo');
+                                                setOpenDropdown(null);
+                                              }}
+                                              className="text-xs sm:text-sm text-gray-600 hover:text-primary-600 hover:bg-gradient-to-r hover:from-primary-50 hover:to-transparent transition-all duration-200 text-left w-full px-3 py-2 rounded-md group/item relative overflow-hidden"
                                             >
-                                              <span className="relative">
+                                              <span className="relative z-10 flex items-center gap-2">
+                                                <span className="w-1 h-1 rounded-full bg-gray-300 group-hover/item:bg-primary-500 transition-colors duration-200"></span>
                                                 {item}
-                                                <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary-500 group-hover/item:w-full transition-all duration-200"></span>
                                               </span>
+                                              <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary-500 group-hover/item:w-full transition-all duration-300"></span>
                                             </button>
                                           </li>
                                         ))
                                       ) : (
-                                        <li className="text-xs text-gray-400 py-2 text-center">
+                                        <li className="text-xs text-gray-400 py-3 text-center">
                                           Nenhum item encontrado
                                         </li>
                                       )}
@@ -423,35 +1166,39 @@ const Header = () => {
                               })}
                             </div>
                           ) : cat.submenu?.sections ? (
-                            // Menu com seções (SaltNic) - Layout em 2 colunas
-                            <div className="grid grid-cols-2 gap-8">
+                            // Menu com seções (SaltNic) - Layout em 2 colunas melhorado
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
                               {cat.submenu.sections.map((section, idx) => {
                                 const searchValue = categorySearch[cat.id] || '';
                                 const filteredItems = filterItems(section.items, searchValue);
                                 
                                 return (
                                   <div key={idx} className="group/section">
-                                    {/* Título da seção */}
-                                    <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-primary-200 group-hover/section:border-primary-500 transition-colors">
-                                      <div className="w-2 h-2 rounded-full bg-primary-500"></div>
-                                      <h4 className="font-bold text-gray-900 text-sm uppercase tracking-wider">
+                                    {/* Título da seção melhorado */}
+                                    <div className="flex items-center gap-2.5 mb-4 pb-3 border-b-2 border-primary-200 group-hover/section:border-primary-500 transition-colors duration-300">
+                                      <div className="w-2 h-2 rounded-full bg-primary-500 group-hover/section:bg-primary-600 transition-colors duration-300"></div>
+                                      <h4 className="font-bold text-gray-900 text-sm sm:text-base uppercase tracking-wider">
                                         {section.title}
                                       </h4>
                                     </div>
                                     
-                                    {/* Grid de itens em 2 colunas filtrados */}
-                                    <ul className="grid grid-cols-2 gap-x-4 gap-y-2 max-h-80 overflow-y-auto">
+                                    {/* Grid de itens em 2 colunas filtrados melhorado */}
+                                    <ul className="grid grid-cols-2 gap-x-4 gap-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-1">
                                       {filteredItems.length > 0 ? (
                                         filteredItems.map((item, itemIdx) => (
                                           <li key={itemIdx}>
                                             <button
-                                              onClick={() => navigateRouter('/catalogo')}
-                                              className="text-sm text-gray-600 hover:text-primary-600 hover:bg-primary-50 transition-all duration-200 text-left w-full px-3 py-2 rounded-lg group/item"
+                                              onClick={() => {
+                                                navigateRouter('/catalogo');
+                                                setOpenDropdown(null);
+                                              }}
+                                              className="text-sm text-gray-600 hover:text-primary-600 hover:bg-gradient-to-r hover:from-primary-50 hover:to-transparent transition-all duration-200 text-left w-full px-3 py-2 rounded-lg group/item relative overflow-hidden"
                                             >
-                                              <span className="relative">
+                                              <span className="relative z-10 flex items-center gap-2">
+                                                <span className="w-1 h-1 rounded-full bg-gray-300 group-hover/item:bg-primary-500 transition-colors duration-200"></span>
                                                 {item}
-                                                <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary-500 group-hover/item:w-full transition-all duration-200"></span>
                                               </span>
+                                              <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary-500 group-hover/item:w-full transition-all duration-300"></span>
                                             </button>
                                           </li>
                                         ))
@@ -466,10 +1213,10 @@ const Header = () => {
                               })}
                             </div>
                           ) : (
-                            // Menu simples (Pods, Coils, etc.) - Layout em grid moderno com busca
+                            // Menu simples (Pods, Coils, etc.) - Layout em grid moderno melhorado
                             <div>
-                              {/* Campo de busca global para menu simples */}
-                              <div className="mb-4">
+                              {/* Campo de busca global para menu simples melhorado */}
+                              <div className="mb-6">
                                 <div className="relative">
                                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                                   <input
@@ -477,32 +1224,35 @@ const Header = () => {
                                     placeholder="Buscar..."
                                     value={categorySearch[cat.id] || ''}
                                     onChange={(e) => handleCategorySearch(cat.id, e.target.value)}
-                                    className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+                                    className="w-full pl-10 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white"
                                     onClick={(e) => e.stopPropagation()}
                                   />
                                 </div>
                               </div>
                               
-                              {/* Grid de itens filtrados */}
-                              <div className="grid grid-cols-4 gap-4">
+                              {/* Grid de itens filtrados melhorado */}
+                              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                                 {filterItems(cat.submenu?.items || [], categorySearch[cat.id] || '').length > 0 ? (
                                   filterItems(cat.submenu?.items || [], categorySearch[cat.id] || '').map((item, idx) => (
                                     <button
                                       key={idx}
-                                      onClick={() => navigateRouter('/catalogo')}
-                                      className="group/item relative p-4 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-gradient-to-br hover:from-primary-50 hover:to-blue-50 transition-all duration-200 text-left"
+                                      onClick={() => {
+                                        navigateRouter('/catalogo');
+                                        setOpenDropdown(null);
+                                      }}
+                                      className="group/item relative p-4 rounded-lg border-2 border-gray-200 hover:border-primary-300 hover:bg-gradient-to-br hover:from-primary-50 hover:to-blue-50 transition-all duration-200 text-left shadow-sm hover:shadow-md"
                                     >
-                                      <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-gray-300 group-hover/item:bg-primary-500 transition-colors"></div>
-                                        <span className="text-sm font-medium text-gray-700 group-hover/item:text-primary-700 transition-colors">
+                                      <div className="flex items-center gap-2.5">
+                                        <div className="w-2 h-2 rounded-full bg-gray-300 group-hover/item:bg-primary-500 transition-colors duration-200"></div>
+                                        <span className="text-sm font-medium text-gray-700 group-hover/item:text-primary-700 transition-colors duration-200">
                                           {item}
                                         </span>
                                       </div>
-                                      <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 group-hover/item:w-full transition-all duration-200"></div>
+                                      <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 group-hover/item:w-full transition-all duration-300"></div>
                                     </button>
                                   ))
                                 ) : (
-                                  <div className="col-span-4 text-sm text-gray-400 py-4 text-center">
+                                  <div className="col-span-2 sm:col-span-3 lg:col-span-4 text-sm text-gray-400 py-6 text-center">
                                     Nenhum item encontrado
                                   </div>
                                 )}
@@ -511,32 +1261,36 @@ const Header = () => {
                           )}
                         </div>
 
-                        {/* Footer do Dropdown */}
-                        <div className="bg-gray-50 border-t border-gray-100 px-6 py-3">
+                        {/* Footer do Dropdown melhorado */}
+                        <div className="bg-gradient-to-r from-gray-50 to-primary-50/30 border-t-2 border-primary-100 px-6 py-4">
                           <button
-                            onClick={() => navigateRouter('/catalogo')}
-                            className="text-xs font-medium text-primary-600 hover:text-primary-700 flex items-center gap-1 group"
+                            onClick={() => {
+                              navigateRouter('/catalogo');
+                              setOpenDropdown(null);
+                            }}
+                            className="text-sm font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-2 group w-full justify-center sm:justify-start transition-all duration-200 hover:gap-3"
                           >
-                            Ver todos os produtos
-                            <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                            <span>Ver todos os produtos</span>
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
                           </button>
                         </div>
                         </div>
                       </div>
                     </>
-                  ) : (
-                    // Link simples (Promoções e Perfumes)
-                    <button 
-                      onClick={() => navigateRouter('/catalogo')}
-                      className={`hover:text-primary-600 transition-colors py-1 px-2 relative uppercase whitespace-nowrap text-xs ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-2 sm:px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
-                      style={{ maxWidth: 'fit-content', overflow: 'visible', flexShrink: 0, minWidth: 0, margin: 0 }}
-                    >
+                 ) : (
+                   // Link simples (Promoções e Perfumes)
+                   <button
+                     onClick={() => navigateRouter('/catalogo')}
+                     className={`hover:text-primary-600 transition-colors py-1 px-2 relative uppercase whitespace-nowrap text-xs ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-2 sm:px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
+                     style={{ overflow: 'visible', flexShrink: 1, minWidth: 0, maxWidth: '100%', width: 'auto', margin: 0 }}
+                   >
                       <span className={cat.isHighlight ? 'relative z-10' : ''}>{cat.name}</span>
                     {!cat.isHighlight && <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all group-hover:w-full"></span>}
                   </button>
                   )}
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </nav>
@@ -551,39 +1305,39 @@ const Header = () => {
       />
 
       <aside 
-        className={`fixed top-0 left-0 z-[10001] h-full w-[85%] max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden ${
+        className={`fixed top-0 left-0 z-[10001] h-full w-[90%] sm:w-[85%] max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden ${
           isMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Mobile Menu Header */}
-          <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50">
+          <div className="flex items-center justify-between p-3 sm:p-4 md:p-5 border-b border-gray-100 bg-gray-50 flex-shrink-0">
             <img 
               src={LOGO_URL} 
               alt="White Cloud Brasil" 
-              className="h-12 w-auto object-contain"
+              className="h-10 sm:h-12 w-auto object-contain"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement!.innerHTML = '<span class="text-lg font-black tracking-tighter text-gray-900">WHITE CLOUD <span class="text-primary-600">BRASIL</span></span>';
+                e.currentTarget.parentElement!.innerHTML = '<span class="text-base sm:text-lg font-black tracking-tighter text-gray-900">WHITE CLOUD <span class="text-primary-600">BRASIL</span></span>';
               }}
             />
             <button 
               onClick={() => setIsMenuOpen(false)}
-              className="p-2 text-gray-500 hover:text-red-500 hover:bg-gray-200 rounded-full transition-colors"
+              className="p-1.5 sm:p-2 text-gray-500 hover:text-red-500 hover:bg-gray-200 rounded-full transition-colors touch-manipulation min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] flex items-center justify-center"
               aria-label="Fechar menu"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
 
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5">
             {/* Mobile Search */}
-            <div className="mb-6 relative">
+            <div className="mb-4 sm:mb-6 relative">
               <input
                 type="text"
                 placeholder="Buscar produtos..."
-                className="w-full bg-gray-100 border-none rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary-500 text-sm"
+                className="w-full bg-gray-100 border-none rounded-lg py-2.5 sm:py-3 pl-9 sm:pl-10 pr-4 focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -591,46 +1345,63 @@ const Header = () => {
             </div>
 
             {/* Mobile Account Links */}
-            <div className="mb-6 pb-6 border-b border-gray-100">
+            <div className="mb-4 sm:mb-6 pb-4 sm:pb-6 border-b border-gray-100">
               <button 
-                onClick={() => { navigateRouter('/favoritos'); setIsMenuOpen(false); }}
-                className="flex items-center w-full py-2 text-gray-700 font-medium hover:text-primary-600"
+                onClick={() => { navigateRouter('/white-club'); setIsMenuOpen(false); }}
+                className="flex items-center w-full py-2.5 sm:py-3 text-gray-700 font-medium hover:text-primary-600 hover:bg-gray-50 rounded-lg px-2 transition-colors touch-manipulation min-h-[44px]"
               >
-                <div className="bg-red-50 p-2 rounded-full mr-3 relative">
-                   <Heart className="w-5 h-5 text-red-500" />
-                   <FavoritesBadge />
+                <div className="bg-yellow-50 p-2 rounded-full mr-3 flex-shrink-0">
+                   <Star className="w-5 h-5 text-yellow-600" />
                 </div>
-                <span>Meus Favoritos</span>
+                <span className="text-sm sm:text-base">White Club</span>
               </button>
 
               <button 
-                onClick={() => { navigateRouter('/conta'); setIsMenuOpen(false); }}
-                className="flex items-center w-full py-2 text-gray-700 font-medium hover:text-primary-600 mt-2"
+                onClick={() => { navigateRouter('/favoritos'); setIsMenuOpen(false); }}
+                className="flex items-center w-full py-2.5 sm:py-3 text-gray-700 font-medium hover:text-primary-600 hover:bg-gray-50 rounded-lg px-2 mt-2 transition-colors touch-manipulation min-h-[44px]"
               >
-                <div className="bg-primary-50 p-2 rounded-full mr-3">
-                   <User className="w-5 h-5 text-primary-600" />
+                <div className="bg-red-50 p-2 rounded-full mr-3 relative flex-shrink-0">
+                   <Heart className="w-5 h-5 text-red-500" />
+                   <FavoritesBadge />
                 </div>
-                <span>Minha Conta</span>
+                <span className="text-sm sm:text-base">Meus Favoritos</span>
               </button>
             </div>
 
             {/* Mobile Categories */}
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Categorias</h3>
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 sm:mb-3 px-2">Categorias</h3>
             <div className="space-y-1">
               {CATEGORIES.map(cat => (
                 <button 
                   key={cat.id} 
                   onClick={() => { navigateRouter('/catalogo'); setIsMenuOpen(false); }}
-                  className={`flex items-center justify-between w-full text-left py-3 px-2 rounded-lg transition-colors ${
+                  className={`flex items-center justify-between w-full text-left py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg transition-colors touch-manipulation min-h-[44px] ${
                     cat.isHighlight 
                       ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white font-bold highlight-button-shimmer' 
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-primary-600'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-primary-600 active:bg-gray-100'
                   }`}
                 >
-                  <span className={cat.isHighlight ? 'relative z-10' : ''}>{cat.name}</span>
-                  {!cat.isHighlight && <ChevronRight className="w-4 h-4 text-gray-300" />}
+                  <span className={`text-sm sm:text-base ${cat.isHighlight ? 'relative z-10' : ''}`}>{cat.name}</span>
+                  {!cat.isHighlight && <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300 flex-shrink-0" />}
                 </button>
               ))}
+            </div>
+
+            {/* Entrar ou criar conta - Destacado após categorias */}
+            <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200">
+              <button 
+                onClick={() => { navigateRouter('/conta'); setIsMenuOpen(false); }}
+                className="flex items-center w-full py-3 sm:py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-bold hover:from-primary-700 hover:to-primary-800 rounded-xl px-4 shadow-lg hover:shadow-xl transition-all touch-manipulation min-h-[52px] sm:min-h-[56px]"
+              >
+                <div className="bg-white/20 p-2 rounded-full mr-3 flex-shrink-0">
+                   <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-base sm:text-lg font-bold">Entrar</span>
+                  <span className="text-xs sm:text-sm text-white/90">ou criar conta</span>
+                </div>
+                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-white/80 flex-shrink-0" />
+              </button>
             </div>
           </div>
 
@@ -652,7 +1423,9 @@ const ProductCard: React.FC<{
   onClick: () => void;
   onQuickView?: (product: Product) => void;
   onQuickAdd?: (product: Product) => void;
-}> = ({ product, onClick, onQuickView, onQuickAdd }) => {
+  showTimer?: boolean;
+  timerEndDate?: Date;
+}> = ({ product, onClick, onQuickView, onQuickAdd, showTimer = false, timerEndDate }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [hoverImageLoaded, setHoverImageLoaded] = useState(false);
   const { toggleFavorite, isFavorite } = useFavorites();
@@ -674,7 +1447,7 @@ const ProductCard: React.FC<{
 
   return (
     <div 
-      className="group bg-white rounded-lg sm:rounded-xl border border-gray-100 overflow-hidden transition-all duration-300 cursor-pointer flex flex-col h-full w-full relative hover:shadow-xl sm:hover:shadow-2xl hover:scale-[1.01] sm:hover:scale-[1.02] hover:border-primary-200 hover:z-10"
+      className="group bg-white rounded-lg sm:rounded-xl border border-gray-100 overflow-hidden transition-all duration-300 cursor-pointer flex flex-col h-full w-full min-w-[187px] relative hover:shadow-xl sm:hover:shadow-2xl hover:scale-[1.01] sm:hover:scale-[1.02] hover:border-primary-200 hover:z-10"
       onClick={onClick}
     >
       {/* Floating Badges */}
@@ -706,7 +1479,7 @@ const ProductCard: React.FC<{
         />
       </button>
 
-      <div className="relative aspect-square overflow-hidden bg-gray-50">
+      <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
         {/* Placeholder Skeleton */}
         <div className={`absolute inset-0 bg-gray-200 animate-pulse transition-opacity duration-500 ${imageLoaded ? 'opacity-0' : 'opacity-100'}`} />
         
@@ -769,10 +1542,29 @@ const ProductCard: React.FC<{
         </div>
       </div>
 
-      <div className="p-3 sm:p-4 flex flex-col flex-1">
+      <div className="p-3 sm:p-4 lg:p-5 xl:p-6 flex flex-col flex-1">
+        {/* Tag de Miligramagem */}
+        {product.nicotine && Array.isArray(product.nicotine) && product.nicotine.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1">
+            {product.nicotine.map((mg, index) => (
+              <span 
+                key={index}
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-primary-100 text-primary-700 border border-primary-200"
+              >
+                {mg}
+              </span>
+            ))}
+          </div>
+        )}
         <h3 className="font-medium text-sm sm:text-base text-gray-900 line-clamp-2 min-h-[2.5rem] group-hover:text-primary-600 transition-colors">
           {product.name}
         </h3>
+        
+        {showTimer && timerEndDate && (
+          <div className="mt-2 sm:mt-3 mb-2 bg-orange-50 border border-orange-200 rounded-lg px-1.5 sm:px-2 py-1 sm:py-1.5 w-full overflow-hidden">
+            <OfferTimer endDate={timerEndDate} size="small" />
+          </div>
+        )}
         
         <div className="mt-auto">
           {product.originalPrice && (
@@ -787,6 +1579,157 @@ const ProductCard: React.FC<{
           <p className="text-[9px] sm:text-[10px] text-gray-400 mt-1">
             ou em até 12x no cartão
           </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Componente de visualização em lista
+const ProductListItem: React.FC<{
+  product: Product;
+  onClick: () => void;
+  onQuickView?: (product: Product) => void;
+  onQuickAdd?: (product: Product) => void;
+}> = ({ product, onClick, onQuickView, onQuickAdd }) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const { toggleFavorite, isFavorite } = useFavorites();
+  const { showSuccess } = useToast();
+  const mainImage = product.images[0];
+  const favorited = isFavorite(product.id);
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFavorite(product);
+    if (favorited) {
+      showSuccess(`${product.name} removido dos favoritos`);
+    } else {
+      showSuccess(`${product.name} adicionado aos favoritos`);
+    }
+  };
+
+  return (
+    <div
+      className="group bg-white rounded-lg sm:rounded-xl border border-gray-100 overflow-hidden transition-all duration-300 cursor-pointer flex flex-col sm:flex-row h-full w-full relative hover:shadow-xl hover:border-primary-200 touch-manipulation"
+      onClick={onClick}
+    >
+      {/* Imagem */}
+      <div className="relative w-full sm:w-48 md:w-56 lg:w-64 h-48 sm:h-auto sm:flex-shrink-0 bg-gray-50 overflow-hidden">
+        <div className={`absolute inset-0 bg-gray-200 animate-pulse transition-opacity duration-500 ${imageLoaded ? 'opacity-0' : 'opacity-100'}`} />
+        <img
+          src={mainImage}
+          alt={product.name}
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setImageLoaded(true)}
+          className={`object-cover w-full h-full transition-all duration-700 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        />
+        
+        {/* Badges */}
+        <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
+          {product.originalPrice && (
+            <span className="bg-red-600 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shadow-sm">
+              -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
+            </span>
+          )}
+          {product.isNew && (
+            <span className="bg-blue-600 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shadow-sm">
+              NOVO
+            </span>
+          )}
+        </div>
+
+        {/* Botão de Favorito */}
+        <button
+          onClick={handleToggleFavorite}
+          className="absolute top-2 right-2 z-30 p-2 bg-white/95 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 active:scale-95 border border-gray-200 min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] flex items-center justify-center touch-manipulation"
+          aria-label={favorited ? `Remover ${product.name} dos favoritos` : `Adicionar ${product.name} aos favoritos`}
+        >
+          <Heart
+            className={`w-4 h-4 sm:w-5 sm:h-5 transition-all ${
+              favorited
+                ? 'fill-red-500 text-red-500'
+                : 'text-gray-400 hover:text-red-400'
+            }`}
+          />
+        </button>
+      </div>
+
+      {/* Conteúdo */}
+      <div className="flex-1 p-4 sm:p-6 flex flex-col">
+        {/* Tags de Nicotina */}
+        {product.nicotine && Array.isArray(product.nicotine) && product.nicotine.length > 0 && (
+          <div className="mb-2 sm:mb-3 flex flex-wrap gap-1.5">
+            {product.nicotine.map((mg, index) => (
+              <span
+                key={index}
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] md:text-xs font-semibold bg-primary-100 text-primary-700 border border-primary-200"
+              >
+                {mg}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Nome do Produto */}
+        <h3 className="font-semibold text-base sm:text-lg md:text-xl text-gray-900 mb-2 sm:mb-3 group-hover:text-primary-600 transition-colors line-clamp-2">
+          {product.name}
+        </h3>
+
+        {/* Descrição (opcional) */}
+        {product.description && (
+          <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2 hidden sm:block">
+            {product.description}
+          </p>
+        )}
+
+        {/* Preço e Ações */}
+        <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex flex-col">
+            {product.originalPrice && (
+              <span className="text-xs sm:text-sm text-gray-400 line-through mb-1">
+                R$ {product.originalPrice.toFixed(2)}
+              </span>
+            )}
+            <div className="flex items-baseline gap-2">
+              <span className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+                R$ {product.price.toFixed(2)}
+              </span>
+              <span className="text-xs sm:text-sm text-gray-500">à vista</span>
+            </div>
+            <p className="text-[10px] sm:text-xs text-gray-400 mt-1">
+              ou em até 12x no cartão
+            </p>
+          </div>
+
+          {/* Botões de Ação */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            {onQuickView && (
+              <button
+                className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-lg font-medium text-sm sm:text-base flex items-center justify-center gap-2 transition-colors shadow-sm hover:shadow-md min-h-[44px] touch-manipulation"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickView(product);
+                }}
+                aria-label="Compra rápida"
+              >
+                <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">Compra rápida</span>
+                <span className="sm:hidden">Ver</span>
+              </button>
+            )}
+            <button
+              className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium text-sm sm:text-base flex items-center justify-center gap-2 transition-colors shadow-sm hover:shadow-md min-h-[44px] touch-manipulation"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick();
+              }}
+              aria-label="Comprar produto"
+            >
+              <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Comprar</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -827,7 +1770,7 @@ const HeroSlider = () => {
   }
 
   return (
-    <div className="relative h-[250px] sm:h-[300px] md:h-[400px] lg:h-[500px] xl:h-[600px] 2xl:h-[700px] w-full overflow-hidden bg-gray-900 group z-0">
+    <div className="relative h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] xl:h-[400px] 2xl:h-[450px] w-full overflow-hidden bg-gray-900 group z-0">
       <div 
         className="flex transition-transform duration-700 ease-out h-full" 
         style={{ transform: `translateX(-${current * 100}%)` }}
@@ -874,11 +1817,11 @@ const HeroSlider = () => {
       </button>
 
       {/* Navigation Dots - Melhorado para Mobile */}
-      <div className="absolute bottom-3 sm:bottom-4 md:bottom-6 left-0 w-full flex justify-center gap-0.5 sm:gap-1 px-4">
+      <div className="absolute bottom-3 sm:bottom-4 md:bottom-6 left-0 w-full flex justify-center gap-1.5 sm:gap-2 px-4">
         {displayBanners.map((_, idx) => (
           <button
             key={idx}
-            className="rounded-full transition-all duration-300 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="rounded-full transition-all duration-300 flex items-center justify-center"
             onClick={() => {
               setIsAutoPlay(false);
               setCurrent(idx);
@@ -890,8 +1833,8 @@ const HeroSlider = () => {
             <span
               className={`rounded-full transition-all duration-300 block ${
                 current === idx 
-                  ? 'bg-white w-8 sm:w-8 md:w-6 h-2 sm:h-2 md:h-2' 
-                  : 'bg-white/40 w-2 h-2 sm:w-2 md:w-2 sm:h-2 md:h-2 hover:bg-white/60'
+                  ? 'bg-white w-6 h-1.5 shadow-md' 
+                  : 'bg-white/40 w-1.5 h-1.5 hover:bg-white/70 hover:scale-125'
               }`}
             />
           </button>
@@ -912,6 +1855,70 @@ const SectionHeader = ({ title, linkText = "Ver todos", onLinkClick }: { title: 
     </button>
   </div>
 );
+
+// Componente de Timer de Oferta
+const OfferTimer = ({ endDate, size = 'default' }: { endDate: Date; size?: 'default' | 'small' }) => {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+      const end = endDate.getTime();
+      const difference = end - now;
+
+      if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+        setTimeLeft({ days, hours, minutes, seconds });
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    };
+
+    calculateTimeLeft();
+    const interval = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(interval);
+  }, [endDate]);
+
+  const isSmall = size === 'small';
+  const textSize = isSmall ? 'text-[7px] sm:text-[8px] md:text-[9px]' : 'text-xs sm:text-sm';
+  const numberSize = isSmall ? 'text-[9px] sm:text-[10px] md:text-xs' : 'text-sm sm:text-base';
+  const gap = isSmall ? 'gap-0.5 sm:gap-1' : 'gap-1 sm:gap-2';
+  const iconSize = isSmall ? 'w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5' : 'w-4 h-4';
+
+  return (
+    <div className={`flex items-center flex-wrap ${gap} ${textSize} font-semibold leading-tight`}>
+      <Calendar className={`${iconSize} text-orange-600 flex-shrink-0`} />
+      <span className="text-orange-600 whitespace-nowrap">TERMINA EM:</span>
+      <div className="flex items-center gap-0.5 flex-shrink-0">
+        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] text-center`}>
+          {String(timeLeft.days).padStart(2, '0')}D
+        </span>
+        <span className="text-orange-600 text-[8px] sm:text-[9px]">:</span>
+        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] text-center`}>
+          {String(timeLeft.hours).padStart(2, '0')}
+        </span>
+        <span className="text-orange-600 text-[8px] sm:text-[9px]">:</span>
+        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] text-center`}>
+          {String(timeLeft.minutes).padStart(2, '0')}
+        </span>
+        <span className="text-orange-600 text-[8px] sm:text-[9px]">:</span>
+        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] text-center`}>
+          {String(timeLeft.seconds).padStart(2, '0')}
+        </span>
+      </div>
+    </div>
+  );
+};
 
 // --- AI EDITOR COMPONENT ---
 
@@ -1025,7 +2032,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
     {/* 3. Feature Bar */}
     <section className="bg-white border-b border-gray-100">
-      <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl py-4 sm:py-5 lg:py-6 xl:py-8">
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl py-3 sm:py-4 md:py-5 lg:py-6 xl:py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 divide-y md:divide-y-0 md:divide-x divide-gray-100">
           {[
             { icon: Truck, title: "Envio para todo Brasil", sub: "Entrega expressa e rastreada" },
@@ -1047,10 +2054,10 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     </section>
 
     {/* 4. New Arrivals */}
-    <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl">
+    <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl py-4 sm:py-6 md:py-8 lg:py-10">
       <SectionHeader title="Novidades Chegando" onLinkClick={() => navigateRouter('/catalogo')} />
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
-        {(products || []).slice(0, 12).map(product => (
+        {(products || []).slice(0, 5).map(product => (
           <ProductCard 
             key={product.id} 
             product={{...product, isNew: true}} 
@@ -1063,13 +2070,16 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     </section>
 
     {/* 5. Promotional Banners */}
-    <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl">
+    <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl py-4 sm:py-6 md:py-8 lg:py-10">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-        <div className="relative h-56 sm:h-64 md:h-80 lg:h-96 xl:h-[450px] rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer w-full">
-          <img src="https://placehold.co/800x600/111/FFF?text=Pod+Systems+Promo" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Banner 1" />
+        <div className="relative h-28 sm:h-32 md:h-40 lg:h-48 xl:h-[225px] rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer">
+          <img src="/images/banner01.svg" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Promoção Pod Systems" loading="lazy" />
         </div>
-        <div className="relative h-56 sm:h-64 md:h-80 lg:h-96 xl:h-[450px] rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer w-full">
-          <img src="https://placehold.co/800x600/1e293b/FFF?text=Premium+Juices+Sale" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Banner 2" />
+        <div className="relative h-28 sm:h-32 md:h-40 lg:h-48 xl:h-[225px] rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer">
+          <img src="/images/banner02.svg" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Promoção Premium Juices" loading="lazy" onError={(e) => {
+            // Fallback para banner01 se banner02 não existir
+            e.currentTarget.src = '/images/banner01.png';
+          }} />
         </div>
       </div>
     </section>
@@ -1078,12 +2088,12 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     <section className="bg-gray-50 py-8 sm:py-12 lg:py-16 xl:py-20">
       <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl">
         <SectionHeader title="Os Mais Vendidos" onLinkClick={() => navigateRouter('/catalogo')} />
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr] 2xl:grid-cols-[360px_1fr] gap-4 lg:gap-6 xl:gap-8 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] xl:grid-cols-[260px_1fr] 2xl:grid-cols-[280px_1fr] gap-3 lg:gap-4 xl:gap-5 w-full">
           {/* Banner Vertical */}
           <div className="hidden lg:block">
             <div 
               onClick={() => navigateRouter('/catalogo')}
-              className="h-full min-h-[600px] bg-gradient-to-br from-primary-600 via-primary-700 to-blue-600 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer group relative"
+              className="h-full min-h-[400px] bg-gradient-to-br from-primary-600 via-primary-700 to-blue-600 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer group relative"
             >
               {/* Imagem de fundo ou gradiente */}
               <div className="absolute inset-0 bg-gradient-to-br from-primary-600/90 via-primary-700/90 to-blue-600/90"></div>
@@ -1116,8 +2126,8 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
           </div>
           
           {/* Grid de Produtos */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5 w-full">
-            {(products || []).filter(p => p.isBestSeller).map(product => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
+            {(products || []).filter(p => p.isBestSeller).slice(0, 4).map(product => (
               <ProductCard 
                 key={product.id} 
                 product={product} 
@@ -1132,8 +2142,21 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     </section>
 
     {/* 7. Best Offers */}
-    <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl">
-      <SectionHeader title="Ofertas Relâmpago" onLinkClick={() => navigateRouter('/catalogo')} />
+    <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl py-4 sm:py-6 md:py-8 lg:py-10">
+      <div className="mb-6 sm:mb-8 lg:mb-10 xl:mb-12 pb-4 border-b border-gray-100">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <h2 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 relative pl-4">
+            <span className="absolute left-0 top-1 w-1 h-6 bg-primary-500 rounded-full"></span>
+            Ofertas Relâmpago
+          </h2>
+          <div className="flex items-center gap-4">
+            <OfferTimer endDate={new Date(Date.now() + 13 * 24 * 60 * 60 * 1000 + 17 * 60 * 60 * 1000 + 16 * 60 * 1000 + 41 * 1000)} />
+            <button onClick={() => navigateRouter('/catalogo')} className="text-sm font-medium text-gray-500 hover:text-primary-600 flex items-center group">
+              Ver todos <ArrowRight className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </div>
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
         {(products || []).map(product => (
            <ProductCard 
@@ -1142,16 +2165,18 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
              onClick={() => handleProductClick(product.id)}
              onQuickView={onQuickView}
              onQuickAdd={onQuickAdd}
+             showTimer={true}
+             timerEndDate={new Date(Date.now() + 13 * 24 * 60 * 60 * 1000 + 17 * 60 * 60 * 1000 + 16 * 60 * 1000 + 41 * 1000)}
            />
-        )).slice(0, 12)}
+        )).slice(0, 5)}
       </div>
     </section>
 
     {/* 8. Customer Favorites */}
-    <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl">
+    <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl py-4 sm:py-6 md:py-8 lg:py-10">
       <SectionHeader title="Queridinhos dos Clientes" onLinkClick={() => navigateRouter('/catalogo')} />
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
-        {(products || []).slice(0, 12).map(product => (
+        {(products || []).slice(0, 5).map(product => (
            <ProductCard 
              key={`fav-${product.id}`} 
              product={product} 
@@ -1160,6 +2185,124 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
              onQuickAdd={onQuickAdd}
            />
         ))}
+      </div>
+    </section>
+
+    {/* 10. Depoimentos de Clientes - Carrossel */}
+    <section className="container mx-auto px-3 sm:px-4 py-8 sm:py-12">
+      <div className="text-center mb-8 sm:mb-12">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
+          O Que Nossos Clientes Dizem
+        </h2>
+        <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
+          Mais de 10.000 clientes satisfeitos confiam na White Cloud Brasil
+        </p>
+      </div>
+      
+      <div className="relative max-w-5xl mx-auto">
+        {/* Card do Depoimento */}
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 lg:p-12 shadow-xl border border-gray-100 relative overflow-hidden">
+          {/* Gradiente de fundo aprimorado */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-50/40 via-white to-blue-50/30 pointer-events-none" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-500 via-primary-600 to-blue-500" />
+          
+          {/* Botões de Navegação - Design aprimorado */}
+          <button
+            onClick={goToPrevTestimonial}
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-primary-50 backdrop-blur-sm rounded-full p-2 sm:p-2.5 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 min-h-[40px] min-w-[40px] flex items-center justify-center border border-gray-200 hover:border-primary-300 group"
+            aria-label="Depoimento anterior"
+          >
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 group-hover:text-primary-600 transition-colors" />
+          </button>
+          
+          <button
+            onClick={goToNextTestimonial}
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-primary-50 backdrop-blur-sm rounded-full p-2 sm:p-2.5 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 min-h-[40px] min-w-[40px] flex items-center justify-center border border-gray-200 hover:border-primary-300 group"
+            aria-label="Próximo depoimento"
+          >
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 group-hover:text-primary-600 transition-colors" />
+          </button>
+
+          {/* Conteúdo do Depoimento com animação */}
+          <div key={currentTestimonial} className="animate-fade-in relative z-10">
+            {/* Header com estrelas - Design aprimorado */}
+            <div className="flex items-center justify-center gap-3 mb-6 sm:mb-8">
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className="w-5 h-5 sm:w-6 sm:h-6 fill-amber-400 text-amber-400 drop-shadow-sm"
+                  />
+                ))}
+              </div>
+            </div>
+            
+            {/* Comentário - Design mais moderno e legível */}
+            <div className="relative mb-6 sm:mb-8 px-2 sm:px-4">
+              <div className="absolute -top-2 -left-1 sm:-top-3 sm:-left-2 text-5xl sm:text-6xl md:text-7xl text-primary-100/60 font-serif leading-none select-none">"</div>
+              <blockquote className="text-base sm:text-lg md:text-xl lg:text-base text-gray-800 leading-relaxed text-center relative z-10 font-light italic px-2 sm:px-4">
+                {testimonials[currentTestimonial].comment}
+              </blockquote>
+              <div className="absolute -bottom-2 -right-1 sm:-bottom-3 sm:-right-2 text-5xl sm:text-6xl md:text-7xl text-primary-100/60 font-serif leading-none select-none">"</div>
+            </div>
+            
+            {/* Footer com avatar, nome e localização - Design mais elegante */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-6 sm:pt-8 border-t border-gray-200">
+              <div className="relative">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 flex items-center justify-center flex-shrink-0 shadow-md ring-2 ring-primary-100">
+                  <img 
+                    src={`https://i.pravatar.cc/128?img=${currentTestimonial + 1}`}
+                    alt={testimonials[currentTestimonial].name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      target.style.display = 'none';
+                      if (target.parentElement) {
+                        target.parentElement.innerHTML = `<span class="text-white font-bold text-base sm:text-lg">${testimonials[currentTestimonial].name.charAt(0)}</span>`;
+                        target.parentElement.className = 'w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-base sm:text-lg flex-shrink-0 shadow-md ring-2 ring-primary-100';
+                      }
+                    }}
+                  />
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full border-2 border-white shadow-sm flex items-center justify-center">
+                  <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white fill-white" />
+                </div>
+              </div>
+              <div className="text-center sm:text-left">
+                <p className="font-bold text-base sm:text-lg text-gray-900 mb-0.5">
+                  {testimonials[currentTestimonial].name}
+                </p>
+                <div className="flex items-center justify-center sm:justify-start gap-1 text-xs sm:text-sm text-gray-500">
+                  <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-primary-500" />
+                  <span className="font-medium">{testimonials[currentTestimonial].location}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Indicadores (Dots) */}
+        <div className="flex items-center justify-center gap-2 mt-6 sm:mt-8">
+          {testimonials.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => goToTestimonial(idx)}
+              className={`transition-all duration-300 rounded-full flex items-center justify-center ${
+                idx === currentTestimonial
+                  ? 'w-6 h-1.5 bg-primary-600 shadow-md'
+                  : 'w-1.5 h-1.5 bg-gray-300 hover:bg-primary-400 hover:scale-125'
+              }`}
+              aria-label={`Ir para depoimento ${idx + 1}`}
+            />
+          ))}
+        </div>
+
+        {/* Contador */}
+        <div className="text-center mt-4">
+          <span className="text-sm text-gray-500">
+            {currentTestimonial + 1} de {testimonials.length}
+          </span>
+        </div>
       </div>
     </section>
 
@@ -1178,124 +2321,6 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
               <img key={`duplicate-${idx}`} src={brand.logo} alt={brand.name} className="h-8 md:h-12 object-contain hover:scale-110 transition-transform cursor-pointer flex-shrink-0" />
             ))}
           </div>
-        </div>
-      </div>
-    </section>
-
-    {/* 10. Depoimentos de Clientes - Carrossel */}
-    <section className="container mx-auto px-3 sm:px-4 py-8 sm:py-12">
-      <div className="text-center mb-8 sm:mb-12">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
-          O Que Nossos Clientes Dizem
-        </h2>
-        <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
-          Mais de 10.000 clientes satisfeitos confiam na White Cloud Brasil
-        </p>
-      </div>
-      
-      <div className="relative max-w-4xl mx-auto">
-        {/* Card do Depoimento */}
-        <div className="bg-white rounded-2xl sm:rounded-3xl p-8 sm:p-10 md:p-12 shadow-xl border-0 relative overflow-hidden backdrop-blur-sm">
-          {/* Gradiente sutil de fundo */}
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 via-white to-primary-50/30 pointer-events-none" />
-          
-          {/* Botões de Navegação - Design mais minimalista */}
-          <button
-            onClick={goToPrevTestimonial}
-            className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white backdrop-blur-md rounded-full p-2.5 sm:p-3 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 min-h-[40px] min-w-[40px] flex items-center justify-center border-0"
-            aria-label="Depoimento anterior"
-          >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-          </button>
-          
-          <button
-            onClick={goToNextTestimonial}
-            className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white backdrop-blur-md rounded-full p-2.5 sm:p-3 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 min-h-[40px] min-w-[40px] flex items-center justify-center border-0"
-            aria-label="Próximo depoimento"
-          >
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-          </button>
-
-          {/* Conteúdo do Depoimento com animação */}
-          <div key={currentTestimonial} className="animate-fade-in relative z-10">
-            {/* Header com estrelas e verificação - Design mais clean */}
-            <div className="flex items-center justify-center gap-4 mb-8">
-              <div className="flex items-center gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-4 h-4 sm:w-5 sm:h-5 fill-amber-400 text-amber-400"
-                  />
-                ))}
-              </div>
-              {testimonials[currentTestimonial].verified && (
-                <div className="flex items-center gap-1.5 bg-primary-500/10 text-primary-600 px-3 py-1 rounded-full border border-primary-200/50">
-                  <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="text-xs font-semibold tracking-wide">Verificado</span>
-                </div>
-              )}
-            </div>
-            
-            {/* Comentário - Design mais moderno */}
-            <div className="relative mb-8">
-              <div className="absolute -top-2 -left-2 text-6xl sm:text-7xl text-primary-100 font-serif leading-none">"</div>
-              <p className="text-lg sm:text-xl md:text-2xl text-gray-800 mb-0 leading-relaxed text-center relative z-10 font-light">
-                {testimonials[currentTestimonial].comment}
-              </p>
-              <div className="absolute -bottom-2 -right-2 text-6xl sm:text-7xl text-primary-100 font-serif leading-none">"</div>
-            </div>
-            
-            {/* Footer com nome e localização - Design mais elegante */}
-            <div className="flex flex-col items-center justify-center gap-3 pt-6 border-t border-gray-200/50">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0 shadow-md ring-2 ring-primary-100">
-                <img 
-                  src={`https://i.pravatar.cc/128?img=${currentTestimonial + 1}`}
-                  alt={testimonials[currentTestimonial].name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    // Fallback para inicial se a imagem não carregar
-                    const target = e.currentTarget;
-                    target.style.display = 'none';
-                    if (target.parentElement) {
-                      target.parentElement.innerHTML = `<span class="text-white font-semibold text-base sm:text-lg">${testimonials[currentTestimonial].name.charAt(0)}</span>`;
-                      target.parentElement.className = 'w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 flex items-center justify-center text-white font-semibold text-base sm:text-lg flex-shrink-0 shadow-md ring-2 ring-primary-100';
-                    }
-                  }}
-                />
-              </div>
-              <div className="text-center">
-                <p className="font-semibold text-base sm:text-lg text-gray-900 mb-0.5">
-                  {testimonials[currentTestimonial].name}
-                </p>
-                <p className="text-xs sm:text-sm text-gray-500 font-medium">
-                  {testimonials[currentTestimonial].location}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Indicadores (Dots) */}
-        <div className="flex items-center justify-center gap-1.5 mt-6 sm:mt-8">
-          {testimonials.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => goToTestimonial(idx)}
-              className={`transition-all duration-300 rounded-full min-h-[32px] min-w-[32px] flex items-center justify-center ${
-                idx === currentTestimonial
-                  ? 'w-8 h-2 bg-primary-600'
-                  : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'
-              }`}
-              aria-label={`Ir para depoimento ${idx + 1}`}
-            />
-          ))}
-        </div>
-
-        {/* Contador */}
-        <div className="text-center mt-4">
-          <span className="text-sm text-gray-500">
-            {currentTestimonial + 1} de {testimonials.length}
-          </span>
         </div>
       </div>
     </section>
@@ -1542,246 +2567,266 @@ const FinalizeOrderPage = () => {
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-6">Detalhes de cobrança</h2>
 
-            <div className="space-y-4">
-              {/* Nome e Sobrenome */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
-                    Nome* <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="firstName"
-                    type="text"
-                    value={formData.firstName}
-                    onChange={(e) => handleInputChange('firstName', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                  />
+            <div className="space-y-8">
+              {/* Seção: Dados Gerais */}
+              <div className="space-y-4">
+                <h3 className="text-base font-semibold text-gray-800 mb-4">Dados Gerais</h3>
+
+                {/* Nome e Sobrenome */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Nome* <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="firstName"
+                      type="text"
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange('firstName', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Sobrenome* <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="lastName"
+                      type="text"
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange('lastName', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
-                    Sobrenome* <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="lastName"
-                    type="text"
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange('lastName', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                  />
+
+                {/* CPF e Data de Nascimento */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-2">
+                      CPF* <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="cpf"
+                      type="text"
+                      value={formData.cpf}
+                      onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
+                      maxLength={14}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-2">
+                      Data de Nascimento* <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="birthDate"
+                      type="text"
+                      value={formData.birthDate}
+                      onChange={(e) => handleInputChange('birthDate', formatDate(e.target.value))}
+                      placeholder="DD/MM/AAAA"
+                      maxLength={10}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    />
+                  </div>
+                </div>
+
+                {/* Gênero e País */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
+                      Gênero* <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="gender"
+                      value={formData.gender}
+                      onChange={(e) => handleInputChange('gender', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    >
+                      <option value="">Selecionar</option>
+                      <option value="masculino">Masculino</option>
+                      <option value="feminino">Feminino</option>
+                      <option value="outro">Outro</option>
+                      <option value="prefiro-nao-informar">Prefiro não informar</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
+                      País* <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="country"
+                      type="text"
+                      value={formData.country}
+                      onChange={(e) => handleInputChange('country', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* CPF e Data de Nascimento */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Seção: Endereço */}
+              <div className="space-y-4 pt-4 border-t border-gray-200">
+                <h3 className="text-base font-semibold text-gray-800 mb-4">Endereço</h3>
+
+                {/* CEP */}
                 <div>
-                  <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-2">
-                    CPF* <span className="text-red-500">*</span>
+                  <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-2">
+                    CEP* <span className="text-red-500">*</span>
                   </label>
                   <input
-                    id="cpf"
+                    id="zipCode"
                     type="text"
-                    value={formData.cpf}
-                    onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
-                    maxLength={14}
+                    value={formData.zipCode}
+                    onChange={(e) => handleInputChange('zipCode', formatCEP(e.target.value))}
+                    maxLength={9}
+                    placeholder="00000-000"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
                   />
                 </div>
-                <div>
-                  <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-2">
-                    Data de Nascimento* <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="birthDate"
-                    type="text"
-                    value={formData.birthDate}
-                    onChange={(e) => handleInputChange('birthDate', formatDate(e.target.value))}
-                    placeholder="DD/MM/AAAA"
-                    maxLength={10}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                  />
+
+                {/* Endereço e Número */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="sm:col-span-2">
+                    <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                      Endereço* <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="address"
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
+                      placeholder="Nome da rua e número da casa"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-2">
+                      Número* <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="number"
+                      type="text"
+                      value={formData.number}
+                      onChange={(e) => handleInputChange('number', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    />
+                  </div>
+                </div>
+
+                {/* Complemento e Bairro */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="complement" className="block text-sm font-medium text-gray-700 mb-2">
+                      Apartamento, suíte, unidade, etc. (opcional)
+                    </label>
+                    <input
+                      id="complement"
+                      type="text"
+                      value={formData.complement}
+                      onChange={(e) => handleInputChange('complement', e.target.value)}
+                      placeholder="Apartamento, suíte, unidade, etc."
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="neighborhood" className="block text-sm font-medium text-gray-700 mb-2">
+                      Bairro (opcional)
+                    </label>
+                    <input
+                      id="neighborhood"
+                      type="text"
+                      value={formData.neighborhood}
+                      onChange={(e) => handleInputChange('neighborhood', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    />
+                  </div>
+                </div>
+
+                {/* Cidade e Estado */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
+                      Cidade* <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="city"
+                      type="text"
+                      value={formData.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
+                      Estado* <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="state"
+                      value={formData.state}
+                      onChange={(e) => handleInputChange('state', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    >
+                      {brazilianStates.map(state => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              {/* Gênero e País */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
-                    Gênero* <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="gender"
-                    value={formData.gender}
-                    onChange={(e) => handleInputChange('gender', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                  >
-                    <option value="">Selecionar</option>
-                    <option value="masculino">Masculino</option>
-                    <option value="feminino">Feminino</option>
-                    <option value="outro">Outro</option>
-                    <option value="prefiro-nao-informar">Prefiro não informar</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
-                    País* <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="country"
-                    type="text"
-                    value={formData.country}
-                    onChange={(e) => handleInputChange('country', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                  />
+              {/* Seção: Contato */}
+              <div className="space-y-4 pt-4 border-t border-gray-200">
+                <h3 className="text-base font-semibold text-gray-800 mb-4">Contato</h3>
+
+                {/* Telefone e Email */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                      Telefone* <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="phone"
+                      type="text"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
+                      maxLength={15}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                      Endereço de e-mail* <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* CEP */}
-              <div>
-                <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-2">
-                  CEP* <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="zipCode"
-                  type="text"
-                  value={formData.zipCode}
-                  onChange={(e) => handleInputChange('zipCode', formatCEP(e.target.value))}
-                  maxLength={9}
-                  placeholder="00000-000"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                />
-              </div>
+              {/* Seção: Observações */}
+              <div className="space-y-4 pt-4 border-t border-gray-200">
+                <h3 className="text-base font-semibold text-gray-800 mb-4">Observações</h3>
 
-              {/* Endereço e Número */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="sm:col-span-2">
-                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-                    Endereço* <span className="text-red-500">*</span>
+                {/* Notas do Pedido */}
+                <div>
+                  <label htmlFor="orderNotes" className="block text-sm font-medium text-gray-700 mb-2">
+                    Notas de Pedido (opcional)
                   </label>
-                  <input
-                    id="address"
-                    type="text"
-                    value={formData.address}
-                    onChange={(e) => handleInputChange('address', e.target.value)}
-                    placeholder="Nome da rua e número da casa"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  <textarea
+                    id="orderNotes"
+                    value={formData.orderNotes}
+                    onChange={(e) => handleInputChange('orderNotes', e.target.value)}
+                    rows={4}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none"
+                    placeholder="Notas sobre seu pedido, por exemplo, instruções especiais para entrega."
                   />
                 </div>
-                <div>
-                  <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-2">
-                    Número* <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="number"
-                    type="text"
-                    value={formData.number}
-                    onChange={(e) => handleInputChange('number', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                  />
-                </div>
-              </div>
-
-              {/* Complemento e Bairro */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="complement" className="block text-sm font-medium text-gray-700 mb-2">
-                    Apartamento, suíte, unidade, etc. (opcional)
-                  </label>
-                  <input
-                    id="complement"
-                    type="text"
-                    value={formData.complement}
-                    onChange={(e) => handleInputChange('complement', e.target.value)}
-                    placeholder="Apartamento, suíte, unidade, etc."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="neighborhood" className="block text-sm font-medium text-gray-700 mb-2">
-                    Bairro (opcional)
-                  </label>
-                  <input
-                    id="neighborhood"
-                    type="text"
-                    value={formData.neighborhood}
-                    onChange={(e) => handleInputChange('neighborhood', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                  />
-                </div>
-              </div>
-
-              {/* Cidade e Estado */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
-                    Cidade* <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="city"
-                    type="text"
-                    value={formData.city}
-                    onChange={(e) => handleInputChange('city', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
-                    Estado* <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="state"
-                    value={formData.state}
-                    onChange={(e) => handleInputChange('state', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                  >
-                    {brazilianStates.map(state => (
-                      <option key={state} value={state}>{state}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Telefone e Email */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                    Telefone* <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="phone"
-                    type="text"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
-                    maxLength={15}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Endereço de e-mail* <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                  />
-                </div>
-              </div>
-
-              {/* Notas do Pedido */}
-              <div>
-                <label htmlFor="orderNotes" className="block text-sm font-medium text-gray-700 mb-2">
-                  Notas de Pedido (opcional)
-                </label>
-                <textarea
-                  id="orderNotes"
-                  value={formData.orderNotes}
-                  onChange={(e) => handleInputChange('orderNotes', e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none"
-                  placeholder="Notas sobre seu pedido, por exemplo, instruções especiais para entrega."
-                />
               </div>
             </div>
           </div>
@@ -2586,7 +3631,16 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
   const [filteredProductsFromFilters, setFilteredProductsFromFilters] = useState<Product[]>(products);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    const saved = localStorage.getItem('catalog-view-mode');
+    return (saved === 'grid' || saved === 'list') ? saved : 'grid';
+  });
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  
+  // Salvar preferência de visualização
+  useEffect(() => {
+    localStorage.setItem('catalog-view-mode', viewMode);
+  }, [viewMode]);
   
   const handleProductClick = (id: string) => {
     navigateRouter(`/produto/${id}`);
@@ -2673,7 +3727,7 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
         <div className="flex-1">
           <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6 shadow-sm">
             <span className="text-gray-500 font-medium text-sm sm:text-base">{filteredProducts.length} produtos encontrados</span>
-            <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-wrap">
               {/* Dropdown Exibir por página */}
               <div className="flex items-center gap-2">
                 <label htmlFor="items-per-page" className="text-xs sm:text-sm font-medium text-gray-700 whitespace-nowrap">
@@ -2702,6 +3756,34 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
                 <option>Maior Preço</option>
                 <option>Mais Recentes</option>
               </select>
+              
+              {/* Botões de Visualização Grid/Lista - Movido para o final */}
+              <div className="flex items-center gap-1 border border-gray-200 rounded-lg p-1 bg-gray-50">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-md transition-all min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] flex items-center justify-center touch-manipulation ${
+                    viewMode === 'grid'
+                      ? 'bg-primary-600 text-white shadow-sm'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-primary-600'
+                  }`}
+                  aria-label="Visualização em grade"
+                  title="Visualização em grade"
+                >
+                  <Grid3x3 className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded-md transition-all min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] flex items-center justify-center touch-manipulation ${
+                    viewMode === 'list'
+                      ? 'bg-primary-600 text-white shadow-sm'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-primary-600'
+                  }`}
+                  aria-label="Visualização em lista"
+                  title="Visualização em lista"
+                >
+                  <List className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -2714,17 +3796,31 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                {paginatedProducts.map(product => (
-                  <ProductCard 
-                    key={product.id} 
-                    product={product} 
-                    onClick={() => handleProductClick(product.id)}
-                    onQuickView={onQuickView}
-                    onQuickAdd={onQuickAdd}
-                  />
-                ))}
-              </div>
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                  {paginatedProducts.map(product => (
+                    <ProductCard 
+                      key={product.id} 
+                      product={product} 
+                      onClick={() => handleProductClick(product.id)}
+                      onQuickView={onQuickView}
+                      onQuickAdd={onQuickAdd}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4 sm:space-y-6">
+                  {paginatedProducts.map(product => (
+                    <ProductListItem
+                      key={product.id}
+                      product={product}
+                      onClick={() => handleProductClick(product.id)}
+                      onQuickView={onQuickView}
+                      onQuickAdd={onQuickAdd}
+                    />
+                  ))}
+                </div>
+              )}
               
               {/* Controles de Paginação */}
               {totalPages > 1 && (
@@ -2839,8 +3935,14 @@ const ProductDetail = ({ product }: { product: Product }) => {
   const flavorsDropdownRef = useRef<HTMLDivElement>(null);
   // Estado para controlar expansão da seção "Fora de Estoque"
   const [isOutOfStockExpanded, setIsOutOfStockExpanded] = useState(false);
-  // Estados para produtos complementares/kit
+  // Estado para produtos complementares selecionados
   const [selectedComplementaryProducts, setSelectedComplementaryProducts] = useState<string[]>([]);
+  
+  // Estados para formulário de comentário
+  const [newReviewName, setNewReviewName] = useState('');
+  const [newReviewComment, setNewReviewComment] = useState('');
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   
   // Produtos relacionados (mesma categoria, excluindo o produto atual)
   const relatedProducts = (products || []).filter(
@@ -2848,7 +3950,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
   ).slice(0, 8);
   
   // Mock de reviews (substituir por dados reais depois)
-  const [reviews] = useState<Review[]>([
+  const [reviews, setReviews] = useState<Review[]>([
     {
       id: '1',
       productId: product.id,
@@ -2879,8 +3981,24 @@ const ProductDetail = ({ product }: { product: Product }) => {
   ]);
   
   const handleAddToCart = () => {
+    // Adiciona o produto principal
     addToCart(product, quantity, { selectedFlavor, selectedNicotine });
-    showSuccess(`${product.name} adicionado ao carrinho!`);
+    
+    // Adiciona produtos complementares automaticamente se existirem
+    if (product.complementaryProducts && product.complementaryProducts.length > 0) {
+      const complementaryItems = (products || []).filter(p => 
+        product.complementaryProducts?.includes(p.id)
+      );
+      
+      complementaryItems.forEach(item => {
+        addToCart(item, 1);
+      });
+      
+      const totalItems = complementaryItems.length + 1;
+      showSuccess(`${totalItems} produto(s) adicionado(s) ao carrinho! (${product.name} + ${complementaryItems.length} complementar${complementaryItems.length > 1 ? 'es' : ''})`);
+    } else {
+      showSuccess(`${product.name} adicionado ao carrinho!`);
+    }
   };
   
   const handleProductClick = (id: string) => {
@@ -3116,6 +4234,36 @@ const ProductDetail = ({ product }: { product: Product }) => {
     }
   };
 
+  // Função para enviar comentário
+  const handleSubmitReview = () => {
+    if (!newReviewName.trim() || !newReviewComment.trim()) {
+      showSuccess('Por favor, preencha todos os campos.');
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    
+    // Simular envio (substituir por chamada de API depois)
+    setTimeout(() => {
+      const newReview: Review = {
+        id: Date.now().toString(),
+        productId: product.id,
+        customerName: newReviewName.trim(),
+        customerPhoto: `https://ui-avatars.com/api/?name=${encodeURIComponent(newReviewName.trim())}&background=3765FF&color=fff`,
+        rating: newReviewRating,
+        comment: newReviewComment.trim(),
+        date: new Date().toISOString().split('T')[0]
+      };
+      
+      setReviews(prev => [newReview, ...prev]);
+      setNewReviewName('');
+      setNewReviewComment('');
+      setNewReviewRating(5);
+      setIsSubmittingReview(false);
+      showSuccess('Avaliação enviada com sucesso!');
+    }, 500);
+  };
+
   return (
     <div className="container mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8">
       {/* Breadcrumb Navigation */}
@@ -3209,13 +4357,25 @@ const ProductDetail = ({ product }: { product: Product }) => {
               product.complementaryProducts?.includes(p.id)
             );
             
-            if (complementaryItems.length === 0) return null;
+            // Debug: verificar se os produtos estão sendo encontrados
+            console.log('Produtos complementares configurados:', product.complementaryProducts);
+            console.log('Total de produtos disponíveis:', products?.length);
+            console.log('Produtos complementares encontrados:', complementaryItems.length);
+            console.log('IDs dos produtos encontrados:', complementaryItems.map(p => p.id));
+            
+            if (complementaryItems.length === 0) {
+              console.warn('Nenhum produto complementar encontrado. Verifique se os IDs estão corretos.');
+              return null;
+            }
             
             return (
               <div className="mt-6 sm:mt-8">
-                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">
                   Complete seu Kit
                 </h3>
+                <p className="text-xs sm:text-sm text-gray-600 mb-4">
+                  Estes produtos serão adicionados automaticamente ao carrinho junto com o produto principal.
+                </p>
                 
                 <div className="space-y-3 border-b border-dashed border-gray-300 pb-4 mb-4">
                   {complementaryItems.map((complementaryProduct) => {
@@ -3935,7 +5095,461 @@ const ProductDetail = ({ product }: { product: Product }) => {
             ))}
           </div>
         )}
+
+        {/* Formulário de Comentário */}
+        <div className="mt-8 pt-8 border-t border-gray-200">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Deixe sua avaliação</h3>
+          
+          <div className="space-y-4">
+            {/* Campo Nome */}
+            <div>
+              <label htmlFor="review-name" className="block text-sm font-medium text-gray-700 mb-2">
+                Seu nome
+              </label>
+              <input
+                id="review-name"
+                type="text"
+                value={newReviewName}
+                onChange={(e) => setNewReviewName(e.target.value)}
+                placeholder="Digite seu nome"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors text-sm sm:text-base"
+              />
+            </div>
+
+            {/* Campo Avaliação (Estrelas) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Sua avaliação
+              </label>
+              <div className="flex items-center gap-2">
+                {[...Array(5)].map((_, i) => {
+                  const rating = i + 1;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setNewReviewRating(rating)}
+                      className="focus:outline-none transition-transform hover:scale-110"
+                      aria-label={`Avaliar ${rating} estrelas`}
+                    >
+                      <Star
+                        className={`w-6 h-6 sm:w-7 sm:h-7 ${
+                          rating <= newReviewRating
+                            ? 'fill-amber-400 text-amber-400'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    </button>
+                  );
+                })}
+                <span className="text-sm text-gray-600 ml-2">({newReviewRating}/5)</span>
+              </div>
+            </div>
+
+            {/* Campo Comentário */}
+            <div>
+              <label htmlFor="review-comment" className="block text-sm font-medium text-gray-700 mb-2">
+                Seu comentário
+              </label>
+              <textarea
+                id="review-comment"
+                value={newReviewComment}
+                onChange={(e) => setNewReviewComment(e.target.value)}
+                placeholder="Compartilhe sua experiência com este produto..."
+                rows={4}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors resize-none text-sm sm:text-base"
+              />
+            </div>
+
+            {/* Botão Enviar */}
+            <Button
+              onClick={handleSubmitReview}
+              disabled={isSubmittingReview || !newReviewName.trim() || !newReviewComment.trim()}
+              className="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2.5 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]"
+            >
+              {isSubmittingReview ? 'Enviando...' : 'Enviar Avaliação'}
+            </Button>
+          </div>
+        </div>
       </section>
+    </div>
+  );
+};
+
+// Componente White Club - Gamificação
+const WhiteClub = () => {
+  const navigateRouter = useNavigateRouter();
+  const { showSuccess } = useToast();
+  const [userPoints, setUserPoints] = useState(1250);
+  const [copiedCoupon, setCopiedCoupon] = useState<string | null>(null);
+
+  // Cupons disponíveis
+  const coupons = [
+    {
+      id: '1',
+      code: 'WHITECLUB5',
+      discount: '5%',
+      description: 'em sua 1ª compra no White Cloud!',
+      category: 'Primeira Compra',
+      image: '/images/img_01.png',
+      conditions: 'Válido para primeira compra. Desconto não cumulativo.'
+    },
+    {
+      id: '2',
+      code: 'PODS12',
+      discount: '12%',
+      description: 'em Pods selecionados',
+      category: 'Pods',
+      image: '/images/img_02.png',
+      conditions: 'Válido para produtos da categoria Pods. Desconto não cumulativo.'
+    },
+    {
+      id: '3',
+      code: 'JUICES15',
+      discount: '15%',
+      description: 'em Juices Premium',
+      category: 'Juices',
+      image: '/images/img_03.png',
+      conditions: 'Válido para juices premium. Desconto não cumulativo.'
+    },
+    {
+      id: '4',
+      code: 'KIT20',
+      discount: '20%',
+      description: 'em Kits completos',
+      category: 'Kits',
+      image: '/images/img_04.png',
+      conditions: 'Válido para kits completos. Desconto não cumulativo.'
+    },
+    {
+      id: '5',
+      code: 'FREESHIP',
+      discount: 'FRETE GRÁTIS',
+      description: 'em compras acima de R$ 200',
+      category: 'Frete',
+      image: '/images/img_06.png',
+      conditions: 'Válido para compras acima de R$ 200. Válido apenas para região Sudeste.'
+    },
+    {
+      id: '6',
+      code: 'APP10',
+      discount: '10%',
+      description: 'no app White Cloud',
+      category: 'App',
+      image: '/images/img_01.png',
+      conditions: 'Válido apenas para compras realizadas pelo app. Desconto não cumulativo.'
+    }
+  ];
+
+  // Conquistas do usuário
+  const achievements = [
+    { id: '1', title: 'Primeira Compra', icon: '🎯', unlocked: true, points: 100 },
+    { id: '2', title: 'Cliente Fiel', icon: '⭐', unlocked: true, points: 250 },
+    { id: '3', title: 'Colecionador', icon: '🏆', unlocked: false, points: 500 },
+    { id: '4', title: 'Influencer', icon: '📱', unlocked: false, points: 300 }
+  ];
+
+  // Função para copiar cupom
+  const handleCopyCoupon = (code: string) => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopiedCoupon(code);
+      showSuccess(`Cupom ${code} copiado!`);
+      setTimeout(() => setCopiedCoupon(null), 2000);
+    }).catch(() => {
+      showSuccess('Erro ao copiar cupom');
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-blue-50">
+      {/* Hero Banner - Design Melhorado */}
+      <div className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-blue-600 overflow-hidden">
+        {/* Decorações de fundo */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-20 -right-20 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-12">
+            {/* Texto */}
+            <div className="flex-1 text-center lg:text-left z-10">
+              {/* Badge White Club */}
+              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md rounded-full px-5 py-2.5 mb-6 border border-white/30 shadow-lg">
+                <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
+                <span className="text-sm font-black tracking-wider text-white uppercase">WHITE CLUB</span>
+              </div>
+              
+              {/* Título Principal */}
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white mb-5 leading-tight">
+                Garanta o seu
+                <br />
+                <span className="relative inline-block">
+                  <span className="text-orange-400 drop-shadow-lg">Cupom* White Cloud!</span>
+                  <span className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-orange-400 via-yellow-400 to-orange-400 rounded-full opacity-60"></span>
+                </span>
+              </h1>
+              
+              {/* Descrição */}
+              <p className="text-lg sm:text-xl lg:text-2xl text-white/95 mb-8 font-medium max-w-2xl mx-auto lg:mx-0">
+                Descontos exclusivos e benefícios especiais para membros do White Club
+              </p>
+              
+              {/* Ações */}
+              <div className="flex flex-col sm:flex-row items-center gap-4 flex-wrap justify-center lg:justify-start">
+                {/* Card de Pontos */}
+                <div className="bg-white/20 backdrop-blur-md rounded-xl px-6 py-4 border border-white/30 shadow-xl hover:bg-white/25 transition-all duration-300">
+                  <p className="text-xs sm:text-sm text-white/80 mb-1.5 font-medium uppercase tracking-wide">Seus Pontos</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-3xl sm:text-4xl font-extrabold text-white">{userPoints.toLocaleString('pt-BR')}</p>
+                    <span className="text-sm text-white/70">pts</span>
+                  </div>
+                </div>
+                
+                {/* Botão CTA */}
+                <button
+                  onClick={() => navigateRouter('/catalogo')}
+                  className="group bg-white hover:bg-gray-50 text-primary-600 font-bold px-8 py-4 rounded-xl transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 active:scale-100 min-h-[56px] flex items-center gap-2"
+                >
+                  <span>Ver Produtos</span>
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
+            </div>
+
+            {/* Ilustração/Decoração Melhorada */}
+            <div className="flex-1 flex items-center justify-center relative w-full lg:w-auto">
+              <div className="relative w-full max-w-md lg:max-w-lg">
+                {/* Efeito de brilho animado */}
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-400/20 via-yellow-400/20 to-orange-400/20 rounded-full blur-3xl animate-pulse"></div>
+                
+                {/* Card principal */}
+                <div className="relative bg-white/20 backdrop-blur-md rounded-3xl p-10 sm:p-12 border-2 border-white/30 shadow-2xl hover:bg-white/25 transition-all duration-300">
+                  {/* Ícone grande */}
+                  <div className="text-7xl sm:text-8xl text-center mb-6 animate-bounce-slow">🎁</div>
+                  
+                  {/* Texto */}
+                  <div className="text-center">
+                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">Cupons Exclusivos</h3>
+                    <p className="text-sm sm:text-base text-white/80">Aproveite agora!</p>
+                  </div>
+                  
+                  {/* Decoração inferior */}
+                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-3/4 h-2 bg-white/10 rounded-full blur-md"></div>
+                </div>
+                
+                {/* Elementos decorativos flutuantes */}
+                <div className="absolute -top-4 -right-4 w-16 h-16 bg-orange-400/30 rounded-full blur-xl animate-pulse"></div>
+                <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-yellow-400/30 rounded-full blur-xl animate-pulse delay-300"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Overlay gradiente inferior */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-primary-50/20 via-transparent to-transparent pointer-events-none"></div>
+      </div>
+
+      {/* Seção de Cupons */}
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-8 sm:py-10 md:py-12">
+        <div className="mb-8">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Cupons Disponíveis</h2>
+          <p className="text-gray-600">Escolha seu cupom e aproveite descontos exclusivos!</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {coupons.map((coupon) => (
+            <div
+              key={coupon.id}
+              className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100"
+            >
+              {/* Imagem do Cupom */}
+              <div className="relative h-32 sm:h-40 bg-gradient-to-br from-primary-100 to-blue-100 overflow-hidden">
+                <img
+                  src={coupon.image}
+                  alt={coupon.category}
+                  className="w-full h-full object-cover opacity-60"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div className="absolute top-4 right-4 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  {coupon.discount} OFF
+                </div>
+              </div>
+
+              {/* Conteúdo do Cupom */}
+              <div className="p-5 sm:p-6">
+                <div className="mb-4">
+                  <p className="text-sm text-gray-500 mb-1">{coupon.category}</p>
+                  <p className="text-gray-700 font-medium mb-2">{coupon.description}</p>
+                </div>
+
+                {/* Código do Cupom */}
+                <div className="flex items-center gap-2 mb-4">
+                  <button
+                    onClick={() => handleCopyCoupon(coupon.code)}
+                    className={`flex-1 flex items-center justify-between bg-primary-50 hover:bg-primary-100 border-2 ${
+                      copiedCoupon === coupon.code
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-primary-200'
+                    } rounded-lg px-4 py-3 transition-all group`}
+                  >
+                    <span className="font-bold text-primary-700 text-sm sm:text-base">{coupon.code}</span>
+                    <div className="flex items-center gap-2">
+                      {copiedCoupon === coupon.code ? (
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <>
+                          <Share2 className="w-4 h-4 text-primary-600 group-hover:scale-110 transition-transform" />
+                          <ArrowRight className="w-4 h-4 text-primary-600 transform group-hover:translate-x-1 transition-transform" />
+                        </>
+                      )}
+                    </div>
+                  </button>
+                </div>
+
+                {/* Condições */}
+                <button className="text-xs text-primary-600 hover:text-primary-700 font-medium">
+                  Condições
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Seção de Conquistas Melhorada */}
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-8 sm:py-10 md:py-12 lg:py-16 bg-white">
+        <div className="mb-8 sm:mb-10 text-center sm:text-left">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-3">Suas Conquistas</h2>
+          <p className="text-base sm:text-lg text-gray-600 font-medium">Complete missões e ganhe pontos!</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {achievements.map((achievement) => (
+            <div
+              key={achievement.id}
+              className={`group relative bg-gradient-to-br rounded-2xl p-6 sm:p-8 text-center border-2 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
+                achievement.unlocked
+                  ? 'from-primary-50 via-blue-50 to-primary-50 border-primary-300 shadow-lg hover:border-primary-400'
+                  : 'from-gray-50 via-gray-100 to-gray-50 border-gray-200 opacity-70 hover:opacity-90'
+              }`}
+            >
+              {/* Badge de desbloqueado */}
+              {achievement.unlocked && (
+                <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
+                  ✓
+                </div>
+              )}
+              
+              {/* Ícone */}
+              <div className={`text-5xl sm:text-6xl mb-4 transition-transform duration-300 ${achievement.unlocked ? 'group-hover:scale-110' : 'grayscale opacity-50'}`}>
+                {achievement.icon}
+              </div>
+              
+              {/* Título */}
+              <h3 className={`font-bold mb-2 text-base sm:text-lg transition-colors ${
+                achievement.unlocked ? 'text-gray-900' : 'text-gray-500'
+              }`}>
+                {achievement.title}
+              </h3>
+              
+              {/* Pontos */}
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <TrendingUp className={`w-4 h-4 ${achievement.unlocked ? 'text-primary-600' : 'text-gray-400'}`} />
+                <p className={`text-sm font-semibold ${achievement.unlocked ? 'text-primary-600' : 'text-gray-500'}`}>
+                  {achievement.points} pontos
+                </p>
+              </div>
+              
+              {/* Status */}
+              {achievement.unlocked ? (
+                <div className="inline-flex items-center gap-2 bg-green-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-md">
+                  <CheckCircle className="w-4 h-4" />
+                  Desbloqueado!
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-2 bg-gray-300 text-gray-600 text-xs font-medium px-4 py-2 rounded-full">
+                  <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
+                  Bloqueado
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Seção de Níveis Melhorada */}
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-8 sm:py-10 md:py-12 lg:py-16">
+        <div className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-blue-600 rounded-3xl p-8 sm:p-10 lg:p-12 text-white overflow-hidden shadow-2xl">
+          {/* Decorações de fundo */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
+          
+          <div className="relative z-10">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6 sm:mb-8">
+              <div>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-2">Seu Nível</h2>
+                <p className="text-sm sm:text-base text-white/80">Continue acumulando pontos para subir de nível!</p>
+              </div>
+              <div className="hidden sm:block text-5xl lg:text-6xl opacity-20">
+                🏆
+              </div>
+            </div>
+            
+            {/* Nível atual */}
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/30">
+                  <span className="text-lg sm:text-xl font-bold">Bronze</span>
+                </div>
+                <div className="flex-1 h-0.5 bg-white/20"></div>
+                <div className="text-right">
+                  <p className="text-xs sm:text-sm text-white/70 mb-1">Próximo nível</p>
+                  <p className="text-sm sm:text-base font-semibold">Prata</p>
+                </div>
+              </div>
+              
+              {/* Barra de progresso melhorada */}
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-2 text-sm sm:text-base">
+                  <span className="font-semibold">Progresso</span>
+                  <span className="text-white/90">{userPoints.toLocaleString('pt-BR')} / 2.000 pontos</span>
+                </div>
+                <div className="relative w-full bg-white/20 rounded-full h-5 sm:h-6 overflow-hidden shadow-inner">
+                  <div
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-400 rounded-full transition-all duration-1000 ease-out shadow-lg"
+                    style={{ width: `${Math.min((userPoints / 2000) * 100, 100)}%` }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer-progress"></div>
+                  </div>
+                  {/* Indicador de porcentagem */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-xs sm:text-sm font-bold text-white drop-shadow-lg">
+                      {Math.round((userPoints / 2000) * 100)}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Informações adicionais */}
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                  <p className="text-xs text-white/70 mb-1">Pontos restantes</p>
+                  <p className="text-lg sm:text-xl font-bold">{(2000 - userPoints).toLocaleString('pt-BR')}</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                  <p className="text-xs text-white/70 mb-1">Benefícios</p>
+                  <p className="text-lg sm:text-xl font-bold">Exclusivos</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -4012,6 +5626,7 @@ const Favorites = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Produc
 };
 
 const Cart = () => {
+  const navigateRouter = useNavigateRouter();
     const { cart, cartTotal, updateQuantity, removeFromCart } = useCart();
     const { navigate } = useApp();
     if (cart.length === 0) return <div className="p-8 sm:p-12 text-center text-gray-500">Carrinho Vazio</div>;
@@ -4639,7 +6254,7 @@ const ChatWidget = () => {
 // --- MAIN APP ---
 
 export default function App() {
-  const { navigate } = useApp();
+  const { navigate, isBannerVisible } = useApp();
   const { toast, showError, showSuccess, closeToast } = useToast();
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const { addToCart } = useCart();
@@ -4653,6 +6268,8 @@ export default function App() {
     showSuccess(`${product.name} adicionado ao carrinho!`);
   };
 
+  const navigateRouter = useNavigateRouter();
+  
   const handleViewFullDetails = (product: Product) => {
     navigateRouter(`/produto/${product.id}`);
   };
@@ -4662,7 +6279,7 @@ export default function App() {
       <AgeVerificationModal />
       <Header />
 
-      <main className="flex-1 w-full overflow-x-hidden pt-[147px] sm:pt-[163px] lg:pt-[221px]">
+      <main className={`flex-1 w-full overflow-x-hidden transition-all duration-300 ${isBannerVisible ? 'pt-[147px] sm:pt-[163px] lg:pt-[221px]' : 'pt-[80px] sm:pt-[96px] lg:pt-[154px]'}`}>
         <Routes>
           <Route path="/" element={<Home onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
           <Route path="/catalogo" element={<Catalog onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
@@ -4673,6 +6290,7 @@ export default function App() {
           <Route path="/finalizar-pedido" element={<FinalizeOrderPage />} />
           <Route path="/rastreamento" element={<TrackingPage />} />
           <Route path="/conta" element={<AccountPage />} />
+          <Route path="/white-club" element={<WhiteClub />} />
           <Route path="*" element={<Home onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
         </Routes>
       </main>
