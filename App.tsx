@@ -160,11 +160,14 @@ const Header = () => {
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:measureHierarchy',message:'Error in measureHierarchy',data:{error:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
         // #endregion
+        console.error('Error measuring hierarchy:', error);
       }
       
       // Continuar com medições de navegação apenas se os refs estiverem disponíveis
       if (!navRef.current || !navContainerRef.current || !navListRef.current) {
         // #region agent log
+        const viewportWidth = window.innerWidth;
+        const breakpoint = viewportWidth < 640 ? 'mobile' : viewportWidth < 1024 ? 'tablet' : 'desktop';
         fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:measureHierarchy',message:'Nav refs not available',data:{hasNavRef:!!navRef.current,hasNavContainerRef:!!navContainerRef.current,hasNavListRef:!!navListRef.current,viewportWidth,breakpoint},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
         // #endregion
         return;
@@ -278,25 +281,25 @@ const Header = () => {
     <>
       {/* Mini Banner de Destaque */}
       <div ref={miniBannerRef} className="fixed top-0 left-0 right-0 bg-gradient-to-r from-primary-600 via-primary-700 to-blue-600 border-b border-primary-800 z-[9999] banner-shimmer overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, width: '100%' }}>
-        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-5 relative z-10">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+        <div className="container mx-auto px-4 sm:px-6 py-2 sm:py-2.5 relative z-10">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
             {/* Badge de Destaque */}
-            <div className="flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/30">
-              <span className="text-white font-black text-xs sm:text-sm tracking-wider">🎁 PROMO</span>
+            <div className="flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full px-2.5 py-1 border border-white/30">
+              <span className="text-white font-black text-[10px] sm:text-xs tracking-wider">🎁 PROMO</span>
             </div>
             
             <div className="text-center">
-              <p className="text-base sm:text-lg md:text-xl font-extrabold text-white mb-1.5 sm:mb-1 tracking-tight">
+              <p className="text-sm sm:text-base md:text-lg font-extrabold text-white mb-0.5 sm:mb-0.5 tracking-tight">
                 🎉 Mega Promoção Monstrinho Misterioso
               </p>
-              <p className="text-xs sm:text-sm text-white/95 font-medium leading-relaxed">
+              <p className="text-[10px] sm:text-xs text-white/95 font-medium leading-tight">
                 A cada <span className="font-bold text-white">R$400,00</span> em compra, leve um <span className="font-bold text-white">Labubu Misterioso</span> grátis!
               </p>
             </div>
             
             <button 
               onClick={() => navigateRouter('/catalogo')}
-              className="group bg-white hover:bg-gray-50 active:bg-gray-100 text-primary-600 font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg transition-all duration-300 whitespace-nowrap text-xs sm:text-sm shadow-md hover:shadow-lg hover:scale-105 active:scale-100 relative z-10 border border-transparent hover:border-white/20"
+              className="group bg-white hover:bg-gray-50 active:bg-gray-100 text-primary-600 font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all duration-300 whitespace-nowrap text-[10px] sm:text-xs shadow-md hover:shadow-lg hover:scale-105 active:scale-100 relative z-10 border border-transparent hover:border-white/20"
             >
               <span className="flex items-center gap-1.5">
                 Confira Agora
@@ -307,7 +310,7 @@ const Header = () => {
         </div>
       </div>
 
-      <header ref={headerRef} className="fixed left-0 right-0 z-[9998] bg-white shadow-sm border-b border-gray-100 w-full overflow-x-hidden top-[50px] sm:top-[60px] h-16 sm:h-20 md:h-24" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
+      <header ref={headerRef} className="fixed left-0 right-0 z-[9998] bg-white shadow-sm border-b border-gray-100 w-full overflow-x-hidden top-[189px] sm:top-[113px] md:top-[93px] h-16 sm:h-20 md:h-24" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
         <div className="container mx-auto px-3 sm:px-4 flex items-center justify-between gap-3 sm:gap-4 md:gap-6 h-16 sm:h-20 md:h-24" style={{ maxWidth: 'min(100%, 1280px)', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
           {/* Logo */}
           <div 
@@ -399,7 +402,7 @@ const Header = () => {
         </div>
 
         {/* Desktop Navigation Bar */}
-        <nav ref={navRef} className="hidden lg:block border-t border-gray-100 bg-white fixed left-0 right-0 z-[9997] w-full overflow-x-hidden top-[156px]" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', position: 'fixed', boxSizing: 'border-box' }}>
+        <nav ref={navRef} className="hidden lg:block border-t border-gray-100 bg-white fixed left-0 right-0 z-[10000] w-full overflow-x-hidden top-[189px]" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', position: 'fixed', boxSizing: 'border-box' }}>
           <div ref={navContainerRef} className="w-full px-3 sm:px-4 overflow-x-hidden" style={{ overflowX: 'hidden', width: '100%', boxSizing: 'border-box', textAlign: 'left', display: 'flex', flexWrap: 'wrap' }}>
             <ul ref={navListRef} className="flex flex-wrap items-center justify-start gap-2 sm:gap-3 text-xs sm:text-sm font-medium text-gray-600 py-4 sm:py-5 overflow-x-hidden w-full" style={{ maxWidth: '100%', overflowX: 'hidden', width: '100%', flexWrap: 'wrap', boxSizing: 'border-box', display: 'flex', margin: 0, padding: 0, listStyle: 'none', minHeight: '58px', textAlign: 'left', verticalAlign: 'middle' }}>
               {CATEGORIES.map(cat => (
@@ -422,7 +425,7 @@ const Header = () => {
                       </button>
                       
                       {/* Dropdown Menu - Design Moderno */}
-                      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[90vw] max-w-[900px] bg-white rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 z-[10000] overflow-x-hidden ${
+                      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[90vw] max-w-[900px] bg-white rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 z-[10001] overflow-x-hidden ${
                         openDropdown === cat.id 
                           ? 'opacity-100 visible translate-y-0' 
                           : 'opacity-0 invisible -translate-y-2 pointer-events-none'
@@ -1233,59 +1236,79 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
       
       <div className="relative max-w-4xl mx-auto">
         {/* Card do Depoimento */}
-        <div className="bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-100 relative overflow-hidden">
-          {/* Botões de Navegação */}
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-8 sm:p-10 md:p-12 shadow-xl border-0 relative overflow-hidden backdrop-blur-sm">
+          {/* Gradiente sutil de fundo */}
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 via-white to-primary-50/30 pointer-events-none" />
+          
+          {/* Botões de Navegação - Design mais minimalista */}
           <button
             onClick={goToPrevTestimonial}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full p-2 sm:p-3 shadow-lg transition-all duration-300 hover:scale-110 min-h-[44px] min-w-[44px] flex items-center justify-center border border-gray-200"
+            className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white backdrop-blur-md rounded-full p-2.5 sm:p-3 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 min-h-[40px] min-w-[40px] flex items-center justify-center border-0"
             aria-label="Depoimento anterior"
           >
-            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
           </button>
           
           <button
             onClick={goToNextTestimonial}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full p-2 sm:p-3 shadow-lg transition-all duration-300 hover:scale-110 min-h-[44px] min-w-[44px] flex items-center justify-center border border-gray-200"
+            className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white backdrop-blur-md rounded-full p-2.5 sm:p-3 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 min-h-[40px] min-w-[40px] flex items-center justify-center border-0"
             aria-label="Próximo depoimento"
           >
-            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
           </button>
 
           {/* Conteúdo do Depoimento com animação */}
-          <div key={currentTestimonial} className="animate-fade-in">
-            {/* Header com estrelas e verificação */}
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex items-center gap-1">
+          <div key={currentTestimonial} className="animate-fade-in relative z-10">
+            {/* Header com estrelas e verificação - Design mais clean */}
+            <div className="flex items-center justify-center gap-4 mb-8">
+              <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className="w-5 h-5 sm:w-6 sm:h-6 fill-yellow-400 text-yellow-400"
+                    className="w-4 h-4 sm:w-5 sm:h-5 fill-amber-400 text-amber-400"
                   />
                 ))}
               </div>
               {testimonials[currentTestimonial].verified && (
-                <div className="flex items-center gap-1 bg-primary-50 text-primary-600 px-3 py-1.5 rounded-full">
-                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="text-xs sm:text-sm font-medium">Verificado</span>
+                <div className="flex items-center gap-1.5 bg-primary-500/10 text-primary-600 px-3 py-1 rounded-full border border-primary-200/50">
+                  <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span className="text-xs font-semibold tracking-wide">Verificado</span>
                 </div>
               )}
             </div>
             
-            {/* Comentário */}
-            <p className="text-base sm:text-lg md:text-xl text-gray-700 mb-6 sm:mb-8 leading-relaxed text-center italic">
-              "{testimonials[currentTestimonial].comment}"
-            </p>
+            {/* Comentário - Design mais moderno */}
+            <div className="relative mb-8">
+              <div className="absolute -top-2 -left-2 text-6xl sm:text-7xl text-primary-100 font-serif leading-none">"</div>
+              <p className="text-lg sm:text-xl md:text-2xl text-gray-800 mb-0 leading-relaxed text-center relative z-10 font-light">
+                {testimonials[currentTestimonial].comment}
+              </p>
+              <div className="absolute -bottom-2 -right-2 text-6xl sm:text-7xl text-primary-100 font-serif leading-none">"</div>
+            </div>
             
-            {/* Footer com nome e localização */}
-            <div className="flex items-center justify-center gap-4 pt-6 border-t border-gray-100">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-lg sm:text-xl flex-shrink-0">
-                {testimonials[currentTestimonial].name.charAt(0)}
+            {/* Footer com nome e localização - Design mais elegante */}
+            <div className="flex flex-col items-center justify-center gap-3 pt-6 border-t border-gray-200/50">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0 shadow-md ring-2 ring-primary-100">
+                <img 
+                  src={`https://i.pravatar.cc/128?img=${currentTestimonial + 1}`}
+                  alt={testimonials[currentTestimonial].name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback para inicial se a imagem não carregar
+                    const target = e.currentTarget;
+                    target.style.display = 'none';
+                    if (target.parentElement) {
+                      target.parentElement.innerHTML = `<span class="text-white font-semibold text-base sm:text-lg">${testimonials[currentTestimonial].name.charAt(0)}</span>`;
+                      target.parentElement.className = 'w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 flex items-center justify-center text-white font-semibold text-base sm:text-lg flex-shrink-0 shadow-md ring-2 ring-primary-100';
+                    }
+                  }}
+                />
               </div>
               <div className="text-center">
-                <p className="font-bold text-base sm:text-lg text-gray-900">
+                <p className="font-semibold text-base sm:text-lg text-gray-900 mb-0.5">
                   {testimonials[currentTestimonial].name}
                 </p>
-                <p className="text-sm sm:text-base text-gray-500">
+                <p className="text-xs sm:text-sm text-gray-500 font-medium">
                   {testimonials[currentTestimonial].location}
                 </p>
               </div>
@@ -1294,15 +1317,15 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
         </div>
 
         {/* Indicadores (Dots) */}
-        <div className="flex items-center justify-center gap-2 mt-6 sm:mt-8">
+        <div className="flex items-center justify-center gap-1.5 mt-6 sm:mt-8">
           {testimonials.map((_, idx) => (
             <button
               key={idx}
               onClick={() => goToTestimonial(idx)}
-              className={`transition-all duration-300 rounded-full min-h-[44px] min-w-[44px] flex items-center justify-center ${
+              className={`transition-all duration-300 rounded-full min-h-[32px] min-w-[32px] flex items-center justify-center ${
                 idx === currentTestimonial
-                  ? 'w-12 h-3 bg-primary-600'
-                  : 'w-3 h-3 bg-gray-300 hover:bg-gray-400'
+                  ? 'w-8 h-2 bg-primary-600'
+                  : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'
               }`}
               aria-label={`Ir para depoimento ${idx + 1}`}
             />
@@ -4757,7 +4780,7 @@ export default function App() {
       <AgeVerificationModal />
       <Header />
 
-      <main className="flex-1 w-full overflow-x-hidden pt-[114px] sm:pt-[140px] lg:pt-[216px]">
+      <main className="flex-1 w-full overflow-x-hidden pt-[245px] sm:pt-[209px] lg:pt-[248px]">
         <Routes>
           <Route path="/" element={<Home onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
           <Route path="/catalogo" element={<Catalog onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
