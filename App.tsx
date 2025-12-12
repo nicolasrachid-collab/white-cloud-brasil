@@ -45,6 +45,8 @@ const Header = () => {
   const navRef = useRef<HTMLElement>(null);
   const navContainerRef = useRef<HTMLDivElement>(null);
   const navListRef = useRef<HTMLUListElement>(null);
+  const miniBannerRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
 
   // Fecha o menu se a tela for redimensionada para desktop
   useEffect(() => {
@@ -65,33 +67,12 @@ const Header = () => {
     return () => { document.body.style.overflow = 'unset'; };
   }, [isMenuOpen]);
 
-  // #region agent log
-  // Medir dimensões dos elementos de navegação para debug
+  // Medir dimensões dos elementos de navegação e hierarquia visual
   useEffect(() => {
     const applyFlexWrap = () => {
       if (navListRef.current) {
         navListRef.current.style.flexWrap = 'wrap';
         navListRef.current.classList.add('flex-wrap');
-        // #region agent log
-        const computed = window.getComputedStyle(navListRef.current);
-        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            location: 'App.tsx:Header:applyFlexWrap',
-            message: 'Applying flex-wrap: wrap',
-            data: {
-              inlineStyle: navListRef.current.style.flexWrap,
-              computedStyle: computed.flexWrap,
-              hasFlexWrapClass: navListRef.current.classList.contains('flex-wrap')
-            },
-            timestamp: Date.now(),
-            sessionId: 'debug-session',
-            runId: 'post-fix',
-            hypothesisId: 'G'
-          })
-        }).catch(() => {});
-        // #endregion
       }
     };
     
@@ -105,14 +86,94 @@ const Header = () => {
       });
     });
     
-    const measureNav = () => {
-      if (!navRef.current || !navContainerRef.current || !navListRef.current) return;
+    const measureHierarchy = () => {
+      try {
+        // #region agent log
+        const logData = {location:'App.tsx:measureHierarchy',timestamp:Date.now(),sessionId:'debug-session',runId:'run1'};
+        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...logData,message:'Function called',data:{hasMiniBannerRef:!!miniBannerRef.current,hasHeaderRef:!!headerRef.current,hasNavRef:!!navRef.current},hypothesisId:'A'})}).catch(()=>{});
+        const viewportWidth = window.innerWidth;
+        const breakpoint = viewportWidth < 640 ? 'mobile' : viewportWidth < 1024 ? 'tablet' : 'desktop';
+        
+        // Medir mini banner - tentar encontrar no DOM se ref não estiver disponível
+        let miniBannerElement = miniBannerRef.current;
+        if (!miniBannerElement) {
+          miniBannerElement = document.querySelector('.banner-shimmer') as HTMLElement;
+        }
+        let miniBannerHeight = 0;
+        let miniBannerTop = 0;
+        if (miniBannerElement) {
+          const bannerRect = miniBannerElement.getBoundingClientRect();
+          miniBannerHeight = bannerRect.height;
+          miniBannerTop = bannerRect.top;
+          const bannerComputed = window.getComputedStyle(miniBannerElement);
+          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...logData,message:'Mini banner dimensions',data:{height:miniBannerHeight,top:miniBannerTop,computedHeight:bannerComputed.height,viewportWidth,breakpoint},hypothesisId:'A'})}).catch(()=>{});
+        }
+        
+        // Medir header - tentar encontrar no DOM se ref não estiver disponível
+        let headerElement = headerRef.current;
+        if (!headerElement) {
+          headerElement = document.querySelector('header.fixed') as HTMLElement;
+        }
+        let headerHeight = 0;
+        let headerTop = 0;
+        if (headerElement) {
+          const headerRect = headerElement.getBoundingClientRect();
+          headerHeight = headerRect.height;
+          headerTop = headerRect.top;
+          const headerComputed = window.getComputedStyle(headerElement);
+          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...logData,message:'Header dimensions',data:{height:headerHeight,top:headerTop,computedHeight:headerComputed.height,computedTop:headerComputed.top,viewportWidth,breakpoint},hypothesisId:'B'})}).catch(()=>{});
+        }
+        
+        // Medir nav
+        let navHeight = 0;
+        let navTop = 0;
+        if (navRef.current) {
+          const navRect = navRef.current.getBoundingClientRect();
+          navHeight = navRect.height;
+          navTop = navRect.top;
+          const navComputed = window.getComputedStyle(navRef.current);
+          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...logData,message:'Nav dimensions',data:{height:navHeight,top:navTop,computedHeight:navComputed.height,computedTop:navComputed.top,viewportWidth,breakpoint},hypothesisId:'C'})}).catch(()=>{});
+        }
+        
+        // Calcular espaçamento esperado vs real
+        const expectedHeaderTop = viewportWidth < 640 ? 50 : 60;
+        const expectedNavTop = 156;
+        const totalFixedHeight = miniBannerHeight + headerHeight + (navRef.current ? navHeight : 0);
+        
+        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...logData,message:'Hierarchy spacing analysis',data:{miniBannerHeight,headerHeight,headerTop,expectedHeaderTop,headerTopDiff:headerTop-expectedHeaderTop,navHeight,navTop,expectedNavTop,navTopDiff:navTop-expectedNavTop,totalFixedHeight,viewportWidth,breakpoint},hypothesisId:'D'})}).catch(()=>{});
+        
+        // Verificar sobreposição
+        const headerOverlapsBanner = headerTop < miniBannerHeight;
+        const navOverlapsHeader = navTop < (miniBannerHeight + headerHeight);
+        const mainElement = document.querySelector('main');
+        let mainPaddingTop = 0;
+        if (mainElement) {
+          const mainComputed = window.getComputedStyle(mainElement);
+          mainPaddingTop = parseFloat(mainComputed.paddingTop) || 0;
+        }
+        const expectedMainPadding = viewportWidth < 640 ? 114 : viewportWidth < 1024 ? 140 : 216;
+        const mainPaddingDiff = mainPaddingTop - expectedMainPadding;
+        
+        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...logData,message:'Overlap detection',data:{headerOverlapsBanner,navOverlapsHeader,mainPaddingTop,expectedMainPadding,mainPaddingDiff,totalFixedHeight,viewportWidth,breakpoint},hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
+      } catch (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:measureHierarchy',message:'Error in measureHierarchy',data:{error:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+        // #endregion
+      }
+      
+      // Continuar com medições de navegação apenas se os refs estiverem disponíveis
+      if (!navRef.current || !navContainerRef.current || !navListRef.current) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:measureHierarchy',message:'Nav refs not available',data:{hasNavRef:!!navRef.current,hasNavContainerRef:!!navContainerRef.current,hasNavListRef:!!navListRef.current,viewportWidth,breakpoint},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+        // #endregion
+        return;
+      }
       
       // Garantir que flex-wrap está aplicado
       navListRef.current.style.flexWrap = 'wrap';
       navListRef.current.classList.add('flex-wrap');
       
-      const viewportWidth = window.innerWidth;
       const navRect = navRef.current.getBoundingClientRect();
       const containerRect = navContainerRef.current.getBoundingClientRect();
       const listRect = navListRef.current.getBoundingClientRect();
@@ -127,26 +188,6 @@ const Header = () => {
         const parent = element.parentElement;
         return parent === navListRef.current; // Apenas filhos diretos do ul
       });
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: 'App.tsx:Header:measureNav:filtering',
-          message: 'Filtering menu items',
-          data: {
-            allItemsCount: allListItems.length,
-            filteredItemsCount: listItems.length,
-            expectedCategoriesCount: CATEGORIES.length
-          },
-          timestamp: Date.now(),
-          sessionId: 'debug-session',
-          runId: 'post-fix',
-          hypothesisId: 'F'
-        })
-      }).catch(() => {});
-      // #endregion
       
       const itemWidths = listItems.map((li, idx) => {
         const element = li as HTMLElement;
@@ -177,47 +218,20 @@ const Header = () => {
       const navHasOverflow = navRef.current ? navRef.current.scrollWidth > navRef.current.clientWidth : false;
       const containerHasOverflow = navContainerRef.current ? navContainerRef.current.scrollWidth > navContainerRef.current.clientWidth : false;
       const listHasOverflow = navListRef.current ? navListRef.current.scrollWidth > navListRef.current.clientWidth : false;
-      
-      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: 'App.tsx:Header:measureNav',
-          message: 'Navigation dimensions measurement',
-          data: {
-            viewportWidth,
-            nav: { width: navRect.width, maxWidth: computedNav.maxWidth, padding: computedNav.padding, margin: computedNav.margin, boxSizing: computedNav.boxSizing, scrollWidth: navRef.current?.scrollWidth, clientWidth: navRef.current?.clientWidth },
-            container: { width: containerRect.width, maxWidth: computedContainer.maxWidth, padding: computedContainer.padding, margin: computedContainer.margin, boxSizing: computedContainer.boxSizing, scrollWidth: navContainerRef.current?.scrollWidth, clientWidth: navContainerRef.current?.clientWidth },
-            list: { width: listRect.width, maxWidth: computedList.maxWidth, padding: computedList.padding, margin: computedList.margin, gap: computedList.gap, flexWrap: computedList.flexWrap, boxSizing: computedList.boxSizing, scrollWidth: navListRef.current?.scrollWidth, clientWidth: navListRef.current?.clientWidth },
-            items: itemWidths,
-            totalItemsWidth,
-            estimatedTotalWidth,
-            hasOverflow: listRect.width > containerRect.width || listRect.width > viewportWidth,
-            overflowCheck: {
-              html: { scrollWidth: htmlElement.scrollWidth, clientWidth: htmlElement.clientWidth, hasOverflow: htmlHasOverflow, overflowX: htmlComputed.overflowX },
-              body: { scrollWidth: bodyElement.scrollWidth, clientWidth: bodyElement.clientWidth, hasOverflow: bodyHasOverflow, overflowX: bodyComputed.overflowX },
-              header: headerElement ? { scrollWidth: headerElement.scrollWidth, clientWidth: headerElement.clientWidth, hasOverflow: headerHasOverflow, overflowX: headerComputed?.overflowX } : null,
-              nav: navRef.current ? { scrollWidth: navRef.current.scrollWidth, clientWidth: navRef.current.clientWidth, hasOverflow: navHasOverflow } : null,
-              container: navContainerRef.current ? { scrollWidth: navContainerRef.current.scrollWidth, clientWidth: navContainerRef.current.clientWidth, hasOverflow: containerHasOverflow } : null,
-              list: navListRef.current ? { scrollWidth: navListRef.current.scrollWidth, clientWidth: navListRef.current.clientWidth, hasOverflow: listHasOverflow } : null
-            }
-          },
-          timestamp: Date.now(),
-          sessionId: 'debug-session',
-          runId: 'post-fix',
-          hypothesisId: 'H'
-        })
-      }).catch(() => {});
     };
     
-    const timeoutId = setTimeout(measureNav, 100);
-    window.addEventListener('resize', measureNav);
+    // Executar imediatamente após um pequeno delay para garantir que o DOM está renderizado
+    const timeoutId1 = setTimeout(measureHierarchy, 100);
+    const timeoutId2 = setTimeout(measureHierarchy, 500);
+    const timeoutId3 = setTimeout(measureHierarchy, 1000);
+    window.addEventListener('resize', measureHierarchy);
     return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener('resize', measureNav);
+      clearTimeout(timeoutId1);
+      clearTimeout(timeoutId2);
+      clearTimeout(timeoutId3);
+      window.removeEventListener('resize', measureHierarchy);
     };
   }, []);
-  // #endregion
 
   // Função para abrir dropdown com delay
   const handleMouseEnter = (categoryId: string) => {
@@ -263,7 +277,7 @@ const Header = () => {
   return (
     <>
       {/* Mini Banner de Destaque */}
-      <div className="bg-gradient-to-r from-primary-600 via-primary-700 to-blue-600 border-b border-primary-800 relative z-[50] banner-shimmer overflow-hidden">
+      <div ref={miniBannerRef} className="fixed top-0 left-0 right-0 bg-gradient-to-r from-primary-600 via-primary-700 to-blue-600 border-b border-primary-800 z-[9999] banner-shimmer overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, width: '100%' }}>
         <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-5 relative z-10">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
             {/* Badge de Destaque */}
@@ -293,8 +307,8 @@ const Header = () => {
         </div>
       </div>
 
-      <header className="fixed top-0 left-0 right-0 z-[9998] bg-white shadow-sm border-b border-gray-100 w-full overflow-x-hidden" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
-        <div className="container mx-auto px-3 sm:px-4 h-20 sm:h-24 md:h-28 flex items-center justify-between gap-3 sm:gap-6 md:gap-8" style={{ maxWidth: 'min(100%, 1280px)', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
+      <header ref={headerRef} className="fixed left-0 right-0 z-[9998] bg-white shadow-sm border-b border-gray-100 w-full overflow-x-hidden top-[50px] sm:top-[60px] h-16 sm:h-20 md:h-24" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
+        <div className="container mx-auto px-3 sm:px-4 flex items-center justify-between gap-3 sm:gap-4 md:gap-6 h-16 sm:h-20 md:h-24" style={{ maxWidth: 'min(100%, 1280px)', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
           {/* Logo */}
           <div 
             className="cursor-pointer flex-shrink-0 min-w-0"
@@ -385,9 +399,9 @@ const Header = () => {
         </div>
 
         {/* Desktop Navigation Bar */}
-        <nav ref={navRef} className="hidden lg:block border-t border-gray-100 bg-white relative z-[9998] w-full overflow-x-hidden" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', position: 'relative', boxSizing: 'border-box' }}>
+        <nav ref={navRef} className="hidden lg:block border-t border-gray-100 bg-white fixed left-0 right-0 z-[9997] w-full overflow-x-hidden top-[156px]" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', position: 'fixed', boxSizing: 'border-box' }}>
           <div ref={navContainerRef} className="w-full px-3 sm:px-4 overflow-x-hidden" style={{ overflowX: 'hidden', width: '100%', boxSizing: 'border-box', textAlign: 'left', display: 'flex', flexWrap: 'wrap' }}>
-            <ul ref={navListRef} className="flex flex-wrap items-center justify-start gap-2 sm:gap-3 text-xs sm:text-sm font-medium text-gray-600 py-4 sm:py-5 overflow-x-hidden w-full" style={{ maxWidth: '100%', overflowX: 'hidden', width: '100%', flexWrap: 'wrap', boxSizing: 'border-box', display: 'flex', margin: 0, padding: 0, listStyle: 'none', height: '42px', textAlign: 'left', verticalAlign: 'middle' }}>
+            <ul ref={navListRef} className="flex flex-wrap items-center justify-start gap-2 sm:gap-3 text-xs sm:text-sm font-medium text-gray-600 py-4 sm:py-5 overflow-x-hidden w-full" style={{ maxWidth: '100%', overflowX: 'hidden', width: '100%', flexWrap: 'wrap', boxSizing: 'border-box', display: 'flex', margin: 0, padding: 0, listStyle: 'none', minHeight: '58px', textAlign: 'left', verticalAlign: 'middle' }}>
               {CATEGORIES.map(cat => (
                 <li 
                   key={cat.id} 
@@ -408,7 +422,7 @@ const Header = () => {
                       </button>
                       
                       {/* Dropdown Menu - Design Moderno */}
-                      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[90vw] max-w-[900px] bg-white rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 z-[9999] overflow-x-hidden ${
+                      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[90vw] max-w-[900px] bg-white rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 z-[10000] overflow-x-hidden ${
                         openDropdown === cat.id 
                           ? 'opacity-100 visible translate-y-0' 
                           : 'opacity-0 invisible -translate-y-2 pointer-events-none'
@@ -607,14 +621,14 @@ const Header = () => {
 
       {/* Mobile Menu Overlay & Drawer */}
       <div 
-        className={`fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
+        className={`fixed inset-0 z-[10000] bg-black/50 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
           isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
         }`}
         onClick={() => setIsMenuOpen(false)}
       />
 
       <aside 
-        className={`fixed top-0 left-0 z-[70] h-full w-[85%] max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden ${
+        className={`fixed top-0 left-0 z-[10001] h-full w-[85%] max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden ${
           isMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -890,7 +904,7 @@ const HeroSlider = () => {
   }
 
   return (
-    <div className="relative h-[250px] sm:h-[300px] md:h-[400px] lg:h-[500px] w-full overflow-hidden bg-gray-900 group">
+    <div className="relative h-[250px] sm:h-[300px] md:h-[400px] lg:h-[500px] w-full overflow-hidden bg-gray-900 group z-0">
       <div 
         className="flex transition-transform duration-700 ease-out h-full" 
         style={{ transform: `translateX(-${current * 100}%)` }}
@@ -985,6 +999,80 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
   const navigateRouter = useNavigateRouter();
   const { products } = useProducts();
   const [isLoading, setIsLoading] = useState(false);
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const [isAutoPlay, setIsAutoPlay] = useState(true);
+  
+  const testimonials = [
+    {
+      name: 'Maria Silva',
+      rating: 5,
+      comment: 'Produtos de excelente qualidade! Entrega super rápida e o atendimento é impecável. Recomendo muito!',
+      location: 'São Paulo, SP',
+      verified: true
+    },
+    {
+      name: 'João Santos',
+      rating: 5,
+      comment: 'Melhor loja de vapes que já comprei. Variedade incrível e preços justos. Já sou cliente há mais de 2 anos!',
+      location: 'Rio de Janeiro, RJ',
+      verified: true
+    },
+    {
+      name: 'Ana Costa',
+      rating: 5,
+      comment: 'Adorei a experiência de compra! Site fácil de usar, produtos chegando bem embalados e em perfeito estado.',
+      location: 'Belo Horizonte, MG',
+      verified: true
+    },
+    {
+      name: 'Pedro Oliveira',
+      rating: 5,
+      comment: 'Atendimento excepcional e produtos originais. Sempre compro aqui e nunca tive problemas. 5 estrelas!',
+      location: 'Curitiba, PR',
+      verified: true
+    },
+    {
+      name: 'Juliana Ferreira',
+      rating: 5,
+      comment: 'Amo os juices da White Cloud! Sabores incríveis e qualidade premium. Vale cada centavo investido.',
+      location: 'Porto Alegre, RS',
+      verified: true
+    },
+    {
+      name: 'Carlos Mendes',
+      rating: 5,
+      comment: 'Loja confiável e produtos de primeira linha. Já indiquei para vários amigos e todos ficaram satisfeitos!',
+      location: 'Brasília, DF',
+      verified: true
+    }
+  ];
+
+  // Autoplay do carrossel de depoimentos
+  useEffect(() => {
+    if (!isAutoPlay || testimonials.length === 0) return;
+    const timer = setInterval(() => {
+      setCurrentTestimonial(prev => (prev + 1) % testimonials.length);
+    }, 5000); // Muda a cada 5 segundos
+    return () => clearInterval(timer);
+  }, [isAutoPlay, testimonials.length]);
+
+  const goToNextTestimonial = () => {
+    setIsAutoPlay(false);
+    setCurrentTestimonial(prev => (prev + 1) % testimonials.length);
+    setTimeout(() => setIsAutoPlay(true), 10000);
+  };
+
+  const goToPrevTestimonial = () => {
+    setIsAutoPlay(false);
+    setCurrentTestimonial(prev => (prev - 1 + testimonials.length) % testimonials.length);
+    setTimeout(() => setIsAutoPlay(true), 10000);
+  };
+
+  const goToTestimonial = (index: number) => {
+    setIsAutoPlay(false);
+    setCurrentTestimonial(index);
+    setTimeout(() => setIsAutoPlay(true), 10000);
+  };
   
   const handleProductClick = (id: string) => {
     navigateRouter(`/produto/${id}`);
@@ -1067,8 +1155,8 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     <section className="bg-gray-50 py-8 sm:py-12">
       <div className="container mx-auto px-3 sm:px-4 md:px-6">
         <SectionHeader title="Os Mais Vendidos" onLinkClick={() => navigateRouter('/catalogo')} />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
-          {(products || []).filter(p => p.isBestSeller).slice(0, 12).map(product => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5 w-full">
+          {(products || []).filter(p => p.isBestSeller).map(product => (
             <ProductCard 
               key={product.id} 
               product={product} 
@@ -1132,53 +1220,101 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
       </div>
     </section>
 
-    {/* 10. Category Banners */}
-    <section className="container mx-auto px-3 sm:px-4">
-      <SectionHeader title="Explore Nossas Categorias" onLinkClick={() => navigateRouter('/catalogo')} />
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-        {CATEGORIES.filter(cat => cat.id !== 'all').map(category => {
-          const categoryProducts = (products || []).filter(p => p.category === category.id);
-          const productCount = categoryProducts.length;
+    {/* 10. Depoimentos de Clientes - Carrossel */}
+    <section className="container mx-auto px-3 sm:px-4 py-8 sm:py-12">
+      <div className="text-center mb-8 sm:mb-12">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
+          O Que Nossos Clientes Dizem
+        </h2>
+        <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
+          Mais de 10.000 clientes satisfeitos confiam na White Cloud Brasil
+        </p>
+      </div>
+      
+      <div className="relative max-w-4xl mx-auto">
+        {/* Card do Depoimento */}
+        <div className="bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-100 relative overflow-hidden">
+          {/* Botões de Navegação */}
+          <button
+            onClick={goToPrevTestimonial}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full p-2 sm:p-3 shadow-lg transition-all duration-300 hover:scale-110 min-h-[44px] min-w-[44px] flex items-center justify-center border border-gray-200"
+            aria-label="Depoimento anterior"
+          >
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+          </button>
           
-          return (
-            <div
-              key={category.id}
-              onClick={() => {
-                setActiveCategory(category.id);
-                navigateRouter('/catalogo');
-              }}
-              className={`group relative h-48 sm:h-56 md:h-64 rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
-                category.isHighlight 
-                  ? 'bg-gradient-to-br from-black to-gray-800' 
-                  : 'bg-gradient-to-br from-primary-500 to-primary-700'
-              }`}
-            >
-              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
-              
-              <div className="relative h-full flex flex-col items-center justify-center p-4 sm:p-6 text-white text-center">
-                <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 group-hover:scale-110 transition-transform">
-                  {category.name}
-                </h3>
-                {productCount > 0 && (
-                  <p className="text-sm sm:text-base text-white/80">
-                    {productCount} {productCount === 1 ? 'produto' : 'produtos'}
-                  </p>
-                )}
-                <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-xs sm:text-sm font-medium border border-white/50 px-3 py-1.5 rounded-full">
-                    Ver produtos â†’
-                  </span>
-                </div>
+          <button
+            onClick={goToNextTestimonial}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full p-2 sm:p-3 shadow-lg transition-all duration-300 hover:scale-110 min-h-[44px] min-w-[44px] flex items-center justify-center border border-gray-200"
+            aria-label="Próximo depoimento"
+          >
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+          </button>
+
+          {/* Conteúdo do Depoimento com animação */}
+          <div key={currentTestimonial} className="animate-fade-in">
+            {/* Header com estrelas e verificação */}
+            <div className="flex items-start justify-between mb-6">
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className="w-5 h-5 sm:w-6 sm:h-6 fill-yellow-400 text-yellow-400"
+                  />
+                ))}
               </div>
-              
-              {category.isHighlight && (
-                <div className="absolute top-3 right-3 bg-red-600 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full">
-                  DESTAQUE
+              {testimonials[currentTestimonial].verified && (
+                <div className="flex items-center gap-1 bg-primary-50 text-primary-600 px-3 py-1.5 rounded-full">
+                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-xs sm:text-sm font-medium">Verificado</span>
                 </div>
               )}
             </div>
-          );
-        })}
+            
+            {/* Comentário */}
+            <p className="text-base sm:text-lg md:text-xl text-gray-700 mb-6 sm:mb-8 leading-relaxed text-center italic">
+              "{testimonials[currentTestimonial].comment}"
+            </p>
+            
+            {/* Footer com nome e localização */}
+            <div className="flex items-center justify-center gap-4 pt-6 border-t border-gray-100">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-lg sm:text-xl flex-shrink-0">
+                {testimonials[currentTestimonial].name.charAt(0)}
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-base sm:text-lg text-gray-900">
+                  {testimonials[currentTestimonial].name}
+                </p>
+                <p className="text-sm sm:text-base text-gray-500">
+                  {testimonials[currentTestimonial].location}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Indicadores (Dots) */}
+        <div className="flex items-center justify-center gap-2 mt-6 sm:mt-8">
+          {testimonials.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => goToTestimonial(idx)}
+              className={`transition-all duration-300 rounded-full min-h-[44px] min-w-[44px] flex items-center justify-center ${
+                idx === currentTestimonial
+                  ? 'w-12 h-3 bg-primary-600'
+                  : 'w-3 h-3 bg-gray-300 hover:bg-gray-400'
+              }`}
+              aria-label={`Ir para depoimento ${idx + 1}`}
+            />
+          ))}
+        </div>
+
+        {/* Contador */}
+        <div className="text-center mt-4">
+          <span className="text-sm text-gray-500">
+            {currentTestimonial + 1} de {testimonials.length}
+          </span>
+        </div>
       </div>
     </section>
   </div>
@@ -4395,12 +4531,12 @@ const AccountPage = () => {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80] transition-opacity duration-300"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] transition-opacity duration-300"
             onClick={() => setShowForgotPasswordModal(false)}
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
             <div className="bg-white rounded-lg sm:rounded-xl shadow-2xl max-w-lg w-full border border-gray-200 animate-fade-in">
               {/* Linha azul no topo */}
               <div className="border-b-2 border-primary-600"></div>
@@ -4491,7 +4627,7 @@ const ChatWidget = () => {
       {/* Botão Flutuante */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-[70] bg-primary-600 hover:bg-primary-700 text-white rounded-full p-4 shadow-2xl transition-all duration-300 hover:scale-110 min-h-[60px] min-w-[60px] flex items-center justify-center group"
+        className="fixed bottom-6 right-6 z-[9996] bg-primary-600 hover:bg-primary-700 text-white rounded-full p-4 shadow-2xl transition-all duration-300 hover:scale-110 min-h-[60px] min-w-[60px] flex items-center justify-center group"
         aria-label="Abrir chat de atendimento"
       >
         <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7" />
@@ -4504,12 +4640,12 @@ const ChatWidget = () => {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80] transition-opacity duration-300"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] transition-opacity duration-300"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Chat Window */}
-          <div className="fixed bottom-6 right-6 z-[90] w-full max-w-md h-[600px] bg-white rounded-xl shadow-2xl flex flex-col animate-fade-in">
+          <div className="fixed bottom-6 right-6 z-[10001] w-full max-w-md h-[600px] bg-white rounded-xl shadow-2xl flex flex-col animate-fade-in">
             {/* Header do Chat */}
             <div className="bg-primary-600 text-white p-4 rounded-t-xl flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -4621,7 +4757,7 @@ export default function App() {
       <AgeVerificationModal />
       <Header />
 
-      <main className="flex-1 w-full overflow-x-hidden">
+      <main className="flex-1 w-full overflow-x-hidden pt-[114px] sm:pt-[140px] lg:pt-[216px]">
         <Routes>
           <Route path="/" element={<Home onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
           <Route path="/catalogo" element={<Catalog onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
@@ -4703,7 +4839,7 @@ export default function App() {
                  </div>
                  {/* American Express */}
                  <div className="h-10 w-16 rounded flex items-center justify-center px-1 border border-gray-700/50">
-                   <span className="text-[7px] font-bold text-white">AMERICAN EXPRESS</span>
+                   <span className="text-[7px] font-bold text-white text-center">AMERICAN EXPRESS</span>
                  </div>
                  {/* Hipercard */}
                  <div className="h-10 w-16 rounded flex items-center justify-center px-1 border border-gray-700/50">
@@ -4715,7 +4851,34 @@ export default function App() {
                  </div>
                  {/* Boleto */}
                  <div className="h-10 w-16 rounded flex flex-col items-center justify-center px-1 border border-gray-700/50">
-                   <div className="w-full h-2 bg-white/20 mb-0.5"></div>
+                   <div className="w-full h-2 mb-0.5 flex items-center justify-center flex-wrap" style={{ textAlign: 'left', display: 'flex' }}>
+                     <svg width="100%" height="100%" viewBox="0 0 60 8" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
+                       <rect x="2" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="4" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="6" y="0" width="2" height="8" fill="white" opacity="0.9"/>
+                       <rect x="9" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="11" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="13" y="0" width="2" height="8" fill="white" opacity="0.9"/>
+                       <rect x="16" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="18" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="20" y="0" width="3" height="8" fill="white" opacity="0.9"/>
+                       <rect x="24" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="26" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="28" y="0" width="2" height="8" fill="white" opacity="0.9"/>
+                       <rect x="31" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="33" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="35" y="0" width="2" height="8" fill="white" opacity="0.9"/>
+                       <rect x="38" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="40" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="42" y="0" width="3" height="8" fill="white" opacity="0.9"/>
+                       <rect x="46" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="48" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="50" y="0" width="2" height="8" fill="white" opacity="0.9"/>
+                       <rect x="53" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="55" y="0" width="1" height="8" fill="white" opacity="0.9"/>
+                       <rect x="57" y="0" width="2" height="8" fill="white" opacity="0.9"/>
+                     </svg>
+                   </div>
                    <span className="text-[7px] font-bold text-white">BOLETO</span>
                  </div>
               </div>
