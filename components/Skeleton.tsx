@@ -98,19 +98,3 @@ export function ProductDetailSkeleton() {
   );
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -16,19 +16,3 @@ export function CartBadge() {
   );
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

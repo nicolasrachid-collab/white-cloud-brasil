@@ -16,15 +16,3 @@ export function FavoritesBadge() {
   );
 }
 
-
-
-
-
-
-
-
-
-
-
-
-

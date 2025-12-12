@@ -13,7 +13,10 @@ if (!rootElement) {
   throw new Error("Could not find root element to mount to");
 }
 
-console.log('Iniciando renderização do React...');
+// Logs apenas em desenvolvimento
+if (import.meta.env.DEV) {
+  console.log('Iniciando renderização do React...');
+}
 
 try {
   const root = ReactDOM.createRoot(rootElement);
@@ -34,7 +37,9 @@ try {
       </ErrorBoundary>
     </React.StrictMode>
   );
-  console.log('React renderizado com sucesso!');
+  if (import.meta.env.DEV) {
+    console.log('React renderizado com sucesso!');
+  }
 } catch (error) {
   console.error('Erro ao renderizar React:', error);
   rootElement.innerHTML = `
@@ -51,10 +56,13 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
-        console.log('Service Worker registrado com sucesso:', registration.scope);
+        if (import.meta.env.DEV) {
+          console.log('Service Worker registrado com sucesso:', registration.scope);
+        }
       })
       .catch((error) => {
-        console.log('Falha ao registrar Service Worker:', error);
+        // Sempre logar erros do Service Worker, mesmo em produção
+        console.error('Falha ao registrar Service Worker:', error);
       });
   });
 }
