@@ -8,6 +8,7 @@
 html {
   overflow-x: hidden;
   width: 100%;
+  max-width: 100vw;
 }
 
 body {
@@ -19,12 +20,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   width: 100%;
+  max-width: 100vw;
 }
 
 #root {
   min-height: 100vh;
   width: 100%;
   overflow-x: hidden;
+  max-width: 100vw;
 }
 
 /* Animações customizadas */
@@ -291,10 +294,10 @@ a:active {
 /* Animação de shimmer para o banner promocional */
 @keyframes shimmer-banner {
   0% {
-    transform: translateX(-100%) skewX(-20deg);
+    transform: translateX(-100%) skewX(-15deg);
   }
   100% {
-    transform: translateX(200%) skewX(-20deg);
+    transform: translateX(200%) skewX(-15deg);
   }
 }
 
@@ -308,20 +311,20 @@ a:active {
   position: absolute;
   top: 0;
   left: 0;
-  width: 50%;
+  width: 60%;
   height: 100%;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.6) 25%,
-    rgba(37, 89, 255, 0.3) 50%,
-    rgba(255, 255, 255, 0.6) 75%,
+    rgba(255, 255, 255, 0.15) 30%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.15) 70%,
     transparent 100%
   );
-  animation: shimmer-banner 4s infinite ease-in-out;
+  animation: shimmer-banner 6s infinite ease-in-out;
   pointer-events: none;
   z-index: 1;
-  filter: blur(1px);
+  filter: blur(0.5px);
 }
 
 /* Animação de pulso suave para botão de destaque */
@@ -351,6 +354,71 @@ a:active {
 /* Ajustes para dropdowns do menu */
 nav ul li.group:hover .absolute {
   pointer-events: auto;
+}
+
+/* Correção de overflow horizontal no menu de navegação */
+header {
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+header > div {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+header > nav {
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+header > nav > div {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+header > nav > div > ul {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  flex-wrap: wrap !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+
+/* Forçar flex-wrap: wrap mesmo com estilos inline */
+header > nav > div > ul[style*="flex-wrap"],
+header > nav > div > ul.flex-wrap,
+header > nav > div > ul {
+  flex-wrap: wrap !important;
+}
+
+header > nav > div > ul > li {
+  flex-shrink: 0 !important;
+  min-width: 0 !important;
+  max-width: fit-content !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+}
+
+header > nav > div > ul > li > button {
+  max-width: fit-content !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  min-width: 0 !important;
 }
 
 /* Ajuste para último item do menu (alinhar dropdown à direita) */
@@ -444,6 +512,23 @@ nav ul li.relative .absolute::before {
 
 .animate-carousel {
   animation: carousel 40s linear infinite;
+  display: flex;
+  width: fit-content;
+  will-change: transform;
+}
+
+/* Animação de scroll da direita para esquerda para logos */
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll-left {
+  animation: scroll-left 30s linear infinite;
   display: flex;
   width: fit-content;
   will-change: transform;

@@ -45,12 +45,34 @@ export function QuickViewModal({ product, isOpen, onClose, onViewFullDetails }: 
   // Prevenir scroll do body quando modal está aberto
   useEffect(() => {
     if (isOpen) {
+      // Salvar o scroll atual
+      const scrollY = window.scrollY;
+      // Bloquear scroll do body
       document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
     } else {
+      // Restaurar scroll do body
+      const scrollY = document.body.style.top;
       document.body.style.overflow = 'unset';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
     }
     return () => {
+      // Cleanup: garantir que o scroll seja restaurado
+      const scrollY = document.body.style.top;
       document.body.style.overflow = 'unset';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
     };
   }, [isOpen]);
 
@@ -80,7 +102,7 @@ export function QuickViewModal({ product, isOpen, onClose, onViewFullDetails }: 
 
   return (
     <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in"
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in"
       onClick={onClose}
     >
       <div 

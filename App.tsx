@@ -88,88 +88,13 @@ const Header = () => {
     
     const measureHierarchy = () => {
       try {
-        // #region agent log
-        const logData = {location:'App.tsx:measureHierarchy',timestamp:Date.now(),sessionId:'debug-session',runId:'run1'};
-        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...logData,message:'Function called',data:{hasMiniBannerRef:!!miniBannerRef.current,hasHeaderRef:!!headerRef.current,hasNavRef:!!navRef.current},hypothesisId:'A'})}).catch(()=>{});
-        const viewportWidth = window.innerWidth;
-        const breakpoint = viewportWidth < 640 ? 'mobile' : viewportWidth < 1024 ? 'tablet' : 'desktop';
-        
-        // Medir mini banner - tentar encontrar no DOM se ref não estiver disponível
-        let miniBannerElement = miniBannerRef.current;
-        if (!miniBannerElement) {
-          miniBannerElement = document.querySelector('.banner-shimmer') as HTMLElement;
-        }
-        let miniBannerHeight = 0;
-        let miniBannerTop = 0;
-        if (miniBannerElement) {
-          const bannerRect = miniBannerElement.getBoundingClientRect();
-          miniBannerHeight = bannerRect.height;
-          miniBannerTop = bannerRect.top;
-          const bannerComputed = window.getComputedStyle(miniBannerElement);
-          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...logData,message:'Mini banner dimensions',data:{height:miniBannerHeight,top:miniBannerTop,computedHeight:bannerComputed.height,viewportWidth,breakpoint},hypothesisId:'A'})}).catch(()=>{});
-        }
-        
-        // Medir header - tentar encontrar no DOM se ref não estiver disponível
-        let headerElement = headerRef.current;
-        if (!headerElement) {
-          headerElement = document.querySelector('header.fixed') as HTMLElement;
-        }
-        let headerHeight = 0;
-        let headerTop = 0;
-        if (headerElement) {
-          const headerRect = headerElement.getBoundingClientRect();
-          headerHeight = headerRect.height;
-          headerTop = headerRect.top;
-          const headerComputed = window.getComputedStyle(headerElement);
-          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...logData,message:'Header dimensions',data:{height:headerHeight,top:headerTop,computedHeight:headerComputed.height,computedTop:headerComputed.top,viewportWidth,breakpoint},hypothesisId:'B'})}).catch(()=>{});
-        }
-        
-        // Medir nav
-        let navHeight = 0;
-        let navTop = 0;
-        if (navRef.current) {
-          const navRect = navRef.current.getBoundingClientRect();
-          navHeight = navRect.height;
-          navTop = navRect.top;
-          const navComputed = window.getComputedStyle(navRef.current);
-          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...logData,message:'Nav dimensions',data:{height:navHeight,top:navTop,computedHeight:navComputed.height,computedTop:navComputed.top,viewportWidth,breakpoint},hypothesisId:'C'})}).catch(()=>{});
-        }
-        
-        // Calcular espaçamento esperado vs real
-        const expectedHeaderTop = viewportWidth < 640 ? 50 : 60;
-        const expectedNavTop = 156;
-        const totalFixedHeight = miniBannerHeight + headerHeight + (navRef.current ? navHeight : 0);
-        
-        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...logData,message:'Hierarchy spacing analysis',data:{miniBannerHeight,headerHeight,headerTop,expectedHeaderTop,headerTopDiff:headerTop-expectedHeaderTop,navHeight,navTop,expectedNavTop,navTopDiff:navTop-expectedNavTop,totalFixedHeight,viewportWidth,breakpoint},hypothesisId:'D'})}).catch(()=>{});
-        
-        // Verificar sobreposição
-        const headerOverlapsBanner = headerTop < miniBannerHeight;
-        const navOverlapsHeader = navTop < (miniBannerHeight + headerHeight);
-        const mainElement = document.querySelector('main');
-        let mainPaddingTop = 0;
-        if (mainElement) {
-          const mainComputed = window.getComputedStyle(mainElement);
-          mainPaddingTop = parseFloat(mainComputed.paddingTop) || 0;
-        }
-        const expectedMainPadding = viewportWidth < 640 ? 114 : viewportWidth < 1024 ? 140 : 216;
-        const mainPaddingDiff = mainPaddingTop - expectedMainPadding;
-        
-        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...logData,message:'Overlap detection',data:{headerOverlapsBanner,navOverlapsHeader,mainPaddingTop,expectedMainPadding,mainPaddingDiff,totalFixedHeight,viewportWidth,breakpoint},hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
+        // Função de medição removida - código de debug limpo para produção
       } catch (error) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:measureHierarchy',message:'Error in measureHierarchy',data:{error:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-        // #endregion
         console.error('Error measuring hierarchy:', error);
       }
       
       // Continuar com medições de navegação apenas se os refs estiverem disponíveis
       if (!navRef.current || !navContainerRef.current || !navListRef.current) {
-        // #region agent log
-        const viewportWidth = window.innerWidth;
-        const breakpoint = viewportWidth < 640 ? 'mobile' : viewportWidth < 1024 ? 'tablet' : 'desktop';
-        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:measureHierarchy',message:'Nav refs not available',data:{hasNavRef:!!navRef.current,hasNavContainerRef:!!navContainerRef.current,hasNavListRef:!!navListRef.current,viewportWidth,breakpoint},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-        // #endregion
         return;
       }
       
@@ -280,14 +205,9 @@ const Header = () => {
   return (
     <>
       {/* Mini Banner de Destaque */}
-      <div ref={miniBannerRef} className="fixed top-0 left-0 right-0 bg-gradient-to-r from-primary-600 via-primary-700 to-blue-600 border-b border-primary-800 z-[9999] banner-shimmer overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, width: '100%' }}>
+      <div ref={miniBannerRef} className="fixed top-0 left-0 right-0 bg-gradient-to-r from-primary-600 via-primary-700 to-blue-600 border-b border-primary-800 z-[10000] banner-shimmer overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, width: '100%' }}>
         <div className="container mx-auto px-4 sm:px-6 py-2 sm:py-2.5 relative z-10">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
-            {/* Badge de Destaque */}
-            <div className="flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full px-2.5 py-1 border border-white/30">
-              <span className="text-white font-black text-[10px] sm:text-xs tracking-wider">🎁 PROMO</span>
-            </div>
-            
             <div className="text-center">
               <p className="text-sm sm:text-base md:text-lg font-extrabold text-white mb-0.5 sm:mb-0.5 tracking-tight">
                 🎉 Mega Promoção Monstrinho Misterioso
@@ -310,8 +230,8 @@ const Header = () => {
         </div>
       </div>
 
-      <header ref={headerRef} className="fixed left-0 right-0 z-[9998] bg-white shadow-sm border-b border-gray-100 w-full overflow-x-hidden top-[189px] sm:top-[113px] md:top-[93px] h-16 sm:h-20 md:h-24" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
-        <div className="container mx-auto px-3 sm:px-4 flex items-center justify-between gap-3 sm:gap-4 md:gap-6 h-16 sm:h-20 md:h-24" style={{ maxWidth: 'min(100%, 1280px)', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
+      <header ref={headerRef} className="fixed left-0 right-0 z-[9998] bg-white shadow-sm border-b border-gray-100 w-full overflow-x-hidden top-[67px] h-16 sm:h-20 md:h-24" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 grid grid-cols-[auto_1fr_auto] lg:grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4 md:gap-6 lg:gap-8 h-16 sm:h-20 md:h-24" style={{ maxWidth: 'min(100%, 1536px)', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
           {/* Logo */}
           <div 
             className="cursor-pointer flex-shrink-0 min-w-0"
@@ -320,7 +240,7 @@ const Header = () => {
             <img 
               src={LOGO_URL} 
               alt="White Cloud Brasil" 
-              className="h-12 sm:h-16 md:h-20 w-auto object-contain transition-transform hover:scale-105"
+              className="h-10 sm:h-12 md:h-14 w-auto object-contain transition-transform hover:scale-105"
               onError={(e) => {
                 // Fallback caso a imagem nÃ£o exista
                 e.currentTarget.style.display = 'none';
@@ -330,7 +250,7 @@ const Header = () => {
           </div>
 
           {/* Search Bar (Desktop) */}
-          <div className="hidden lg:flex flex-1 max-w-2xl relative min-w-0">
+          <div className="hidden lg:flex flex-1 max-w-2xl relative min-w-0 w-full">
             <input
               type="text"
               placeholder="Pesquise seu produto na White Cloud :)"
@@ -347,7 +267,7 @@ const Header = () => {
           </div>
 
           {/* User Actions */}
-          <div className="flex items-center space-x-2 sm:space-x-4 md:space-x-6 text-sm font-medium text-gray-700 flex-shrink-0 min-w-0">
+          <div className="flex items-center justify-end gap-2 sm:gap-3 md:gap-4 text-sm font-medium text-gray-700 flex-shrink-0 min-w-0">
              {/* Mobile Menu Trigger */}
              <button 
                className="lg:hidden p-2 -mr-2 text-gray-700 min-h-[44px] min-w-[44px] flex items-center justify-center" 
@@ -402,22 +322,22 @@ const Header = () => {
         </div>
 
         {/* Desktop Navigation Bar */}
-        <nav ref={navRef} className="hidden lg:block border-t border-gray-100 bg-white fixed left-0 right-0 z-[10000] w-full overflow-x-hidden top-[189px]" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', position: 'fixed', boxSizing: 'border-box' }}>
-          <div ref={navContainerRef} className="w-full px-3 sm:px-4 overflow-x-hidden" style={{ overflowX: 'hidden', width: '100%', boxSizing: 'border-box', textAlign: 'left', display: 'flex', flexWrap: 'wrap' }}>
-            <ul ref={navListRef} className="flex flex-wrap items-center justify-start gap-2 sm:gap-3 text-xs sm:text-sm font-medium text-gray-600 py-4 sm:py-5 overflow-x-hidden w-full" style={{ maxWidth: '100%', overflowX: 'hidden', width: '100%', flexWrap: 'wrap', boxSizing: 'border-box', display: 'flex', margin: 0, padding: 0, listStyle: 'none', minHeight: '58px', textAlign: 'left', verticalAlign: 'middle' }}>
+        <nav ref={navRef} className="hidden lg:block border-t border-gray-100 bg-white fixed left-0 right-0 z-[9997] w-full overflow-x-hidden top-[163px]" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', position: 'fixed', boxSizing: 'border-box' }}>
+          <div ref={navContainerRef} className="w-full px-3 sm:px-4 lg:px-6 xl:px-8 overflow-x-hidden flex justify-center" style={{ overflowX: 'hidden', width: '100%', boxSizing: 'border-box', textAlign: 'center', display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <ul ref={navListRef} className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm font-medium text-gray-600 py-4 sm:py-5 overflow-x-hidden w-full" style={{ maxWidth: '100%', overflowX: 'hidden', width: '100%', flexWrap: 'wrap', boxSizing: 'border-box', display: 'flex', margin: 0, padding: 0, listStyle: 'none', minHeight: '58px', textAlign: 'center', verticalAlign: 'middle' }}>
               {CATEGORIES.map(cat => (
                 <li 
                   key={cat.id} 
                   className="relative z-[100]"
                   onMouseEnter={() => cat.hasDropdown && handleMouseEnter(cat.id)}
                   onMouseLeave={handleMouseLeave}
-                  style={{ flexShrink: 1, minWidth: 0, maxWidth: 'fit-content', whiteSpace: 'nowrap' }}
+                  style={{ flexShrink: 0, minWidth: 0, maxWidth: 'fit-content', whiteSpace: 'nowrap', margin: 0, padding: 0 }}
                 >
                   {cat.hasDropdown ? (
                     <>
                   <button 
-                        className={`hover:text-primary-600 transition-colors py-1 relative uppercase flex items-center gap-1 whitespace-nowrap text-xs ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-2 sm:px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
-                        style={{ maxWidth: 'fit-content', overflow: 'visible', flexShrink: 0, minWidth: 0 }}
+                        className={`hover:text-primary-600 transition-colors py-1 px-2 relative uppercase flex items-center gap-1 whitespace-nowrap text-xs ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-2 sm:px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
+                        style={{ maxWidth: 'fit-content', overflow: 'visible', flexShrink: 0, minWidth: 0, margin: 0 }}
                       >
                         <span className={cat.isHighlight ? 'relative z-10' : ''}>{cat.name}</span>
                         <ChevronDown className={`w-3 h-3 opacity-60 transition-all duration-300 ${openDropdown === cat.id ? 'opacity-100 rotate-180' : ''}`} />
@@ -425,7 +345,7 @@ const Header = () => {
                       </button>
                       
                       {/* Dropdown Menu - Design Moderno */}
-                      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[90vw] max-w-[900px] bg-white rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 z-[10001] overflow-x-hidden ${
+                      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[90vw] max-w-[900px] bg-white rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 z-[99999] overflow-x-hidden ${
                         openDropdown === cat.id 
                           ? 'opacity-100 visible translate-y-0' 
                           : 'opacity-0 invisible -translate-y-2 pointer-events-none'
@@ -608,8 +528,8 @@ const Header = () => {
                     // Link simples (Promoções e Perfumes)
                     <button 
                       onClick={() => navigateRouter('/catalogo')}
-                      className={`hover:text-primary-600 transition-colors py-1 relative uppercase whitespace-nowrap text-xs ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-2 sm:px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
-                      style={{ maxWidth: 'fit-content', overflow: 'visible', flexShrink: 0, minWidth: 0 }}
+                      className={`hover:text-primary-600 transition-colors py-1 px-2 relative uppercase whitespace-nowrap text-xs ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-2 sm:px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
+                      style={{ maxWidth: 'fit-content', overflow: 'visible', flexShrink: 0, minWidth: 0, margin: 0 }}
                     >
                       <span className={cat.isHighlight ? 'relative z-10' : ''}>{cat.name}</span>
                     {!cat.isHighlight && <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all group-hover:w-full"></span>}
@@ -786,7 +706,7 @@ const ProductCard: React.FC<{
         />
       </button>
 
-      <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
+      <div className="relative aspect-square overflow-hidden bg-gray-50">
         {/* Placeholder Skeleton */}
         <div className={`absolute inset-0 bg-gray-200 animate-pulse transition-opacity duration-500 ${imageLoaded ? 'opacity-0' : 'opacity-100'}`} />
         
@@ -907,7 +827,7 @@ const HeroSlider = () => {
   }
 
   return (
-    <div className="relative h-[250px] sm:h-[300px] md:h-[400px] lg:h-[500px] w-full overflow-hidden bg-gray-900 group z-0">
+    <div className="relative h-[250px] sm:h-[300px] md:h-[400px] lg:h-[500px] xl:h-[600px] 2xl:h-[700px] w-full overflow-hidden bg-gray-900 group z-0">
       <div 
         className="flex transition-transform duration-700 ease-out h-full" 
         style={{ transform: `translateX(-${current * 100}%)` }}
@@ -982,8 +902,8 @@ const HeroSlider = () => {
 };
 
 const SectionHeader = ({ title, linkText = "Ver todos", onLinkClick }: { title: string, linkText?: string, onLinkClick: () => void }) => (
-  <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
-    <h2 className="text-2xl font-bold text-gray-900 relative pl-4">
+  <div className="flex items-center justify-between mb-6 sm:mb-8 lg:mb-10 xl:mb-12 pb-4 border-b border-gray-100">
+    <h2 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 relative pl-4">
       <span className="absolute left-0 top-1 w-1 h-6 bg-primary-500 rounded-full"></span>
       {title}
     </h2>
@@ -1105,7 +1025,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
     {/* 3. Feature Bar */}
     <section className="bg-white border-b border-gray-100">
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-5">
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl py-4 sm:py-5 lg:py-6 xl:py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 divide-y md:divide-y-0 md:divide-x divide-gray-100">
           {[
             { icon: Truck, title: "Envio para todo Brasil", sub: "Entrega expressa e rastreada" },
@@ -1127,9 +1047,9 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     </section>
 
     {/* 4. New Arrivals */}
-    <section className="container mx-auto px-3 sm:px-4 md:px-6">
+    <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl">
       <SectionHeader title="Novidades Chegando" onLinkClick={() => navigateRouter('/catalogo')} />
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
         {(products || []).slice(0, 12).map(product => (
           <ProductCard 
             key={product.id} 
@@ -1143,39 +1063,78 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     </section>
 
     {/* 5. Promotional Banners */}
-    <section className="container mx-auto px-3 sm:px-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-        <div className="relative h-56 sm:h-64 md:h-80 rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer">
+    <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+        <div className="relative h-56 sm:h-64 md:h-80 lg:h-96 xl:h-[450px] rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer w-full">
           <img src="https://placehold.co/800x600/111/FFF?text=Pod+Systems+Promo" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Banner 1" />
         </div>
-        <div className="relative h-56 sm:h-64 md:h-80 rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer">
+        <div className="relative h-56 sm:h-64 md:h-80 lg:h-96 xl:h-[450px] rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer w-full">
           <img src="https://placehold.co/800x600/1e293b/FFF?text=Premium+Juices+Sale" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Banner 2" />
         </div>
       </div>
     </section>
 
     {/* 6. Best Sellers Layout */}
-    <section className="bg-gray-50 py-8 sm:py-12">
-      <div className="container mx-auto px-3 sm:px-4 md:px-6">
+    <section className="bg-gray-50 py-8 sm:py-12 lg:py-16 xl:py-20">
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl">
         <SectionHeader title="Os Mais Vendidos" onLinkClick={() => navigateRouter('/catalogo')} />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5 w-full">
-          {(products || []).filter(p => p.isBestSeller).map(product => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              onClick={() => handleProductClick(product.id)}
-              onQuickView={onQuickView}
-              onQuickAdd={onQuickAdd}
-            />
-          ))}
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr] 2xl:grid-cols-[360px_1fr] gap-4 lg:gap-6 xl:gap-8 w-full">
+          {/* Banner Vertical */}
+          <div className="hidden lg:block">
+            <div 
+              onClick={() => navigateRouter('/catalogo')}
+              className="h-full min-h-[600px] bg-gradient-to-br from-primary-600 via-primary-700 to-blue-600 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer group relative"
+            >
+              {/* Imagem de fundo ou gradiente */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-600/90 via-primary-700/90 to-blue-600/90"></div>
+              
+              {/* Conteúdo do banner */}
+              <div className="relative h-full flex flex-col justify-between p-6 lg:p-8 xl:p-10 text-white">
+                <div>
+                  <div className="inline-block bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 mb-4 border border-white/30">
+                    <span className="text-sm font-black tracking-wider">🔥 DESTAQUE</span>
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-extrabold mb-3 leading-tight">
+                    Produtos em Destaque
+                  </h3>
+                  <p className="text-white/90 text-sm mb-4 leading-relaxed">
+                    Descubra os produtos mais vendidos e aproveite nossas ofertas especiais!
+                  </p>
+                </div>
+                
+                <div className="mt-auto">
+                  <div className="flex items-center gap-2 text-white/90 group-hover:text-white transition-colors">
+                    <span className="font-semibold text-base">Ver todos</span>
+                    <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Efeito shimmer */}
+              <div className="absolute inset-0 banner-shimmer pointer-events-none"></div>
+            </div>
+          </div>
+          
+          {/* Grid de Produtos */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5 w-full">
+            {(products || []).filter(p => p.isBestSeller).map(product => (
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                onClick={() => handleProductClick(product.id)}
+                onQuickView={onQuickView}
+                onQuickAdd={onQuickAdd}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>
 
     {/* 7. Best Offers */}
-    <section className="container mx-auto px-3 sm:px-4 md:px-6">
+    <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl">
       <SectionHeader title="Ofertas Relâmpago" onLinkClick={() => navigateRouter('/catalogo')} />
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
         {(products || []).map(product => (
            <ProductCard 
              key={`offer-${product.id}`} 
@@ -1189,9 +1148,9 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     </section>
 
     {/* 8. Customer Favorites */}
-    <section className="container mx-auto px-3 sm:px-4 md:px-6">
+    <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl">
       <SectionHeader title="Queridinhos dos Clientes" onLinkClick={() => navigateRouter('/catalogo')} />
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
         {(products || []).slice(0, 12).map(product => (
            <ProductCard 
              key={`fav-${product.id}`} 
@@ -2436,13 +2395,13 @@ const CheckoutPage = () => {
               {cart.map((item) => (
                 <div key={item.id} className="grid grid-cols-12 gap-4 p-4 hover:bg-gray-50 transition-colors">
                   {/* Botão Remover */}
-                  <div className="col-span-12 md:col-span-1 flex items-start justify-start md:justify-center">
+                  <div className="col-span-12 md:col-span-1 flex items-center justify-center">
                     <button
                       onClick={() => removeFromCart(item.id)}
                       className="text-red-500 hover:text-red-700 transition-colors p-1"
                       aria-label="Remover produto"
                     >
-                      <X className="w-5 h-5" />
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
 
@@ -2860,9 +2819,6 @@ const ProductDetailWrapper = () => {
 };
 
 const ProductDetail = ({ product }: { product: Product }) => {
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:ProductDetail:entry',message:'ProductDetail rendered with product',data:{productId:product.id,productName:product.name,productNameLength:product.name?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'F'})}).catch(()=>{});
-  // #endregion
   const { addToCart } = useCart();
   const navigateRouter = useNavigateRouter();
   const { products } = useProducts();
@@ -2961,45 +2917,21 @@ const ProductDetail = ({ product }: { product: Product }) => {
 
   // Função para obter índice da imagem baseado no sabor
   const getImageIndexForFlavor = (flavor: string): number => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:getImageIndexForFlavor:entry',message:'getImageIndexForFlavor called',data:{flavor,flavorsLength:product.flavors?.length,imagesLength:product.images?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     if (!product.flavors || product.flavors.length === 0 || !product.images || product.images.length === 0) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:getImageIndexForFlavor:early-return',message:'Early return - missing data',data:{returnValue:0},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       return 0;
     }
     const flavorIndex = product.flavors.indexOf(flavor);
     const result = flavorIndex % product.images.length;
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:getImageIndexForFlavor:exit',message:'getImageIndexForFlavor result',data:{flavor,flavorIndex,imagesLength:product.images.length,result},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     // Distribui os sabores entre as imagens disponíveis
     return result;
   };
 
   // Função para lidar com hover no sabor
   const handleFlavorHover = (flavor: string) => {
-    // #region agent log
-    const logData = {location:'App.tsx:handleFlavorHover:entry',message:'handleFlavorHover called',data:{flavor},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'A'};
-    console.log('[DEBUG]', logData);
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
-    // #endregion
     const imageIndex = getImageIndexForFlavor(flavor);
-    // #region agent log
-    const logData2 = {location:'App.tsx:handleFlavorHover:before-setState',message:'About to set hoveredFlavorImageIndex',data:{flavor,imageIndex,currentHovered:hoveredFlavorImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'A'};
-    console.log('[DEBUG]', logData2);
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData2)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
-    // #endregion
     setHoveredFlavorImageIndex(imageIndex);
     setImageUpdateKey(prev => prev + 1); // Incrementar contador para forçar atualização
     setImageLoaded(false);
-    // #region agent log
-    const logData3 = {location:'App.tsx:handleFlavorHover:after-setState',message:'setHoveredFlavorImageIndex called',data:{flavor,imageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'A'};
-    console.log('[DEBUG]', logData3);
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData3)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
-    // #endregion
   };
 
   // Função para lidar com saída do hover
@@ -3021,22 +2953,12 @@ const ProductDetail = ({ product }: { product: Product }) => {
     const result = hoveredFlavorImageIndex !== null
       ? hoveredFlavorImageIndex
       : (fixedFlavorImageIndex !== null ? fixedFlavorImageIndex : selectedImageIndex);
-    // #region agent log
-    const logData = {location:'App.tsx:displayImageIndex:calculation',message:'displayImageIndex being calculated',data:{result,hoveredFlavorImageIndex,fixedFlavorImageIndex,selectedImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'C'};
-    console.log('[DEBUG]', logData);
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
-    // #endregion
     return result;
   }, [hoveredFlavorImageIndex, fixedFlavorImageIndex, selectedImageIndex]);
 
   // Calcular src da imagem baseado no displayImageIndex
   const currentImageSrc = useMemo(() => {
     const src = product.images[displayImageIndex] || product.images[0];
-    // #region agent log
-    const logData = {location:'App.tsx:currentImageSrc:calculation',message:'currentImageSrc being calculated',data:{displayImageIndex,src,hoveredFlavorImageIndex,fixedFlavorImageIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'E'};
-    console.log('[DEBUG]', logData);
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
-    // #endregion
     return src;
   }, [displayImageIndex, product.images]);
 
@@ -3119,11 +3041,6 @@ const ProductDetail = ({ product }: { product: Product }) => {
     // Fixar imagem do primeiro sabor ao carregar o produto
     if (product.flavors && product.flavors.length > 0 && product.images && product.images.length > 0) {
       const firstFlavorImageIndex = getImageIndexForFlavor(product.flavors[0]);
-      // #region agent log
-      const logData = {location:'App.tsx:useEffect:initialization',message:'Setting initial fixedFlavorImageIndex',data:{firstFlavorImageIndex,firstFlavor:product.flavors[0],initialImageSrc:product.images[firstFlavorImageIndex]},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'F'};
-      console.log('[DEBUG]', logData);
-      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
-      // #endregion
       setFixedFlavorImageIndex(firstFlavorImageIndex);
       setSelectedImageIndex(firstFlavorImageIndex);
     } else {
@@ -3135,11 +3052,6 @@ const ProductDetail = ({ product }: { product: Product }) => {
 
   // Recarregar imagem quando displayImageIndex mudar
   useEffect(() => {
-    // #region agent log
-    const logData = {location:'App.tsx:useEffect:displayImageIndex',message:'displayImageIndex changed - resetting imageLoaded',data:{displayImageIndex,hoveredFlavorImageIndex,fixedFlavorImageIndex,selectedImageIndex,imageLoaded},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'D'};
-    console.log('[DEBUG]', logData);
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
-    // #endregion
     setImageLoaded(false);
   }, [displayImageIndex]);
   
@@ -3256,43 +3168,19 @@ const ProductDetail = ({ product }: { product: Product }) => {
         <div className="space-y-3 sm:space-y-4">
           {/* Foto Principal */}
           <div className="aspect-square bg-white border border-gray-100 rounded-xl sm:rounded-2xl overflow-hidden p-4 sm:p-8 flex items-center justify-center relative shadow-sm hover:shadow-md transition-shadow">
-            {(() => {
-              // #region agent log
-              const logData = {location:'App.tsx:img:render',message:'Image component rendering',data:{displayImageIndex,hoveredFlavorImageIndex,fixedFlavorImageIndex,selectedImageIndex,imageLoaded,imageSrc:product.images[displayImageIndex]},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'E'};
-              console.log('[DEBUG]', logData);
-              fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
-              // #endregion
-              return null;
-            })()}
             {!imageLoaded && (
               <div className="absolute inset-0 bg-gray-200 animate-pulse" />
             )}
-            {(() => {
-              // #region agent log
-              const logData = {location:'App.tsx:img:render',message:'Image component rendering',data:{displayImageIndex,currentImageSrc,hoveredFlavorImageIndex,fixedFlavorImageIndex,selectedImageIndex,imageLoaded},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'E'};
-              console.log('[DEBUG]', logData);
-              fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
-              // #endregion
-              return (
-                <img 
-                  key={`product-image-${displayImageIndex}-${product.id}-${hoveredFlavorImageIndex !== null ? `hover-${hoveredFlavorImageIndex}-${imageUpdateKey}` : fixedFlavorImageIndex !== null ? `fixed-${fixedFlavorImageIndex}` : `selected-${selectedImageIndex}`}`}
-                  src={currentImageSrc}
-                  alt={product.name} 
-                  loading="eager"
-                  decoding="async"
-                  className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-                  onLoad={() => {
-                    // #region agent log
-                    const logData = {location:'App.tsx:img:onLoad',message:'Image loaded',data:{displayImageIndex,currentImageSrc},timestamp:Date.now(),sessionId:'debug-session',runId:'fix-attempt',hypothesisId:'E'};
-                    console.log('[DEBUG]', logData);
-                    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logData)}).catch((e)=>console.error('[DEBUG] Log failed:',e));
-                    // #endregion
-                    setImageLoaded(true);
-                  }}
-                  onError={() => setImageLoaded(true)}
-                />
-              );
-            })()}
+            <img 
+              key={`product-image-${displayImageIndex}-${product.id}-${hoveredFlavorImageIndex !== null ? `hover-${hoveredFlavorImageIndex}-${imageUpdateKey}` : fixedFlavorImageIndex !== null ? `fixed-${fixedFlavorImageIndex}` : `selected-${selectedImageIndex}`}`}
+              src={currentImageSrc}
+              alt={product.name} 
+              loading="eager"
+              decoding="async"
+              className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageLoaded(true)}
+            />
           </div>
           
           {/* Miniaturas das Imagens */}
@@ -3493,9 +3381,6 @@ const ProductDetail = ({ product }: { product: Product }) => {
 
           {/* 5. Variações (Sabores/Cores/Modelos) */}
           {(() => {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:ProductDetail:flavors-section',message:'Rendering flavors section',data:{productId:product.id,hasFlavors:!!product.flavors,flavorsLength:product.flavors?.length,flavors:product.flavors},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-            // #endregion
             return product.flavors && product.flavors.length > 0 && (() => {
             // Definir quais sabores estão disponíveis (metade disponível, metade indisponível)
             const totalFlavors = product.flavors.length;
@@ -3831,9 +3716,6 @@ const ProductDetail = ({ product }: { product: Product }) => {
 
       {/* 9. DESCRIÇÃO */}
       {(() => {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:ProductDetail:description-check',message:'Checking detailedDescription',data:{productId:product.id,hasDetailedDescription:!!product.detailedDescription,detailedDescriptionLength:product.detailedDescription?.length,detailedDescriptionPreview:product.detailedDescription?.substring(0,100)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-        // #endregion
         return product.detailedDescription;
       })() && (
         <section className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-10 mb-12">
@@ -4780,7 +4662,7 @@ export default function App() {
       <AgeVerificationModal />
       <Header />
 
-      <main className="flex-1 w-full overflow-x-hidden pt-[245px] sm:pt-[209px] lg:pt-[248px]">
+      <main className="flex-1 w-full overflow-x-hidden pt-[147px] sm:pt-[163px] lg:pt-[221px]">
         <Routes>
           <Route path="/" element={<Home onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
           <Route path="/catalogo" element={<Catalog onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
