@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Routes, Route, useParams, useNavigate as useNavigateRouter } from 'react-router-dom';
 import { 
   ShoppingCart, Search, Menu, X, User, Star, Truck, ShieldCheck, 
@@ -556,6 +556,9 @@ const ProductCard: React.FC<{
   const mainImage = product.images[0];
   const hoverImage = hasSecondImage ? product.images[1] : null;
   const favorited = isFavorite(product.id);
+  
+  // Verificar se o produto tem opções de miligramagem
+  const hasNicotineOptions = product.nicotine && product.nicotine.length > 0;
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -665,8 +668,21 @@ const ProductCard: React.FC<{
       </div>
 
       <div className="p-3 sm:p-4 flex flex-col flex-1">
-        <div className="text-[10px] sm:text-xs text-gray-500 mb-1 uppercase tracking-wide">{product.category}</div>
-        <h3 className="font-medium text-sm sm:text-base text-gray-900 mb-2 line-clamp-2 min-h-[2.5rem] group-hover:text-primary-600 transition-colors">
+        {/* Tags de Miligramagem */}
+        {hasNicotineOptions && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {product.nicotine.map((nicotine) => (
+              <span 
+                key={nicotine}
+                className="inline-block px-2.5 py-1.5 text-xs sm:text-sm bg-primary-50 text-primary-700 rounded-md font-medium hover:bg-primary-600 hover:text-white transition-colors cursor-pointer"
+              >
+                {nicotine}
+              </span>
+            ))}
+          </div>
+        )}
+        
+        <h3 className="font-medium text-sm sm:text-base text-gray-900 line-clamp-2 min-h-[2.5rem] group-hover:text-primary-600 transition-colors">
           {product.name}
         </h3>
         
