@@ -9,7 +9,6 @@ import {
 } from './components/Icons';
 import { Button } from './components/Button';
 import Toast from './components/Toast';
-import { EmailCapture } from './components/EmailCapture';
 import { CartBadge } from './components/CartBadge';
 import { FavoritesBadge } from './components/FavoritesBadge';
 import { QuickViewModal } from './components/QuickViewModal';
@@ -43,6 +42,9 @@ const Header = () => {
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [categorySearch, setCategorySearch] = useState<Record<string, string>>({});
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+  const navContainerRef = useRef<HTMLDivElement>(null);
+  const navListRef = useRef<HTMLUListElement>(null);
 
   // Fecha o menu se a tela for redimensionada para desktop
   useEffect(() => {
@@ -62,6 +64,160 @@ const Header = () => {
     }
     return () => { document.body.style.overflow = 'unset'; };
   }, [isMenuOpen]);
+
+  // #region agent log
+  // Medir dimensões dos elementos de navegação para debug
+  useEffect(() => {
+    const applyFlexWrap = () => {
+      if (navListRef.current) {
+        navListRef.current.style.flexWrap = 'wrap';
+        navListRef.current.classList.add('flex-wrap');
+        // #region agent log
+        const computed = window.getComputedStyle(navListRef.current);
+        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'App.tsx:Header:applyFlexWrap',
+            message: 'Applying flex-wrap: wrap',
+            data: {
+              inlineStyle: navListRef.current.style.flexWrap,
+              computedStyle: computed.flexWrap,
+              hasFlexWrapClass: navListRef.current.classList.contains('flex-wrap')
+            },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'post-fix',
+            hypothesisId: 'G'
+          })
+        }).catch(() => {});
+        // #endregion
+      }
+    };
+    
+    // Aplicar imediatamente
+    applyFlexWrap();
+    
+    // Aplicar após o próximo frame para garantir que o DOM está renderizado
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        applyFlexWrap();
+      });
+    });
+    
+    const measureNav = () => {
+      if (!navRef.current || !navContainerRef.current || !navListRef.current) return;
+      
+      // Garantir que flex-wrap está aplicado
+      navListRef.current.style.flexWrap = 'wrap';
+      navListRef.current.classList.add('flex-wrap');
+      
+      const viewportWidth = window.innerWidth;
+      const navRect = navRef.current.getBoundingClientRect();
+      const containerRect = navContainerRef.current.getBoundingClientRect();
+      const listRect = navListRef.current.getBoundingClientRect();
+      const computedNav = window.getComputedStyle(navRef.current);
+      const computedContainer = window.getComputedStyle(navContainerRef.current);
+      const computedList = window.getComputedStyle(navListRef.current);
+      
+      // Medir apenas os itens principais do menu (não os dropdowns)
+      const allListItems = Array.from(navListRef.current.querySelectorAll('li'));
+      const listItems = allListItems.filter(li => {
+        const element = li as HTMLElement;
+        const parent = element.parentElement;
+        return parent === navListRef.current; // Apenas filhos diretos do ul
+      });
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'App.tsx:Header:measureNav:filtering',
+          message: 'Filtering menu items',
+          data: {
+            allItemsCount: allListItems.length,
+            filteredItemsCount: listItems.length,
+            expectedCategoriesCount: CATEGORIES.length
+          },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'post-fix',
+          hypothesisId: 'F'
+        })
+      }).catch(() => {});
+      // #endregion
+      
+      const itemWidths = listItems.map((li, idx) => {
+        const element = li as HTMLElement;
+        const rect = element.getBoundingClientRect();
+        const computed = window.getComputedStyle(element);
+        return { index: idx, width: rect.width, minWidth: computed.minWidth, maxWidth: computed.maxWidth, flexShrink: computed.flexShrink };
+      });
+      
+      const totalItemsWidth = itemWidths.reduce((sum, item) => sum + item.width, 0);
+      const gap = parseFloat(computedList.gap) || 0;
+      const estimatedTotalWidth = totalItemsWidth + (gap * (listItems.length - 1));
+      
+      // Verificar overflow em outros elementos
+      const htmlElement = document.documentElement;
+      const bodyElement = document.body;
+      const headerElement = navRef.current?.closest('header') as HTMLElement;
+      const htmlRect = htmlElement.getBoundingClientRect();
+      const bodyRect = bodyElement.getBoundingClientRect();
+      const headerRect = headerElement?.getBoundingClientRect();
+      const htmlComputed = window.getComputedStyle(htmlElement);
+      const bodyComputed = window.getComputedStyle(bodyElement);
+      const headerComputed = headerElement ? window.getComputedStyle(headerElement) : null;
+      
+      // Verificar scrollWidth vs clientWidth para detectar overflow
+      const htmlHasOverflow = htmlElement.scrollWidth > htmlElement.clientWidth;
+      const bodyHasOverflow = bodyElement.scrollWidth > bodyElement.clientWidth;
+      const headerHasOverflow = headerElement ? headerElement.scrollWidth > headerElement.clientWidth : false;
+      const navHasOverflow = navRef.current ? navRef.current.scrollWidth > navRef.current.clientWidth : false;
+      const containerHasOverflow = navContainerRef.current ? navContainerRef.current.scrollWidth > navContainerRef.current.clientWidth : false;
+      const listHasOverflow = navListRef.current ? navListRef.current.scrollWidth > navListRef.current.clientWidth : false;
+      
+      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'App.tsx:Header:measureNav',
+          message: 'Navigation dimensions measurement',
+          data: {
+            viewportWidth,
+            nav: { width: navRect.width, maxWidth: computedNav.maxWidth, padding: computedNav.padding, margin: computedNav.margin, boxSizing: computedNav.boxSizing, scrollWidth: navRef.current?.scrollWidth, clientWidth: navRef.current?.clientWidth },
+            container: { width: containerRect.width, maxWidth: computedContainer.maxWidth, padding: computedContainer.padding, margin: computedContainer.margin, boxSizing: computedContainer.boxSizing, scrollWidth: navContainerRef.current?.scrollWidth, clientWidth: navContainerRef.current?.clientWidth },
+            list: { width: listRect.width, maxWidth: computedList.maxWidth, padding: computedList.padding, margin: computedList.margin, gap: computedList.gap, flexWrap: computedList.flexWrap, boxSizing: computedList.boxSizing, scrollWidth: navListRef.current?.scrollWidth, clientWidth: navListRef.current?.clientWidth },
+            items: itemWidths,
+            totalItemsWidth,
+            estimatedTotalWidth,
+            hasOverflow: listRect.width > containerRect.width || listRect.width > viewportWidth,
+            overflowCheck: {
+              html: { scrollWidth: htmlElement.scrollWidth, clientWidth: htmlElement.clientWidth, hasOverflow: htmlHasOverflow, overflowX: htmlComputed.overflowX },
+              body: { scrollWidth: bodyElement.scrollWidth, clientWidth: bodyElement.clientWidth, hasOverflow: bodyHasOverflow, overflowX: bodyComputed.overflowX },
+              header: headerElement ? { scrollWidth: headerElement.scrollWidth, clientWidth: headerElement.clientWidth, hasOverflow: headerHasOverflow, overflowX: headerComputed?.overflowX } : null,
+              nav: navRef.current ? { scrollWidth: navRef.current.scrollWidth, clientWidth: navRef.current.clientWidth, hasOverflow: navHasOverflow } : null,
+              container: navContainerRef.current ? { scrollWidth: navContainerRef.current.scrollWidth, clientWidth: navContainerRef.current.clientWidth, hasOverflow: containerHasOverflow } : null,
+              list: navListRef.current ? { scrollWidth: navListRef.current.scrollWidth, clientWidth: navListRef.current.clientWidth, hasOverflow: listHasOverflow } : null
+            }
+          },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'post-fix',
+          hypothesisId: 'H'
+        })
+      }).catch(() => {});
+    };
+    
+    const timeoutId = setTimeout(measureNav, 100);
+    window.addEventListener('resize', measureNav);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', measureNav);
+    };
+  }, []);
+  // #endregion
 
   // Função para abrir dropdown com delay
   const handleMouseEnter = (categoryId: string) => {
@@ -107,32 +263,41 @@ const Header = () => {
   return (
     <>
       {/* Mini Banner de Destaque */}
-      <div className="bg-gradient-to-r from-primary-50 to-blue-50 border-b border-primary-100 relative z-[60] banner-shimmer">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 relative z-10">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-            <div className="text-center sm:text-left">
-              <p className="text-sm sm:text-base font-bold text-gray-900 mb-0.5">
-                Mega Promoção Monstrinho Misterioso
+      <div className="bg-gradient-to-r from-primary-600 via-primary-700 to-blue-600 border-b border-primary-800 relative z-[50] banner-shimmer overflow-hidden">
+        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-5 relative z-10">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+            {/* Badge de Destaque */}
+            <div className="flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/30">
+              <span className="text-white font-black text-xs sm:text-sm tracking-wider">🎁 PROMO</span>
+            </div>
+            
+            <div className="text-center">
+              <p className="text-base sm:text-lg md:text-xl font-extrabold text-white mb-1.5 sm:mb-1 tracking-tight">
+                🎉 Mega Promoção Monstrinho Misterioso
               </p>
-              <p className="text-xs sm:text-sm text-gray-700">
-                A cada R$400,00 em compra, leve um Labubu Misterioso
+              <p className="text-xs sm:text-sm text-white/95 font-medium leading-relaxed">
+                A cada <span className="font-bold text-white">R$400,00</span> em compra, leve um <span className="font-bold text-white">Labubu Misterioso</span> grátis!
               </p>
             </div>
+            
             <button 
               onClick={() => navigateRouter('/catalogo')}
-              className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-2.5 rounded-md transition-colors whitespace-nowrap text-sm sm:text-base shadow-md hover:shadow-lg relative z-10"
+              className="group bg-white hover:bg-gray-50 active:bg-gray-100 text-primary-600 font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg transition-all duration-300 whitespace-nowrap text-xs sm:text-sm shadow-md hover:shadow-lg hover:scale-105 active:scale-100 relative z-10 border border-transparent hover:border-white/20"
             >
-              Confira
+              <span className="flex items-center gap-1.5">
+                Confira Agora
+                <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+              </span>
             </button>
           </div>
         </div>
       </div>
 
-      <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100 w-full overflow-x-hidden">
-        <div className="container mx-auto px-3 sm:px-4 h-20 sm:h-24 md:h-28 flex items-center justify-between gap-3 sm:gap-6 md:gap-8 max-w-full">
+      <header className="fixed top-0 left-0 right-0 z-[9998] bg-white shadow-sm border-b border-gray-100 w-full overflow-x-hidden" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
+        <div className="container mx-auto px-3 sm:px-4 h-20 sm:h-24 md:h-28 flex items-center justify-between gap-3 sm:gap-6 md:gap-8" style={{ maxWidth: 'min(100%, 1280px)', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
           {/* Logo */}
           <div 
-            className="cursor-pointer flex-shrink-0"
+            className="cursor-pointer flex-shrink-0 min-w-0"
             onClick={() => navigateRouter('/')}
           >
             <img 
@@ -148,7 +313,7 @@ const Header = () => {
           </div>
 
           {/* Search Bar (Desktop) */}
-          <div className="hidden lg:flex flex-1 max-w-2xl relative">
+          <div className="hidden lg:flex flex-1 max-w-2xl relative min-w-0">
             <input
               type="text"
               placeholder="Pesquise seu produto na White Cloud :)"
@@ -165,7 +330,7 @@ const Header = () => {
           </div>
 
           {/* User Actions */}
-          <div className="flex items-center space-x-2 sm:space-x-4 md:space-x-6 text-sm font-medium text-gray-700">
+          <div className="flex items-center space-x-2 sm:space-x-4 md:space-x-6 text-sm font-medium text-gray-700 flex-shrink-0 min-w-0">
              {/* Mobile Menu Trigger */}
              <button 
                className="lg:hidden p-2 -mr-2 text-gray-700 min-h-[44px] min-w-[44px] flex items-center justify-center" 
@@ -220,20 +385,22 @@ const Header = () => {
         </div>
 
         {/* Desktop Navigation Bar */}
-        <nav className="hidden lg:block border-t border-gray-100 bg-white">
-          <div className="container mx-auto px-3 sm:px-4">
-            <ul className="flex items-center justify-between gap-4 sm:gap-6 text-sm font-medium text-gray-600 py-3">
+        <nav ref={navRef} className="hidden lg:block border-t border-gray-100 bg-white relative z-[9998] w-full overflow-x-hidden" style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', position: 'relative', boxSizing: 'border-box' }}>
+          <div ref={navContainerRef} className="w-full px-3 sm:px-4 overflow-x-hidden" style={{ overflowX: 'hidden', width: '100%', boxSizing: 'border-box', textAlign: 'left', display: 'flex', flexWrap: 'wrap' }}>
+            <ul ref={navListRef} className="flex flex-wrap items-center justify-start gap-2 sm:gap-3 text-xs sm:text-sm font-medium text-gray-600 py-4 sm:py-5 overflow-x-hidden w-full" style={{ maxWidth: '100%', overflowX: 'hidden', width: '100%', flexWrap: 'wrap', boxSizing: 'border-box', display: 'flex', margin: 0, padding: 0, listStyle: 'none', height: '42px', textAlign: 'left', verticalAlign: 'middle' }}>
               {CATEGORIES.map(cat => (
                 <li 
                   key={cat.id} 
-                  className="relative"
+                  className="relative z-[100]"
                   onMouseEnter={() => cat.hasDropdown && handleMouseEnter(cat.id)}
                   onMouseLeave={handleMouseLeave}
+                  style={{ flexShrink: 1, minWidth: 0, maxWidth: 'fit-content', whiteSpace: 'nowrap' }}
                 >
                   {cat.hasDropdown ? (
                     <>
                   <button 
-                        className={`hover:text-primary-600 transition-colors py-1 relative uppercase flex items-center gap-1 ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
+                        className={`hover:text-primary-600 transition-colors py-1 relative uppercase flex items-center gap-1 whitespace-nowrap text-xs ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-2 sm:px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
+                        style={{ maxWidth: 'fit-content', overflow: 'visible', flexShrink: 0, minWidth: 0 }}
                       >
                         <span className={cat.isHighlight ? 'relative z-10' : ''}>{cat.name}</span>
                         <ChevronDown className={`w-3 h-3 opacity-60 transition-all duration-300 ${openDropdown === cat.id ? 'opacity-100 rotate-180' : ''}`} />
@@ -241,7 +408,7 @@ const Header = () => {
                       </button>
                       
                       {/* Dropdown Menu - Design Moderno */}
-                      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[90vw] max-w-[900px] bg-white rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 z-[60] ${
+                      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[90vw] max-w-[900px] bg-white rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 z-[9999] overflow-x-hidden ${
                         openDropdown === cat.id 
                           ? 'opacity-100 visible translate-y-0' 
                           : 'opacity-0 invisible -translate-y-2 pointer-events-none'
@@ -424,7 +591,8 @@ const Header = () => {
                     // Link simples (Promoções e Perfumes)
                     <button 
                       onClick={() => navigateRouter('/catalogo')}
-                      className={`hover:text-primary-600 transition-colors py-1 relative uppercase ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
+                      className={`hover:text-primary-600 transition-colors py-1 relative uppercase whitespace-nowrap text-xs ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-2 sm:px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
+                      style={{ maxWidth: 'fit-content', overflow: 'visible', flexShrink: 0, minWidth: 0 }}
                     >
                       <span className={cat.isHighlight ? 'relative z-10' : ''}>{cat.name}</span>
                     {!cat.isHighlight && <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all group-hover:w-full"></span>}
@@ -556,9 +724,6 @@ const ProductCard: React.FC<{
   const mainImage = product.images[0];
   const hoverImage = hasSecondImage ? product.images[1] : null;
   const favorited = isFavorite(product.id);
-  
-  // Verificar se o produto tem opções de miligramagem
-  const hasNicotineOptions = product.nicotine && product.nicotine.length > 0;
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -668,20 +833,6 @@ const ProductCard: React.FC<{
       </div>
 
       <div className="p-3 sm:p-4 flex flex-col flex-1">
-        {/* Tags de Miligramagem */}
-        {hasNicotineOptions && (
-          <div className="mb-2 flex flex-wrap gap-1.5">
-            {product.nicotine.map((nicotine) => (
-              <span 
-                key={nicotine}
-                className="inline-block px-2.5 py-1.5 text-xs sm:text-sm bg-primary-50 text-primary-700 rounded-md font-medium hover:bg-primary-600 hover:text-white transition-colors cursor-pointer"
-              >
-                {nicotine}
-              </span>
-            ))}
-          </div>
-        )}
-        
         <h3 className="font-medium text-sm sm:text-base text-gray-900 line-clamp-2 min-h-[2.5rem] group-hover:text-primary-600 transition-colors">
           {product.name}
         </h3>
@@ -863,20 +1014,20 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
     {/* 3. Feature Bar */}
     <section className="bg-white border-b border-gray-100">
-      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 divide-y md:divide-y-0 md:divide-x divide-gray-100">
           {[
             { icon: Truck, title: "Envio para todo Brasil", sub: "Entrega expressa e rastreada" },
             { icon: CreditCard, title: "Compra Facilitada", sub: "Parcelamos em até 12x" },
             { icon: ShieldCheck, title: "Compra 100% Segura", sub: "Seus dados protegidos" },
           ].map((item, idx) => (
-            <div key={idx} className="flex items-center justify-center space-x-4 pt-4 md:pt-0">
+            <div key={idx} className="flex items-center justify-center space-x-3 pt-3 md:pt-0">
               <div className="text-primary-600">
-                <item.icon className="w-10 h-10 stroke-[1.5]" />
+                <item.icon className="w-8 h-8 stroke-[1.5]" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900">{item.title}</h3>
-                <p className="text-sm text-gray-500">{item.sub}</p>
+                <h3 className="font-bold text-gray-900 text-sm sm:text-base">{item.title}</h3>
+                <p className="text-xs sm:text-sm text-gray-500">{item.sub}</p>
               </div>
             </div>
           ))}
@@ -905,19 +1056,9 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         <div className="relative h-56 sm:h-64 md:h-80 rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer">
           <img src="https://placehold.co/800x600/111/FFF?text=Pod+Systems+Promo" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Banner 1" />
-          <div className="absolute inset-0 bg-black/40 flex flex-col justify-center px-8 text-white">
-            <h3 className="text-3xl font-bold mb-2">Pod Systems</h3>
-            <p className="mb-4 text-gray-200">A melhor tecnologia em suas mÃ£os.</p>
-            <Button size="sm" variant="outline" className="w-fit border-white text-white hover:bg-white hover:text-black">Confira</Button>
-          </div>
         </div>
         <div className="relative h-56 sm:h-64 md:h-80 rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer">
           <img src="https://placehold.co/800x600/1e293b/FFF?text=Premium+Juices+Sale" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Banner 2" />
-          <div className="absolute inset-0 bg-black/40 flex flex-col justify-center px-8 text-white">
-            <h3 className="text-3xl font-bold mb-2">Juices Premium</h3>
-            <p className="mb-4 text-gray-200">Sabores importados selecionados.</p>
-            <Button size="sm" variant="outline" className="w-fit border-white text-white hover:bg-white hover:text-black">Confira</Button>
-          </div>
         </div>
       </div>
     </section>
@@ -973,13 +1114,20 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     </section>
 
     {/* 9. Brand Strip */}
-    <section className="border-t border-b border-gray-100 bg-white py-8 sm:py-12">
+    <section className="border-t border-b border-gray-100 bg-white py-8 sm:py-12 overflow-hidden">
       <div className="container mx-auto px-3 sm:px-4">
         <h3 className="text-center font-bold text-gray-400 text-sm tracking-widest uppercase mb-8">As Melhores Marcas</h3>
-        <div className="flex flex-wrap justify-center md:justify-between items-center gap-8">
-           {BRANDS.map((brand, idx) => (
-             <img key={idx} src={brand.logo} alt={brand.name} className="h-8 md:h-12 object-contain hover:scale-110 transition-transform cursor-pointer" />
-           ))}
+        <div className="relative">
+          <div className="flex animate-scroll-left items-center gap-8 md:gap-12">
+            {/* Primeira linha de logos */}
+            {BRANDS.map((brand, idx) => (
+              <img key={idx} src={brand.logo} alt={brand.name} className="h-8 md:h-12 object-contain hover:scale-110 transition-transform cursor-pointer flex-shrink-0" />
+            ))}
+            {/* Duplicar para scroll infinito */}
+            {BRANDS.map((brand, idx) => (
+              <img key={`duplicate-${idx}`} src={brand.logo} alt={brand.name} className="h-8 md:h-12 object-contain hover:scale-110 transition-transform cursor-pointer flex-shrink-0" />
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -4486,7 +4634,6 @@ export default function App() {
           <Route path="/conta" element={<AccountPage />} />
           <Route path="*" element={<Home onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
         </Routes>
-        <EmailCapture />
       </main>
 
       {/* Toast Notification */}
