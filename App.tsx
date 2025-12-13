@@ -33,6 +33,13 @@ import { ProductCardSkeleton, ProductGridSkeleton, ProductDetailSkeleton } from 
 
 import { LoadingSpinner } from './components/LoadingSpinner';
 
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@/components/ui/carousel";
+
 import { ProductFilters } from './components/ProductFilters';
 
 import { useToast } from './hooks/useToast';
@@ -1160,7 +1167,7 @@ const Header = () => {
 
           <div 
 
-            className="cursor-pointer flex-shrink-0 min-w-0"
+            className="cursor-pointer flex-shrink-0 min-w-0 flex items-center"
 
             onClick={() => navigateRouter('/')}
 
@@ -1222,7 +1229,7 @@ const Header = () => {
 
 
           {/* User Actions - Mobile Optimized */}
-          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-3 xl:gap-4 text-sm font-medium text-gray-700 flex-shrink-0 min-w-0">
+          <div className="flex items-end gap-1.5 sm:gap-2 md:gap-3 lg:gap-3 xl:gap-4 text-sm font-medium text-gray-700 flex-shrink-0 min-w-0">
              {/* Login/Cadastro Button - Visible on md+ screens, appears in hamburger menu on smaller screens */}
              <button 
 
@@ -2107,6 +2114,7 @@ const ProductCard: React.FC<{
     <div 
 
       className="group bg-white rounded-lg sm:rounded-xl border border-gray-100 overflow-hidden transition-all duration-300 cursor-pointer flex flex-col h-full w-full min-w-[187px] relative hover:shadow-xl sm:hover:shadow-2xl hover:scale-[1.01] sm:hover:scale-[1.02] hover:border-primary-200 hover:z-10"
+      style={{ minHeight: '642px' }}
       onClick={onClick}
 
     >
@@ -2117,7 +2125,7 @@ const ProductCard: React.FC<{
 
         {product.originalPrice && (
 
-          <span className="bg-red-600 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shadow-sm">
+          <span className="bg-red-600 text-white text-xs sm:text-[10px] font-bold px-2 sm:px-2.5 md:px-2 py-1 sm:py-1 md:py-1 rounded-full shadow-sm">
 
             -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
 
@@ -2127,7 +2135,7 @@ const ProductCard: React.FC<{
 
         {product.isNew && (
 
-          <span className="bg-blue-600 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shadow-sm">
+          <span className="bg-blue-600 text-white text-xs sm:text-[10px] font-bold px-2 sm:px-2.5 md:px-2 py-1 sm:py-1 md:py-1 rounded-full shadow-sm">
 
             NOVO
 
@@ -2139,37 +2147,69 @@ const ProductCard: React.FC<{
 
 
 
-      {/* BotÃ£o de Favorito */}
+      {/* Botões de Ação - Favorito e Carrinho (Mobile) */}
 
-      <button
+      <div className="absolute top-2 right-2 z-30 flex flex-col gap-2 sm:gap-0">
 
-        onClick={handleToggleFavorite}
+        {/* Botão de Favorito */}
 
-        className="absolute top-2 right-2 z-30 p-2 sm:p-2.5 bg-white/95 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 active:scale-95 border border-gray-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
+        <button
 
-        aria-label={favorited ? `Remover ${product.name} dos favoritos` : `Adicionar ${product.name} aos favoritos`}
+          onClick={handleToggleFavorite}
 
-      >
+          className="p-2.5 sm:p-3 bg-white/95 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 active:scale-95 border border-gray-200 min-h-[50px] min-w-[50px] flex items-center justify-center"
 
-        <Heart 
+          aria-label={favorited ? `Remover ${product.name} dos favoritos` : `Adicionar ${product.name} aos favoritos`}
 
-          className={`w-4 h-4 sm:w-5 sm:h-5 transition-all ${
+        >
 
-            favorited 
+          <Heart 
 
-              ? 'fill-red-500 text-red-500' 
+            className={`w-5 h-5 sm:w-6 sm:h-6 transition-all ${
 
-              : 'text-gray-400 hover:text-red-400'
+              favorited 
 
-          }`}
+                ? 'fill-red-500 text-red-500' 
 
-        />
+                : 'text-gray-400 hover:text-red-400'
 
-      </button>
+            }`}
+
+          />
+
+        </button>
+
+        {/* Botão de Compra Rápida (Mobile apenas) */}
+
+        {onQuickAdd && (
+
+          <button
+
+            onClick={(e) => {
+
+              e.stopPropagation();
+
+              onQuickAdd(product);
+
+            }}
+
+            className="sm:hidden p-2.5 bg-white/95 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 active:scale-95 border border-gray-200 min-h-[50px] min-w-[50px] flex items-center justify-center"
+
+            aria-label={`Adicionar ${product.name} ao carrinho`}
+
+          >
+
+            <ShoppingCart className="w-5 h-5 text-primary-600" />
+
+          </button>
+
+        )}
+
+      </div>
 
 
 
-      <div className="relative aspect-[4/5] overflow-hidden bg-gray-50" style={{ position: 'relative' }}>
+      <div className="relative aspect-[5/8] sm:aspect-[4/5] overflow-hidden bg-gray-50" style={{ position: 'relative', height: '458px' }}>
 
         {/* Placeholder Skeleton */}
 
@@ -2295,38 +2335,38 @@ const ProductCard: React.FC<{
 
 
 
-      <div className="p-3 sm:p-4 lg:p-5 xl:p-6 flex flex-col flex-1">
+      <div className="p-4 sm:p-4 lg:p-5 xl:p-6 flex flex-col flex-1 min-h-[180px] sm:min-h-0">
 
         {/* Tag de Miligramagem */}
         {product.nicotine && Array.isArray(product.nicotine) && product.nicotine.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-1">
+          <div className="mb-3 sm:mb-2 flex flex-wrap gap-1" style={{ height: '29px' }}>
             {product.nicotine.map((mg, index) => (
               <span 
                 key={index}
-                className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-primary-100 text-primary-700 border border-primary-200"
+                className="inline-flex items-center px-3 py-2 rounded-[22px] text-[10px] sm:text-[10px] font-semibold bg-primary-100 text-primary-700 border border-primary-200"
               >
                 {mg}
               </span>
             ))}
           </div>
         )}
-        <h3 className="font-medium text-sm sm:text-base text-gray-900 line-clamp-2 min-h-[2.5rem] group-hover:text-primary-600 transition-colors">
+        <h3 className="font-medium text-base sm:text-base text-gray-900 line-clamp-2 min-h-[2.5rem] mb-3 sm:mb-0 group-hover:text-primary-600 transition-colors" style={{ fontSize: '16px' }}>
 
           {product.name}
 
         </h3>
 
-        <div className="mt-auto">
+        <div className="mt-auto sm:mt-auto">
 
           {showTimer && timerEndDate && (
-            <div className="mb-3 bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 border border-orange-200/60 rounded-lg sm:rounded-xl px-1.5 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 w-full overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div className="mb-4 sm:mb-3 bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 border border-orange-200/60 rounded-lg sm:rounded-xl px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 w-full overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 flex items-center" style={{ minHeight: '39px' }}>
               <OfferTimer endDate={timerEndDate} size="small" />
             </div>
           )}
 
           {product.originalPrice && (
 
-            <span className="text-[10px] sm:text-xs text-gray-400 line-through block mb-0.5">
+            <span className="text-[10px] sm:text-xs text-gray-400 line-through block mb-1 sm:mb-0.5">
 
               R$ {product.originalPrice.toFixed(2)}
 
@@ -2334,15 +2374,15 @@ const ProductCard: React.FC<{
 
           )}
 
-          <div className="flex items-end gap-2">
+          <div className="flex items-end gap-2 mb-1 sm:mb-0">
 
-            <span className="text-base sm:text-lg font-bold text-gray-900">R$ {product.price.toFixed(2)}</span>
+            <span className="text-xl sm:text-lg font-bold text-gray-900" style={{ fontSize: '20px' }}>R$ {product.price.toFixed(2)}</span>
 
-            <span className="text-[10px] sm:text-xs text-gray-500 mb-1">Ã  vista</span>
+            <span className="text-xs sm:text-xs text-gray-500 mb-1" style={{ fontSize: '12px' }}>Ã  vista</span>
 
           </div>
 
-          <p className="text-[9px] sm:text-[10px] text-gray-400 mt-1">
+          <p className="text-xs sm:text-[10px] text-gray-400 mt-2 sm:mt-1" style={{ fontSize: '12px' }}>
 
             ou em até 12x no cartão
 
@@ -2402,12 +2442,12 @@ const ProductListItem: React.FC<{
         {/* Badges */}
         <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
           {product.originalPrice && (
-            <span className="bg-red-600 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shadow-sm">
+            <span className="bg-red-600 text-white text-xs sm:text-[10px] font-bold px-2 sm:px-2.5 md:px-2 py-1 sm:py-1 md:py-1 rounded-full shadow-sm">
               -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
             </span>
           )}
           {product.isNew && (
-            <span className="bg-blue-600 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shadow-sm">
+            <span className="bg-blue-600 text-white text-sm sm:text-[10px] font-bold px-2.5 sm:px-2.5 md:px-2 py-1.5 sm:py-1 md:py-1 rounded-full shadow-sm">
               NOVO
             </span>
           )}
@@ -2572,7 +2612,7 @@ const HeroSlider = () => {
 
   return (
 
-    <div className="relative h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] xl:h-[400px] 2xl:h-[450px] w-full overflow-hidden bg-gray-900 group z-0">
+    <div className="relative h-[280px] sm:h-[300px] md:h-[300px] lg:h-[400px] xl:h-[400px] 2xl:h-[450px] w-full overflow-hidden bg-gray-900 group z-0">
       <div 
 
         className="flex transition-transform duration-700 ease-out h-full" 
@@ -2613,12 +2653,11 @@ const HeroSlider = () => {
 
               <img 
 
-                src={banner.image} 
+                src={banner.imageMobile || banner.image} 
 
                 alt={banner.title} 
 
-                className="absolute inset-0 w-full h-full" 
-                style={{ objectFit: 'fill' }}
+                className="absolute inset-0 w-full h-full object-cover sm:object-fill"
 
               />
 
@@ -2718,19 +2757,22 @@ const HeroSlider = () => {
 
 const SectionHeader = ({ title, linkText = "Ver todos", onLinkClick }: { title: string, linkText?: string, onLinkClick: () => void }) => (
 
-  <div className="flex items-center justify-between mb-6 sm:mb-8 lg:mb-10 xl:mb-12 pb-4 border-b border-gray-100">
+  <div className="flex flex-row items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6 md:mb-8 lg:mb-10 xl:mb-12 pb-4 border-b border-gray-100">
 
-    <h2 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 relative pl-4">
+    <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 relative pl-4 flex-shrink-0 min-w-0">
 
-      <span className="absolute left-0 top-1 w-1 h-6 bg-primary-500 rounded-full"></span>
+      <span className="absolute left-0 top-1 w-1 h-5 sm:h-6 bg-primary-500 rounded-full"></span>
 
       {title}
 
     </h2>
 
-    <button onClick={onLinkClick} className="text-sm font-medium text-gray-500 hover:text-primary-600 flex items-center group">
+    <button 
+      onClick={onLinkClick} 
+      className="text-xs sm:text-sm font-medium text-gray-500 hover:text-primary-600 flex items-center group flex-shrink-0 min-h-[44px] px-2 sm:px-0"
+    >
 
-      {linkText} <ArrowRight className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
+      {linkText} <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
 
     </button>
 
@@ -2773,29 +2815,29 @@ const OfferTimer = ({ endDate, size = 'default' }: { endDate: Date; size?: 'defa
   }, [endDate]);
 
   const isSmall = size === 'small';
-  const textSize = isSmall ? 'text-[7px] sm:text-[8px] md:text-[9px]' : 'text-xs sm:text-sm';
-  const numberSize = isSmall ? 'text-[9px] sm:text-[10px] md:text-xs' : 'text-sm sm:text-base';
-  const gap = isSmall ? 'gap-0.5 sm:gap-1' : 'gap-1 sm:gap-2';
-  const iconSize = isSmall ? 'w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5' : 'w-4 h-4';
+  const textSize = isSmall ? 'text-[9px] sm:text-[10px] md:text-[11px] lg:text-xs' : 'text-xs sm:text-sm';
+  const numberSize = isSmall ? 'text-[11px] sm:text-xs md:text-sm lg:text-base' : 'text-sm sm:text-base';
+  const gap = isSmall ? 'gap-1 sm:gap-1.5 md:gap-2' : 'gap-1 sm:gap-2';
+  const iconSize = isSmall ? 'w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5' : 'w-4 h-4';
 
   return (
-    <div className={`flex items-center flex-wrap ${gap} ${textSize} font-semibold leading-tight`}>
+    <div className={`flex items-center flex-wrap ${gap} ${textSize} font-semibold leading-tight`} style={{ minHeight: isSmall ? '39px' : 'auto' }}>
       <Calendar className={`${iconSize} text-orange-600 flex-shrink-0`} />
       <span className="text-orange-600 whitespace-nowrap">TERMINA EM:</span>
       <div className="flex items-center gap-0.5 flex-shrink-0">
-        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] flex items-center justify-center`}>
+        <span className={`bg-orange-600 text-white px-1 sm:px-1.5 md:px-2 py-1 sm:py-1.5 rounded font-bold ${numberSize} min-w-[1.8em] flex items-center justify-center`}>
           {String(timeLeft.days).padStart(2, '0')}D
         </span>
-        <span className="text-orange-600 text-[8px] sm:text-[9px]">:</span>
-        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] flex items-center justify-center`}>
+        <span className="text-orange-600 text-[10px] sm:text-xs md:text-sm">:</span>
+        <span className={`bg-orange-600 text-white px-1 sm:px-1.5 md:px-2 py-1 sm:py-1.5 rounded font-bold ${numberSize} min-w-[1.8em] flex items-center justify-center`}>
           {String(timeLeft.hours).padStart(2, '0')}
         </span>
-        <span className="text-orange-600 text-[8px] sm:text-[9px]">:</span>
-        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] flex items-center justify-center`}>
+        <span className="text-orange-600 text-[10px] sm:text-xs md:text-sm">:</span>
+        <span className={`bg-orange-600 text-white px-1 sm:px-1.5 md:px-2 py-1 sm:py-1.5 rounded font-bold ${numberSize} min-w-[1.8em] flex items-center justify-center`}>
           {String(timeLeft.minutes).padStart(2, '0')}
         </span>
-        <span className="text-orange-600 text-[8px] sm:text-[9px]">:</span>
-        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] flex items-center justify-center`}>
+        <span className="text-orange-600 text-[10px] sm:text-xs md:text-sm">:</span>
+        <span className={`bg-orange-600 text-white px-1 sm:px-1.5 md:px-2 py-1 sm:py-1.5 rounded font-bold ${numberSize} min-w-[1.8em] flex items-center justify-center`}>
           {String(timeLeft.seconds).padStart(2, '0')}
         </span>
       </div>
@@ -2810,7 +2852,57 @@ const OfferTimer = ({ endDate, size = 'default' }: { endDate: Date; size?: 'defa
 
 // --- HOME SECTIONS ---
 
+// Componente de Carrossel de Benefícios com Autoplay
+const BenefitsCarousel = () => {
+  const [api, setApi] = useState<CarouselApi>();
 
+  useEffect(() => {
+    if (!api) return;
+
+    const interval = setInterval(() => {
+      api.scrollNext();
+    }, 3000); // Muda a cada 3 segundos
+
+    return () => clearInterval(interval);
+  }, [api]);
+
+  const benefits = [
+    { icon: Truck, title: "Envio para todo Brasil", sub: "Entrega expressa e rastreada" },
+    { icon: CreditCard, title: "Compra Facilitada", sub: "Parcelamos em até 12x" },
+    { icon: ShieldCheck, title: "Compra 100% Segura", sub: "Seus dados protegidos" },
+  ];
+
+  return (
+    <Carousel
+      setApi={setApi}
+      opts={{
+        align: "start",
+        loop: true,
+        dragFree: true,
+        containScroll: "trimSnaps",
+      }}
+      className="w-full"
+    >
+      <CarouselContent className="-ml-3">
+        {benefits.map((item, idx) => (
+          <CarouselItem key={idx} className="pl-3 basis-[85%]">
+            <div className="flex items-center justify-center py-2">
+              <div className="flex flex-col items-center justify-center space-y-2 w-full text-center bg-gray-50 rounded-lg p-4 border border-gray-100">
+                <div className="text-primary-600">
+                  <item.icon className="w-10 h-10 stroke-[1.5]" />
+                </div>
+                <div className="flex flex-col items-center">
+                  <h3 className="font-bold text-gray-900 text-base">{item.title}</h3>
+                  <p className="text-sm text-gray-500">{item.sub}</p>
+                </div>
+              </div>
+            </div>
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+    </Carousel>
+  );
+};
 
 const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) => void; onQuickAdd?: (product: Product) => void }) => {
 
@@ -3029,7 +3121,8 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     <section className="bg-white border-b border-gray-100">
 
       <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl py-3 sm:py-4 md:py-5 lg:py-6 xl:py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+        {/* Grid Desktop */}
+        <div className="hidden md:grid grid-cols-3 gap-4 sm:gap-6 divide-x divide-gray-100">
 
           {[
 
@@ -3041,19 +3134,23 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
           ].map((item, idx) => (
 
-            <div key={idx} className="flex items-center justify-center space-x-3 pt-3 md:pt-0">
+            <div key={idx} className="flex items-center justify-center">
 
-              <div className="text-primary-600">
+              <div className="flex flex-row items-center justify-start space-x-3 w-full text-left">
 
-                <item.icon className="w-8 h-8 stroke-[1.5]" />
+                <div className="text-primary-600">
 
-              </div>
+                  <item.icon className="w-8 h-8 stroke-[1.5]" />
 
-              <div>
+                </div>
 
-                <h3 className="font-bold text-gray-900 text-sm sm:text-base">{item.title}</h3>
+                <div className="flex flex-col items-start">
 
-                <p className="text-xs sm:text-sm text-gray-500">{item.sub}</p>
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base">{item.title}</h3>
+
+                  <p className="text-xs sm:text-sm text-gray-500">{item.sub}</p>
+
+                </div>
 
               </div>
 
@@ -3061,6 +3158,11 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
           ))}
 
+        </div>
+
+        {/* Carrossel Mobile */}
+        <div className="md:hidden">
+          <BenefitsCarousel />
         </div>
 
       </div>
@@ -3074,7 +3176,8 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl py-4 sm:py-6 md:py-8 lg:py-10">
       <SectionHeader title="Novidades Chegando" onLinkClick={() => navigateRouter('/catalogo')} />
 
-      <div className="grid gap-2.5 sm:gap-3 md:gap-4 lg:gap-5" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+      {/* Grid Desktop */}
+      <div className="hidden md:grid gap-2.5 sm:gap-3 md:gap-4 lg:gap-5" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
 
         {(products || []).slice(0, 4).map(product => (
           <ProductCard 
@@ -3093,6 +3196,32 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
         ))}
 
+      </div>
+
+      {/* Carrossel Mobile */}
+      <div className="md:hidden">
+        <Carousel
+          opts={{
+            align: "start",
+            loop: false,
+            dragFree: true,
+            containScroll: "trimSnaps",
+          }}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-3">
+            {(products || []).slice(0, 4).map((product) => (
+              <CarouselItem key={product.id} className="pl-3 basis-[70%]">
+                <ProductCard 
+                  product={{...product, isNew: true}} 
+                  onClick={() => handleProductClick(product.id)}
+                  onQuickView={onQuickView}
+                  onQuickAdd={onQuickAdd}
+                />
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+        </Carousel>
       </div>
 
     </section>
@@ -3216,9 +3345,8 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
           
 
-          {/* Grid de Produtos */}
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
+          {/* Grid de Produtos Desktop */}
+          <div className="hidden md:grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
             {(products || []).filter(p => p.isBestSeller).slice(0, 4).map(product => (
 
               <ProductCard 
@@ -3237,6 +3365,32 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
             ))}
 
+          </div>
+
+          {/* Carrossel Mobile */}
+          <div className="md:hidden">
+            <Carousel
+              opts={{
+                align: "start",
+                loop: false,
+                dragFree: true,
+                containScroll: "trimSnaps",
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-3">
+                {(products || []).filter(p => p.isBestSeller).slice(0, 4).map((product) => (
+                  <CarouselItem key={`bestseller-mobile-${product.id}`} className="pl-3 basis-[70%]">
+                    <ProductCard 
+                      product={product} 
+                      onClick={() => handleProductClick(product.id)}
+                      onQuickView={onQuickView}
+                      onQuickAdd={onQuickAdd}
+                    />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
           </div>
 
         </div>
@@ -3264,7 +3418,8 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
           </div>
         </div>
       </div>
-      <div className="grid gap-2.5 sm:gap-3 md:gap-4 lg:gap-5" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+      {/* Grid Desktop */}
+      <div className="hidden md:grid gap-2.5 sm:gap-3 md:gap-4 lg:gap-5" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
 
         {(products || []).map(product => (
 
@@ -3287,6 +3442,34 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
         )).slice(0, 4)}
       </div>
 
+      {/* Carrossel Mobile */}
+      <div className="md:hidden">
+        <Carousel
+          opts={{
+            align: "start",
+            loop: false,
+            dragFree: true,
+            containScroll: "trimSnaps",
+          }}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-3">
+            {(products || []).map((product) => (
+              <CarouselItem key={`offer-mobile-${product.id}`} className="pl-3 basis-[70%]">
+                <ProductCard 
+                  product={{...product, price: product.price * 0.8, originalPrice: product.price}} 
+                  onClick={() => handleProductClick(product.id)}
+                  onQuickView={onQuickView}
+                  onQuickAdd={onQuickAdd}
+                  showTimer={true}
+                  timerEndDate={new Date(Date.now() + 13 * 24 * 60 * 60 * 1000 + 17 * 60 * 60 * 1000 + 16 * 60 * 1000 + 41 * 1000)}
+                />
+              </CarouselItem>
+            )).slice(0, 4)}
+          </CarouselContent>
+        </Carousel>
+      </div>
+
     </section>
 
 
@@ -3296,7 +3479,8 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl py-4 sm:py-6 md:py-8 lg:py-10">
       <SectionHeader title="Queridinhos dos Clientes" onLinkClick={() => navigateRouter('/catalogo')} />
 
-      <div className="grid gap-2.5 sm:gap-3 md:gap-4 lg:gap-5" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+      {/* Grid Desktop */}
+      <div className="hidden md:grid gap-2.5 sm:gap-3 md:gap-4 lg:gap-5" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
 
         {(products || []).slice(0, 4).map(product => (
            <ProductCard 
@@ -3315,6 +3499,32 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
         ))}
 
+      </div>
+
+      {/* Carrossel Mobile */}
+      <div className="md:hidden">
+        <Carousel
+          opts={{
+            align: "start",
+            loop: false,
+            dragFree: true,
+            containScroll: "trimSnaps",
+          }}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-3">
+            {(products || []).slice(0, 4).map((product) => (
+              <CarouselItem key={`fav-mobile-${product.id}`} className="pl-3 basis-[70%]">
+                <ProductCard 
+                  product={product} 
+                  onClick={() => handleProductClick(product.id)}
+                  onQuickView={onQuickView}
+                  onQuickAdd={onQuickAdd}
+                />
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+        </Carousel>
       </div>
 
     </section>
@@ -3346,7 +3556,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
       <div className="relative max-w-5xl mx-auto">
         {/* Card do Depoimento */}
 
-        <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 lg:p-12 shadow-xl border border-gray-100 relative overflow-hidden">
+        <div className="bg-white rounded-xl sm:rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-10 xl:p-12 shadow-xl border border-gray-100 relative overflow-hidden">
           {/* Gradiente de fundo aprimorado */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary-50/40 via-white to-blue-50/30 pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-600 via-blue-400 to-blue-200 opacity-90" />
@@ -3356,7 +3566,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
             onClick={goToPrevTestimonial}
 
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-primary-50 backdrop-blur-sm rounded-full p-2 sm:p-2.5 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 min-h-[40px] min-w-[40px] flex items-center justify-center border border-gray-200 hover:border-primary-300 group"
+            className="hidden sm:flex absolute left-1 sm:left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-primary-50 backdrop-blur-sm rounded-full p-1.5 sm:p-2 md:p-2.5 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 min-h-[36px] min-w-[36px] sm:min-h-[40px] sm:min-w-[40px] items-center justify-center border border-gray-200 hover:border-primary-300 group"
             aria-label="Depoimento anterior"
 
           >
@@ -3370,7 +3580,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
             onClick={goToNextTestimonial}
 
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-primary-50 backdrop-blur-sm rounded-full p-2 sm:p-2.5 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 min-h-[40px] min-w-[40px] flex items-center justify-center border border-gray-200 hover:border-primary-300 group"
+            className="hidden sm:flex absolute right-1 sm:right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-primary-50 backdrop-blur-sm rounded-full p-1.5 sm:p-2 md:p-2.5 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 min-h-[36px] min-w-[36px] sm:min-h-[40px] sm:min-w-[40px] items-center justify-center border border-gray-200 hover:border-primary-300 group"
             aria-label="Próximo depoimento"
 
           >
@@ -3385,15 +3595,15 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
           <div key={currentTestimonial} className="animate-fade-in relative z-10">
 
             {/* Header com estrelas - Design aprimorado */}
-            <div className="flex items-center justify-center gap-3 mb-6 sm:mb-8">
-              <div className="flex items-center gap-1">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 md:mb-8">
+              <div className="flex items-center gap-0.5 sm:gap-1">
                 {[...Array(5)].map((_, i) => (
 
                   <Star
 
                     key={i}
 
-                    className="w-5 h-5 sm:w-6 sm:h-6 fill-amber-400 text-amber-400 drop-shadow-sm"
+                    className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 fill-amber-400 text-amber-400 drop-shadow-sm"
                   />
 
                 ))}
@@ -3405,21 +3615,21 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
             
 
             {/* Comentário - Design mais moderno e legível */}
-            <div className="relative mb-6 sm:mb-8 px-2 sm:px-4">
-              <div className="absolute -top-2 -left-1 sm:-top-3 sm:-left-2 text-5xl sm:text-6xl md:text-7xl text-primary-100/60 font-serif leading-none select-none">"</div>
-              <blockquote className="text-base sm:text-lg md:text-xl lg:text-base text-gray-800 leading-relaxed text-center relative z-10 font-light italic px-2 sm:px-4">
+            <div className="relative mb-4 sm:mb-6 md:mb-8 px-1 sm:px-2 md:px-4">
+              <div className="absolute -top-1 -left-0 sm:-top-2 sm:-left-1 md:-top-3 md:-left-2 text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-primary-100/60 font-serif leading-none select-none">"</div>
+              <blockquote className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-800 leading-relaxed text-center relative z-10 font-light italic px-2 sm:px-3 md:px-4">
                 {testimonials[currentTestimonial].comment}
 
               </blockquote>
-              <div className="absolute -bottom-2 -right-1 sm:-bottom-3 sm:-right-2 text-5xl sm:text-6xl md:text-7xl text-primary-100/60 font-serif leading-none select-none">"</div>
+              <div className="absolute -bottom-1 -right-0 sm:-bottom-2 sm:-right-1 md:-bottom-3 md:-right-2 text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-primary-100/60 font-serif leading-none select-none">"</div>
             </div>
 
             
 
             {/* Footer com avatar, nome e localização - Design mais elegante */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-6 sm:pt-8 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 md:gap-4 pt-4 sm:pt-6 md:pt-8 border-t border-gray-200">
               <div className="relative">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 flex items-center justify-center flex-shrink-0 shadow-md ring-2 ring-primary-100">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full overflow-hidden bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 flex items-center justify-center flex-shrink-0 shadow-md ring-2 ring-primary-100">
                 <img 
 
                   src={`https://i.pravatar.cc/128?img=${currentTestimonial + 1}`}
@@ -3436,8 +3646,8 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
                     if (target.parentElement) {
 
-                        target.parentElement.innerHTML = `<span class="text-white font-bold text-base sm:text-lg">${testimonials[currentTestimonial].name.charAt(0)}</span>`;
-                        target.parentElement.className = 'w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-base sm:text-lg flex-shrink-0 shadow-md ring-2 ring-primary-100';
+                        target.parentElement.innerHTML = `<span class="text-white font-bold text-sm sm:text-base md:text-lg">${testimonials[currentTestimonial].name.charAt(0)}</span>`;
+                        target.parentElement.className = 'w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-sm sm:text-base md:text-lg flex-shrink-0 shadow-md ring-2 ring-primary-100';
                     }
 
                   }}
@@ -3446,18 +3656,18 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
               </div>
 
-                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full border-2 border-white shadow-sm flex items-center justify-center">
-                  <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white fill-white" />
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 bg-green-500 rounded-full border-2 border-white shadow-sm flex items-center justify-center">
+                  <CheckCircle className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 text-white fill-white" />
                 </div>
               </div>
               <div className="text-center sm:text-left">
-                <p className="font-bold text-base sm:text-lg text-gray-900 mb-0.5">
+                <p className="font-bold text-sm sm:text-base md:text-lg text-gray-900 mb-0.5 sm:mb-1">
                   {testimonials[currentTestimonial].name}
 
                 </p>
 
                 <div className="flex items-center justify-center sm:justify-start gap-1 text-xs sm:text-sm text-gray-500">
-                  <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-primary-500" />
+                  <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-primary-500" />
                   <span className="font-medium">{testimonials[currentTestimonial].location}</span>
                 </div>
               </div>
@@ -3472,7 +3682,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
         {/* Indicadores (Dots) */}
 
-        <div className="flex items-center justify-center gap-2 mt-6 sm:mt-8">
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2 mt-4 sm:mt-6 md:mt-8">
           {testimonials.map((_, idx) => (
 
             <button
@@ -3484,8 +3694,8 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
               className={`transition-all duration-300 rounded-full flex items-center justify-center ${
                 idx === currentTestimonial
 
-                  ? 'w-6 h-1.5 bg-primary-600 shadow-md'
-                  : 'w-1.5 h-1.5 bg-gray-300 hover:bg-primary-400 hover:scale-125'
+                  ? 'w-4 h-1 sm:w-5 sm:h-1.5 bg-primary-600 shadow-md'
+                  : 'w-1 h-1 sm:w-1.5 sm:h-1.5 bg-gray-300 hover:bg-primary-400 hover:scale-125'
               }`}
 
               aria-label={`Ir para depoimento ${idx + 1}`}
@@ -3532,13 +3742,13 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
           {/* Gradiente direito */}
           <div className="absolute right-0 top-0 bottom-0 w-32 md:w-48 bg-gradient-to-l from-white via-white/90 via-white/70 to-transparent z-30 pointer-events-none"></div>
 
-          <div className="flex animate-scroll-left items-center gap-8 md:gap-12 relative z-0">
+          <div className="flex animate-scroll-left items-center gap-10 sm:gap-12 md:gap-16 lg:gap-20 relative z-0">
 
             {/* Primeira linha de logos */}
 
             {BRANDS.map((brand, idx) => (
 
-              <img key={idx} src={brand.logo} alt={brand.name} className="h-8 md:h-12 object-contain hover:scale-110 transition-transform cursor-pointer flex-shrink-0" />
+              <img key={idx} src={brand.logo} alt={brand.name} className="h-12 sm:h-16 md:h-20 lg:h-24 object-contain hover:scale-110 transition-transform cursor-pointer flex-shrink-0" />
 
             ))}
 
@@ -3546,7 +3756,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
             {BRANDS.map((brand, idx) => (
 
-              <img key={`duplicate-${idx}`} src={brand.logo} alt={brand.name} className="h-8 md:h-12 object-contain hover:scale-110 transition-transform cursor-pointer flex-shrink-0" />
+              <img key={`duplicate-${idx}`} src={brand.logo} alt={brand.name} className="h-12 sm:h-16 md:h-20 lg:h-24 object-contain hover:scale-110 transition-transform cursor-pointer flex-shrink-0" />
 
             ))}
 
@@ -11088,13 +11298,13 @@ export default function App() {
 
               <h4 className="text-white font-bold text-lg mb-6">Siga-nos</h4>
 
-              <div className="flex space-x-4 mb-8">
+              <div className="flex space-x-3 sm:space-x-4 md:space-x-5 mb-8">
 
-                <button className="bg-gray-800 p-2 rounded-full hover:bg-primary-600 transition-colors"><Instagram className="w-5 h-5" /></button>
+                <button className="bg-gray-800 p-2.5 sm:p-3 md:p-3.5 rounded-full hover:bg-primary-600 transition-colors min-h-[44px] min-w-[44px] sm:min-h-[48px] sm:min-w-[48px] md:min-h-[52px] md:min-w-[52px] flex items-center justify-center"><Instagram className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" /></button>
 
-                <button className="bg-gray-800 p-2 rounded-full hover:bg-primary-600 transition-colors"><Youtube className="w-5 h-5" /></button>
+                <button className="bg-gray-800 p-2.5 sm:p-3 md:p-3.5 rounded-full hover:bg-primary-600 transition-colors min-h-[44px] min-w-[44px] sm:min-h-[48px] sm:min-w-[48px] md:min-h-[52px] md:min-w-[52px] flex items-center justify-center"><Youtube className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" /></button>
 
-                <button className="bg-gray-800 p-2 rounded-full hover:bg-primary-600 transition-colors"><Twitter className="w-5 h-5" /></button>
+                <button className="bg-gray-800 p-2.5 sm:p-3 md:p-3.5 rounded-full hover:bg-primary-600 transition-colors min-h-[44px] min-w-[44px] sm:min-h-[48px] sm:min-w-[48px] md:min-h-[52px] md:min-w-[52px] flex items-center justify-center"><Twitter className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" /></button>
 
               </div>
 
