@@ -1,0 +1,83 @@
+<svg width="1920" height="600" viewBox="0 0 1920 600" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradientJuices" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#1e40af;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGradientJuices" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d97706;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glowJuices">
+      <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1920" height="600" fill="url(#bgGradientJuices)"/>
+  
+  <!-- Decorative circles -->
+  <circle cx="200" cy="150" r="120" fill="rgba(251,191,36,0.1)"/>
+  <circle cx="1700" cy="420" r="140" fill="rgba(255,255,255,0.05)"/>
+  <circle cx="1650" cy="100" r="90" fill="rgba(251,191,36,0.08)"/>
+  
+  <!-- Main content area -->
+  <g transform="translate(120, 140)">
+    <!-- Title -->
+    <text x="0" y="90" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="white" letter-spacing="3">
+      JUICES IMPORTADOS
+    </text>
+    
+    <!-- Subtitle -->
+    <text x="0" y="160" font-family="Arial, sans-serif" font-size="32" fill="rgba(255,255,255,0.95)" letter-spacing="1">
+      As melhores marcas do mundo
+    </text>
+    <text x="0" y="200" font-family="Arial, sans-serif" font-size="32" fill="url(#accentGradientJuices)" letter-spacing="1">
+      com pre�os do Brasil
+    </text>
+    
+    <!-- Highlight badge -->
+    <g transform="translate(0, 260)">
+      <rect x="0" y="0" width="380" height="70" rx="35" fill="url(#accentGradientJuices)" filter="url(#glowJuices)" opacity="0.95"/>
+      <text x="190" y="48" font-family="Arial, sans-serif" font-size="30" font-weight="bold" fill="white" text-anchor="middle">
+        VER COLE��O
+      </text>
+    </g>
+    
+    <!-- Description -->
+    <text x="0" y="380" font-family="Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.85)">
+      Sabores premium de todo o mundo em um s� lugar
+    </text>
+  </g>
+  
+  <!-- Decorative elements - juice drops -->
+  <g opacity="0.3">
+    <circle cx="1400" cy="200" r="40" fill="rgba(255,255,255,0.4)"/>
+    <circle cx="1500" cy="280" r="35" fill="rgba(251,191,36,0.3)"/>
+    <circle cx="1600" cy="180" r="45" fill="rgba(255,255,255,0.35)"/>
+    <circle cx="1700" cy="320" r="38" fill="rgba(251,191,36,0.3)"/>
+  </g>
+  
+  <!-- Accent elements -->
+  <g opacity="0.4">
+    <rect x="100" y="480" width="240" height="5" rx="2.5" fill="url(#accentGradientJuices)"/>
+    <rect x="100" y="495" width="200" height="5" rx="2.5" fill="url(#accentGradientJuices)"/>
+  </g>
+  
+  <!-- Floating particles -->
+  <g opacity="0.35">
+    <circle cx="950" cy="250" r="8" fill="rgba(251,191,36,0.7)"/>
+    <circle cx="1050" cy="400" r="7" fill="rgba(255,255,255,0.6)"/>
+    <circle cx="1150" cy="300" r="9" fill="rgba(251,191,36,0.6)"/>
+    <circle cx="1250" cy="450" r="8" fill="rgba(255,255,255,0.5)"/>
+  </g>
+  
+  <!-- Bottom accent line -->
+  <line x1="0" y1="580" x2="1920" y2="580" stroke="rgba(251,191,36,0.15)" stroke-width="3"/>
+</svg>

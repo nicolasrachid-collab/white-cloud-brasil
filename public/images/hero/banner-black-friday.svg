@@ -1,0 +1,81 @@
+<svg width="1920" height="600" viewBox="0 0 1920 600" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradientBF" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4c1d95;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#5b21b6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#312e81;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGradientBF" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d97706;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glowBF">
+      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1920" height="600" fill="url(#bgGradientBF)"/>
+  
+  <!-- Decorative geometric shapes -->
+  <circle cx="1600" cy="150" r="120" fill="rgba(251,191,36,0.1)"/>
+  <circle cx="1700" cy="400" r="100" fill="rgba(251,191,36,0.08)"/>
+  <circle cx="1750" cy="200" r="80" fill="rgba(255,255,255,0.05)"/>
+  
+  <!-- Tech pattern overlay -->
+  <g opacity="0.1">
+    <rect x="1400" y="0" width="3" height="600" fill="white"/>
+    <rect x="1500" y="0" width="3" height="600" fill="white"/>
+    <rect x="1600" y="0" width="3" height="600" fill="white"/>
+    <rect x="1700" y="0" width="3" height="600" fill="white"/>
+  </g>
+  
+  <!-- Main content area -->
+  <g transform="translate(120, 150)">
+    <!-- Title -->
+    <text x="0" y="80" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="white" letter-spacing="4">
+      BLACK FRIDAY
+    </text>
+    <text x="0" y="140" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="url(#accentGradientBF)" letter-spacing="4">
+      VAPE
+    </text>
+    
+    <!-- Subtitle -->
+    <text x="0" y="220" font-family="Arial, sans-serif" font-size="28" fill="rgba(255,255,255,0.9)">
+      Descontos de at� 60% em toda a linha premium
+    </text>
+    <text x="0" y="260" font-family="Arial, sans-serif" font-size="28" fill="rgba(255,255,255,0.9)">
+      de Pods e Juices
+    </text>
+    
+    <!-- Highlight badge -->
+    <g transform="translate(0, 320)">
+      <rect x="0" y="0" width="400" height="70" rx="35" fill="url(#accentGradientBF)" filter="url(#glowBF)" opacity="0.95"/>
+      <text x="200" y="48" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white" text-anchor="middle">
+        APROVEITAR AGORA
+      </text>
+    </g>
+  </g>
+  
+  <!-- Decorative elements -->
+  <g opacity="0.3">
+    <rect x="100" y="450" width="200" height="4" rx="2" fill="url(#accentGradientBF)"/>
+    <rect x="100" y="470" width="150" height="4" rx="2" fill="url(#accentGradientBF)"/>
+  </g>
+  
+  <!-- Floating particles -->
+  <g opacity="0.4">
+    <circle cx="800" cy="150" r="6" fill="rgba(251,191,36,0.8)"/>
+    <circle cx="900" cy="300" r="5" fill="rgba(255,255,255,0.6)"/>
+    <circle cx="1000" cy="200" r="7" fill="rgba(251,191,36,0.7)"/>
+    <circle cx="1100" cy="400" r="6" fill="rgba(255,255,255,0.5)"/>
+  </g>
+  
+  <!-- Bottom accent line -->
+  <line x1="0" y1="580" x2="1920" y2="580" stroke="rgba(251,191,36,0.2)" stroke-width="3"/>
+</svg>

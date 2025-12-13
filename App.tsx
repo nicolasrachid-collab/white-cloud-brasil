@@ -1477,12 +1477,12 @@ const Header = () => {
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
                             <div>
 
-                              <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 uppercase tracking-wide">
+                              <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 uppercase tracking-wide text-left">
                                 {cat.name}
 
                               </h3>
 
-                              <p className="text-xs sm:text-sm text-gray-600 mt-1.5 font-medium">Explore nossa seleção completa</p>
+                              <p className="text-xs sm:text-sm text-gray-600 mt-1.5 font-medium text-left">Explore nossa seleção completa</p>
                             </div>
 
                           </div>
@@ -2576,7 +2576,7 @@ const HeroSlider = () => {
 
         {displayBanners.map((banner) => (
 
-          <div key={banner.id} className="w-full h-full flex-shrink-0 relative">
+          <div key={banner.id} className="w-full h-full flex-shrink-0 relative 2xl:w-[1920px] 2xl:mx-auto">
 
             {/* Background Image - Responsivo com Picture Element */}
 
@@ -2610,7 +2610,8 @@ const HeroSlider = () => {
 
                 alt={banner.title} 
 
-                className="absolute inset-0 w-full h-full object-cover" 
+                className="absolute inset-0 w-full h-full" 
+                style={{ objectFit: 'fill' }}
 
               />
 
@@ -3066,9 +3067,9 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl py-4 sm:py-6 md:py-8 lg:py-10">
       <SectionHeader title="Novidades Chegando" onLinkClick={() => navigateRouter('/catalogo')} />
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
+      <div className="grid gap-2.5 sm:gap-3 md:gap-4 lg:gap-5" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
 
-        {(products || []).slice(0, 5).map(product => (
+        {(products || []).slice(0, 4).map(product => (
           <ProductCard 
 
             key={product.id} 
@@ -3094,17 +3095,30 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     {/* 5. Promotional Banners */}
 
     <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl py-4 sm:py-6 md:py-8 lg:py-10">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8">
 
-        <div className="relative aspect-[2.08/1] sm:aspect-[2.33/1] md:aspect-[2.17/1] lg:aspect-[2.25/1] rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer shadow-md hover:shadow-lg transition-shadow duration-300">
-          <img src="/images/banner01.svg" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Promoção Pod Systems" loading="lazy" />
+        <div className="relative aspect-[2.1/1] sm:aspect-[2.2/1] md:aspect-[2.15/1] lg:aspect-[2.2/1] xl:aspect-[2.25/1] rounded-lg sm:rounded-xl md:rounded-2xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.01]">
+          <img 
+            src="/images/banner01.svg" 
+            className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-110" 
+            style={{ objectFit: 'fill' }}
+            alt="Promoção Pod Systems" 
+            loading="lazy" 
+          />
         </div>
 
-        <div className="relative aspect-[2.08/1] sm:aspect-[2.33/1] md:aspect-[2.17/1] lg:aspect-[2.25/1] rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer shadow-md hover:shadow-lg transition-shadow duration-300">
-          <img src="/images/banner02.svg" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Promoção Premium Juices" loading="lazy" onError={(e) => {
-            // Fallback para banner01 se banner02 não existir
-            e.currentTarget.src = '/images/banner01.png';
-          }} />
+        <div className="relative aspect-[2.1/1] sm:aspect-[2.2/1] md:aspect-[2.15/1] lg:aspect-[2.2/1] xl:aspect-[2.25/1] rounded-lg sm:rounded-xl md:rounded-2xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.01]">
+          <img 
+            src="/images/banner02.svg" 
+            className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-110" 
+            style={{ objectFit: 'fill' }}
+            alt="Promoção Premium Juices" 
+            loading="lazy" 
+            onError={(e) => {
+              // Fallback para banner01 se banner02 não existir
+              e.currentTarget.src = '/images/banner01.png';
+            }} 
+          />
         </div>
 
       </div>
@@ -3243,7 +3257,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
+      <div className="grid gap-2.5 sm:gap-3 md:gap-4 lg:gap-5" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
 
         {(products || []).map(product => (
 
@@ -3263,7 +3277,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
              timerEndDate={new Date(Date.now() + 13 * 24 * 60 * 60 * 1000 + 17 * 60 * 60 * 1000 + 16 * 60 * 1000 + 41 * 1000)}
            />
 
-        )).slice(0, 5)}
+        )).slice(0, 4)}
       </div>
 
     </section>
@@ -3275,9 +3289,9 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl py-4 sm:py-6 md:py-8 lg:py-10">
       <SectionHeader title="Queridinhos dos Clientes" onLinkClick={() => navigateRouter('/catalogo')} />
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 md:gap-4 lg:gap-5">
+      <div className="grid gap-2.5 sm:gap-3 md:gap-4 lg:gap-5" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
 
-        {(products || []).slice(0, 5).map(product => (
+        {(products || []).slice(0, 4).map(product => (
            <ProductCard 
 
              key={`fav-${product.id}`} 
@@ -3328,7 +3342,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
         <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 lg:p-12 shadow-xl border border-gray-100 relative overflow-hidden">
           {/* Gradiente de fundo aprimorado */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary-50/40 via-white to-blue-50/30 pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-500 via-primary-600 to-blue-500 opacity-90" />
+          <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-600 via-blue-400 to-blue-200 opacity-90" />
           
           {/* Botões de Navegação - Design aprimorado */}
           <button
@@ -3504,6 +3518,12 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
         <h3 className="text-center font-bold text-gray-400 text-sm tracking-widest uppercase mb-8">As Melhores Marcas</h3>
 
         <div className="relative">
+
+          {/* Gradiente esquerdo */}
+          <div className="absolute left-0 top-0 bottom-0 w-32 md:w-48 bg-gradient-to-r from-white via-white/60 via-white/20 to-transparent z-10 pointer-events-none"></div>
+
+          {/* Gradiente direito */}
+          <div className="absolute right-0 top-0 bottom-0 w-32 md:w-48 bg-gradient-to-l from-white via-white/60 via-white/20 to-transparent z-10 pointer-events-none"></div>
 
           <div className="flex animate-scroll-left items-center gap-8 md:gap-12">
 

@@ -226,8 +226,8 @@ export const HERO_BANNERS = [
     id: 1,
     title: "BLACK FRIDAY VAPE",
     subtitle: "Descontos de até 60% em toda a linha premium de Pods e Juices.",
-    image: "https://placehold.co/1920x600/1a1a1a/FFF?text=BLACK+FRIDAY+VAPE+PROMO&font=roboto",
-    imageMobile: "https://placehold.co/800x600/1a1a1a/FFF?text=BLACK+FRIDAY+MOBILE&font=roboto",
+    image: "/images/hero/banner-black-friday.svg",
+    imageMobile: "/images/hero/banner-black-friday-mobile.svg",
     cta: "Aproveitar Agora",
     color: "from-purple-900 to-indigo-900"
   },
@@ -235,8 +235,8 @@ export const HERO_BANNERS = [
     id: 2,
     title: "XROS SERIES: A EVOLUÇÃO DO SABOR",
     subtitle: "DISPOSITIVOS PREMIUM. SESSÕES INIGUALÁVEIS.",
-    image: "https://placehold.co/1920x600/0a0a0a/FFF?text=XROS+SERIES&font=roboto",
-    imageMobile: "https://placehold.co/800x600/0a0a0a/FFF?text=XROS+MOBILE&font=roboto",
+    image: "/images/hero/banner-xros.svg",
+    imageMobile: "/images/hero/banner-xros-mobile.svg",
     cta: "Compre Agora",
     color: "from-blue-900 via-purple-900 to-orange-900"
   },
@@ -244,8 +244,8 @@ export const HERO_BANNERS = [
     id: 3,
     title: "NOVO IGNITE V80",
     subtitle: "A revolução do sabor chegou. 8000 puffs de pura tecnologia.",
-    image: "https://placehold.co/1920x600/064e3b/FFF?text=NEW+IGNITE+V80+LAUNCH&font=roboto",
-    imageMobile: "https://placehold.co/800x600/064e3b/FFF?text=IGNITE+MOBILE&font=roboto",
+    image: "/images/hero/banner-ignite.svg",
+    imageMobile: "/images/hero/banner-ignite-mobile.svg",
     cta: "Conhecer Lançamento",
     color: "from-blue-900 to-indigo-900"
   },
@@ -253,8 +253,8 @@ export const HERO_BANNERS = [
     id: 4,
     title: "JUICES IMPORTADOS",
     subtitle: "As melhores marcas do mundo com preços do Brasil.",
-    image: "https://placehold.co/1920x600/1e3a8a/FFF?text=PREMIUM+IMPORTED+JUICES&font=roboto",
-    imageMobile: "https://placehold.co/800x600/1e3a8a/FFF?text=JUICES+MOBILE&font=roboto",
+    image: "/images/hero/banner-juices.svg",
+    imageMobile: "/images/hero/banner-juices-mobile.svg",
     cta: "Ver Coleção",
     color: "from-blue-900 to-slate-900"
   }

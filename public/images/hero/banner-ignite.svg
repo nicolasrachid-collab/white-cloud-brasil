@@ -1,0 +1,88 @@
+<svg width="1920" height="600" viewBox="0 0 1920 600" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradientIgnite" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#065f46;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#047857;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e3a8a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGradientIgnite" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#34d399;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6ee7b7;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glowIgnite">
+      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1920" height="600" fill="url(#bgGradientIgnite)"/>
+  
+  <!-- Decorative geometric shapes -->
+  <circle cx="1550" cy="140" r="140" fill="rgba(16,185,129,0.12)"/>
+  <circle cx="1680" cy="380" r="120" fill="rgba(52,211,153,0.1)"/>
+  <circle cx="1750" cy="200" r="100" fill="rgba(255,255,255,0.06)"/>
+  
+  <!-- Tech pattern overlay -->
+  <g opacity="0.1">
+    <rect x="1350" y="0" width="3" height="600" fill="white"/>
+    <rect x="1450" y="0" width="3" height="600" fill="white"/>
+    <rect x="1550" y="0" width="3" height="600" fill="white"/>
+    <rect x="1650" y="0" width="3" height="600" fill="white"/>
+  </g>
+  
+  <!-- Main content area -->
+  <g transform="translate(120, 130)">
+    <!-- Title -->
+    <text x="0" y="100" font-family="Arial, sans-serif" font-size="76" font-weight="bold" fill="white" letter-spacing="3">
+      NOVO IGNITE V80
+    </text>
+    
+    <!-- Subtitle -->
+    <text x="0" y="180" font-family="Arial, sans-serif" font-size="36" fill="rgba(255,255,255,0.95)" letter-spacing="1">
+      A revolu��o do sabor chegou
+    </text>
+    
+    <!-- Highlight badge -->
+    <g transform="translate(0, 240)">
+      <rect x="0" y="0" width="450" height="80" rx="40" fill="url(#accentGradientIgnite)" filter="url(#glowIgnite)" opacity="0.95"/>
+      <text x="225" y="55" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="white" text-anchor="middle">
+        8000 PUFFS
+      </text>
+    </g>
+    
+    <!-- Description -->
+    <text x="0" y="380" font-family="Arial, sans-serif" font-size="28" fill="rgba(255,255,255,0.9)">
+      Pura tecnologia. Sabor intenso. Dura��o excepcional.
+    </text>
+    
+    <!-- CTA Button -->
+    <g transform="translate(0, 440)">
+      <rect x="0" y="0" width="300" height="70" rx="35" fill="rgba(255,255,255,0.2)" stroke="rgba(16,185,129,0.6)" stroke-width="2"/>
+      <text x="150" y="48" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle">
+        CONHECER LAN�AMENTO
+      </text>
+    </g>
+  </g>
+  
+  <!-- Decorative elements -->
+  <g opacity="0.4">
+    <rect x="100" y="480" width="220" height="5" rx="2.5" fill="url(#accentGradientIgnite)"/>
+    <rect x="100" y="495" width="180" height="5" rx="2.5" fill="url(#accentGradientIgnite)"/>
+  </g>
+  
+  <!-- Floating particles -->
+  <g opacity="0.4">
+    <circle cx="900" cy="200" r="8" fill="rgba(16,185,129,0.8)"/>
+    <circle cx="1000" cy="350" r="7" fill="rgba(255,255,255,0.6)"/>
+    <circle cx="1100" cy="250" r="9" fill="rgba(52,211,153,0.7)"/>
+    <circle cx="1200" cy="450" r="8" fill="rgba(16,185,129,0.6)"/>
+  </g>
+  
+  <!-- Bottom accent line -->
+  <line x1="0" y1="580" x2="1920" y2="580" stroke="rgba(16,185,129,0.2)" stroke-width="3"/>
+</svg>
