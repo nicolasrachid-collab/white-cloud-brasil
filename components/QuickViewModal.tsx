@@ -113,9 +113,11 @@ export function QuickViewModal({ product, isOpen, onClose, onViewFullDetails }: 
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900">Exibição Rápida</h2>
           <button
-            onClick={onClose}
+            onClick={() => {
+              handleAddToCart();
+            }}
             className="p-2 text-gray-400 hover:text-gray-600 active:text-gray-700 hover:bg-gray-100 active:bg-gray-200 rounded-full transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
-            aria-label="Fechar modal"
+            aria-label="Adicionar ao carrinho e fechar"
           >
             <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>

@@ -387,9 +387,42 @@ a:active {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
+.highlight-button-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 30%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0.3) 70%,
+    transparent 100%
+  );
+  animation: shimmer-sweep 3s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
 .highlight-button-shimmer:hover {
   animation: pulse-glow 1s ease-in-out infinite;
-  transform: scale(1.05);
+  transform: scale(1.02);
+}
+
+.highlight-button-shimmer:hover::before {
+  animation: shimmer-sweep 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer-sweep {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 /* Ajustes para dropdowns do menu */

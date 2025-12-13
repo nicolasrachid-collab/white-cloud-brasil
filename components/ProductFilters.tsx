@@ -490,10 +490,13 @@ export function ProductFilters({
     filters.priceRange[1] !== priceRange[1];
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 space-y-4 sm:space-y-6">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-sm">
       {/* Header com botão Limpar */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-base sm:text-lg font-bold text-gray-900">Filtros</h3>
+      <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+        <h3 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
+          <span className="w-1 h-6 bg-primary-600 rounded-full"></span>
+          Filtros
+        </h3>
         {hasActiveFilters && (
           <button
             onClick={handleClearFilters}
@@ -510,11 +513,14 @@ export function ProductFilters({
       <div className="border-b border-gray-200 pb-3 sm:pb-4">
         <button
           onClick={() => toggleGroup('stock')}
-          className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
+          className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-2 py-1 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
           aria-expanded={expandedGroups.stock}
           aria-controls="stock-filter-content"
         >
-          <h4 className="text-sm sm:text-base font-semibold text-gray-900">Disponibilidade</h4>
+          <h4 className="text-sm sm:text-base font-semibold text-gray-900 flex items-center gap-2">
+            <span className="w-1 h-4 bg-gray-300 rounded-full"></span>
+            Disponibilidade
+          </h4>
           {expandedGroups.stock ? (
             <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
           ) : (
@@ -553,11 +559,14 @@ export function ProductFilters({
         <div className="border-b border-gray-200 pb-3 sm:pb-4">
           <button
             onClick={() => toggleGroup('flavorProfiles')}
-            className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
+            className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-2 py-1 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
             aria-expanded={expandedGroups.flavorProfiles}
             aria-controls="flavorProfiles-filter-content"
           >
-            <h4 className="text-sm sm:text-base font-semibold text-gray-900">Perfis de Sabor</h4>
+            <h4 className="text-sm sm:text-base font-semibold text-gray-900 flex items-center gap-2">
+              <span className="w-1 h-4 bg-gray-300 rounded-full"></span>
+              Perfis de Sabor
+            </h4>
             {expandedGroups.flavorProfiles ? (
               <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             ) : (
@@ -595,11 +604,14 @@ export function ProductFilters({
         <div className="border-b border-gray-200 pb-3 sm:pb-4">
           <button
             onClick={() => toggleGroup('flavors')}
-            className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
+            className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-2 py-1 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
             aria-expanded={expandedGroups.flavors}
             aria-controls="flavors-filter-content"
           >
-            <h4 className="text-sm sm:text-base font-semibold text-gray-900">Sabores</h4>
+            <h4 className="text-sm sm:text-base font-semibold text-gray-900 flex items-center gap-2">
+              <span className="w-1 h-4 bg-gray-300 rounded-full"></span>
+              Sabores
+            </h4>
             {expandedGroups.flavors ? (
               <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             ) : (
@@ -648,11 +660,14 @@ export function ProductFilters({
         <div className="border-b border-gray-200 pb-3 sm:pb-4">
           <button
             onClick={() => toggleGroup('nicotine')}
-            className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
+            className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-2 py-1 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
             aria-expanded={expandedGroups.nicotine}
             aria-controls="nicotine-filter-content"
           >
-            <h4 className="text-sm sm:text-base font-semibold text-gray-900">Teor de Nicotina</h4>
+            <h4 className="text-sm sm:text-base font-semibold text-gray-900 flex items-center gap-2">
+              <span className="w-1 h-4 bg-gray-300 rounded-full"></span>
+              Teor de Nicotina
+            </h4>
             {expandedGroups.nicotine ? (
               <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             ) : (
@@ -701,11 +716,14 @@ export function ProductFilters({
         <div className="border-b border-gray-200 pb-3 sm:pb-4">
           <button
             onClick={() => toggleGroup('brands')}
-            className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
+            className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-2 py-1 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
             aria-expanded={expandedGroups.brands}
             aria-controls="brands-filter-content"
           >
-            <h4 className="text-sm sm:text-base font-semibold text-gray-900">Marcas</h4>
+            <h4 className="text-sm sm:text-base font-semibold text-gray-900 flex items-center gap-2">
+              <span className="w-1 h-4 bg-gray-300 rounded-full"></span>
+              Marcas
+            </h4>
             {expandedGroups.brands ? (
               <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             ) : (
@@ -754,11 +772,14 @@ export function ProductFilters({
         <div className="border-b border-gray-200 pb-3 sm:pb-4">
           <button
             onClick={() => toggleGroup('colors')}
-            className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
+            className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-2 py-1 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
             aria-expanded={expandedGroups.colors}
             aria-controls="colors-filter-content"
           >
-            <h4 className="text-sm sm:text-base font-semibold text-gray-900">Cores</h4>
+            <h4 className="text-sm sm:text-base font-semibold text-gray-900 flex items-center gap-2">
+              <span className="w-1 h-4 bg-gray-300 rounded-full"></span>
+              Cores
+            </h4>
             {expandedGroups.colors ? (
               <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             ) : (
@@ -806,11 +827,14 @@ export function ProductFilters({
       <div className="border-b border-gray-200 pb-3 sm:pb-4">
         <button
           onClick={() => toggleGroup('price')}
-          className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-1 touch-manipulation"
+          className="w-full flex items-center justify-between text-left mb-2 sm:mb-3 min-h-[44px] px-2 py-1 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
           aria-expanded={expandedGroups.price}
           aria-controls="price-filter-content"
         >
-          <h4 className="text-sm sm:text-base font-semibold text-gray-900">Preço</h4>
+          <h4 className="text-sm sm:text-base font-semibold text-gray-900 flex items-center gap-2">
+            <span className="w-1 h-4 bg-gray-300 rounded-full"></span>
+            Preço
+          </h4>
           {expandedGroups.price ? (
             <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
           ) : (

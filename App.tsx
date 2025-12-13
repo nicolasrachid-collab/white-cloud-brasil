@@ -84,6 +84,8 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [expandedMobileCategories, setExpandedMobileCategories] = useState<Set<string>>(new Set());
+  const [categorySearchTerms, setCategorySearchTerms] = useState<Record<string, string>>({});
 
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -1968,32 +1970,146 @@ const Header = () => {
 
             {/* Mobile Categories */}
 
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 sm:mb-3 px-2">Categorias</h3>
-            <div className="space-y-1">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 sm:mb-4 px-2">Categorias</h3>
+            <div className="space-y-0">
 
-              {CATEGORIES.map(cat => (
+              {CATEGORIES.map(cat => {
+                const hasSubmenu = cat.hasDropdown && (cat.submenu?.items || cat.submenu?.categories);
+                const isExpanded = expandedMobileCategories.has(cat.id);
+                const categorySearchTerm = categorySearchTerms[cat.id] || '';
 
+                return (
+                  <div key={cat.id} className="mb-0">
+                    {/* Categoria Principal - Promoções como barra azul */}
+                    {cat.isHighlight ? (
                 <button 
+                        onClick={() => {
+                          navigateRouter('/catalogo');
+                          setIsMenuOpen(false);
+                        }}
+                        className="w-full bg-primary-600 text-white font-bold py-3.5 px-4 text-left transition-colors touch-manipulation min-h-[44px] hover:bg-primary-700 active:bg-primary-800"
+                      >
+                        {cat.name}
+                      </button>
+                    ) : (
+                      <>
+                        <button 
+                          onClick={() => {
+                            if (hasSubmenu) {
+                              setExpandedMobileCategories(prev => {
+                                const newSet = new Set(prev);
+                                if (newSet.has(cat.id)) {
+                                  newSet.delete(cat.id);
+                                } else {
+                                  newSet.add(cat.id);
+                                }
+                                return newSet;
+                              });
+                            } else {
+                              navigateRouter('/catalogo');
+                              setIsMenuOpen(false);
+                            }
+                          }}
+                          className={`flex items-center justify-between w-full text-left py-3 px-4 transition-colors touch-manipulation min-h-[44px] ${
+                            isExpanded 
+                              ? 'bg-gray-50 text-primary-600 font-semibold' 
+                              : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+                          }`}
+                        >
+                          <span className={`text-sm sm:text-base ${isExpanded ? 'font-semibold' : ''}`}>
+                            {cat.name}
+                          </span>
+                          
+                          {hasSubmenu && (
+                            <ChevronDown 
+                              className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 transition-transform duration-200 ${
+                                isExpanded ? 'text-primary-600 rotate-180' : 'text-gray-400'
+                              }`} 
+                            />
+                          )}
+                          {!hasSubmenu && (
+                            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300 flex-shrink-0" />
+                          )}
+                        </button>
 
-                  key={cat.id} 
+                        {/* Submenu expandido */}
+                        {hasSubmenu && isExpanded && (
+                          <div className="bg-gray-50 pb-3">
+                            {/* Barra de busca dentro da categoria expandida */}
+                            {(cat.submenu?.categories && cat.submenu.categories.length > 0) && (
+                              <div className="px-4 pt-3 pb-2">
+                                <div className="relative">
+                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                  <input
+                                    type="text"
+                                    placeholder="Buscar..."
+                                    value={categorySearchTerm}
+                                    onChange={(e) => setCategorySearchTerms(prev => ({ ...prev, [cat.id]: e.target.value }))}
+                                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm bg-white min-h-[44px]"
+                                  />
+                                </div>
+                              </div>
+                            )}
 
-                  onClick={() => { navigateRouter('/catalogo'); setIsMenuOpen(false); }}
+                            <div className="px-4 space-y-3">
+                              {/* Renderizar items simples */}
+                              {cat.submenu?.items && cat.submenu.items
+                                .filter(item => !categorySearchTerm || item.toLowerCase().includes(categorySearchTerm.toLowerCase()))
+                                .map((item, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveCategory(item.toLowerCase().replace(/\s+/g, '-'));
+                                    navigateRouter('/catalogo');
+                                    setIsMenuOpen(false);
+                                  }}
+                                  className="flex items-center w-full text-left py-2.5 px-3 rounded-lg text-sm text-gray-700 hover:bg-white hover:text-primary-700 active:bg-gray-100 transition-colors touch-manipulation min-h-[44px]"
+                                >
+                                  <span className="flex-1">{item}</span>
+                                  <ChevronRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                </button>
+                              ))}
 
-                  className={`flex items-center justify-between w-full text-left py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg transition-colors touch-manipulation min-h-[44px] ${
-                    cat.isHighlight 
-
-                      ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white font-bold highlight-button-shimmer' 
-
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-primary-600 active:bg-gray-100'
-                  }`}
-
-                >
-
-                  <span className={`text-sm sm:text-base ${cat.isHighlight ? 'relative z-10' : ''}`}>{cat.name}</span>
-                  {!cat.isHighlight && <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300 flex-shrink-0" />}
+                              {/* Renderizar categorias com títulos */}
+                              {cat.submenu?.categories && cat.submenu.categories.map((category, catIdx) => {
+                                const filteredItems = category.items.filter(item => 
+                                  !categorySearchTerm || item.toLowerCase().includes(categorySearchTerm.toLowerCase())
+                                );
+                                
+                                if (filteredItems.length === 0) return null;
+                                
+                                return (
+                                  <div key={catIdx} className="space-y-2">
+                                    <h4 className="text-xs font-bold text-primary-600 uppercase tracking-wider px-3 py-1.5">
+                                      {category.title}
+                                    </h4>
+                                    {filteredItems.map((item, itemIdx) => (
+                                      <button
+                                        key={itemIdx}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setActiveCategory(item.toLowerCase().replace(/\s+/g, '-'));
+                                          navigateRouter('/catalogo');
+                                          setIsMenuOpen(false);
+                                        }}
+                                        className="flex items-center w-full text-left py-2.5 px-3 rounded-lg text-sm text-gray-700 hover:bg-white hover:text-primary-700 active:bg-gray-100 transition-colors touch-manipulation min-h-[44px]"
+                                      >
+                                        <span className="flex-1">{item}</span>
+                                        <ChevronRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                 </button>
-
-              ))}
+                                    ))}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                );
+              })}
 
             </div>
           </div>
@@ -2137,7 +2253,7 @@ const ProductCard: React.FC<{
 
           <span className="bg-blue-600 text-white text-xs sm:text-[10px] font-bold px-2 sm:px-2.5 md:px-2 py-1 sm:py-1 md:py-1 rounded-full shadow-sm">
 
-            NOVO
+            Novo
 
           </span>
 
@@ -2153,35 +2269,35 @@ const ProductCard: React.FC<{
 
         {/* Botão de Favorito */}
 
-        <button
+      <button
 
-          onClick={handleToggleFavorite}
+        onClick={handleToggleFavorite}
 
           className="p-2.5 sm:p-3 bg-white/95 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 active:scale-95 border border-gray-200 min-h-[50px] min-w-[50px] flex items-center justify-center"
 
-          aria-label={favorited ? `Remover ${product.name} dos favoritos` : `Adicionar ${product.name} aos favoritos`}
+        aria-label={favorited ? `Remover ${product.name} dos favoritos` : `Adicionar ${product.name} aos favoritos`}
 
-        >
+      >
 
-          <Heart 
+        <Heart 
 
             className={`w-5 h-5 sm:w-6 sm:h-6 transition-all ${
 
-              favorited 
+            favorited 
 
-                ? 'fill-red-500 text-red-500' 
+              ? 'fill-red-500 text-red-500' 
 
-                : 'text-gray-400 hover:text-red-400'
+              : 'text-gray-400 hover:text-red-400'
 
-            }`}
+          }`}
 
-          />
+        />
 
-        </button>
+      </button>
 
         {/* Botão de Compra Rápida (Mobile apenas) */}
 
-        {onQuickAdd && (
+        {onQuickView && (
 
           <button
 
@@ -2189,13 +2305,13 @@ const ProductCard: React.FC<{
 
               e.stopPropagation();
 
-              onQuickAdd(product);
+              onQuickView(product);
 
             }}
 
             className="sm:hidden p-2.5 bg-white/95 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all hover:scale-110 active:scale-95 border border-gray-200 min-h-[50px] min-w-[50px] flex items-center justify-center"
 
-            aria-label={`Adicionar ${product.name} ao carrinho`}
+            aria-label={`Abrir compra rápida de ${product.name}`}
 
           >
 
@@ -2213,7 +2329,7 @@ const ProductCard: React.FC<{
 
         {/* Placeholder Skeleton */}
 
-        <div className={`absolute inset-0 bg-gray-200 animate-pulse transition-opacity duration-500 ${imageLoaded ? 'opacity-0' : 'opacity-100'}`} />
+        <div className={`absolute inset-0 bg-gray-200 transition-opacity duration-500 ${imageLoaded ? 'opacity-0' : 'opacity-100'}`} />
 
         
 
@@ -2231,7 +2347,7 @@ const ProductCard: React.FC<{
 
           onLoad={() => setImageLoaded(true)}
 
-          className={`object-cover w-full h-full group-hover:scale-105 transition-all duration-700 ${
+          className={`object-cover w-full h-full transition-opacity duration-300 ${
 
             imageLoaded ? 'opacity-100' : 'opacity-0'
 
@@ -2257,7 +2373,7 @@ const ProductCard: React.FC<{
 
             onLoad={() => setHoverImageLoaded(true)}
 
-            className={`absolute inset-0 object-cover w-full h-full transition-all duration-700 group-hover:scale-105 ${
+            className={`absolute inset-0 object-cover w-full h-full transition-opacity duration-300 ${
 
               hoverImageLoaded ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'
 
@@ -2271,7 +2387,7 @@ const ProductCard: React.FC<{
 
         {/* Overlay com botÃµes no hover */}
 
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 flex items-center justify-center">
+        <div className="hidden md:flex absolute inset-0 bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 items-center justify-center">
 
           <div className="flex flex-col gap-3 px-4 w-full max-w-[200px]">
 
@@ -2429,14 +2545,14 @@ const ProductListItem: React.FC<{
     >
       {/* Imagem */}
       <div className="relative w-full sm:w-48 md:w-56 lg:w-64 h-48 sm:h-auto sm:flex-shrink-0 bg-gray-50 overflow-hidden">
-        <div className={`absolute inset-0 bg-gray-200 animate-pulse transition-opacity duration-500 ${imageLoaded ? 'opacity-0' : 'opacity-100'}`} />
+        <div className={`absolute inset-0 bg-gray-200 transition-opacity duration-500 ${imageLoaded ? 'opacity-0' : 'opacity-100'}`} />
         <img
           src={mainImage}
           alt={product.name}
           loading="lazy"
           decoding="async"
           onLoad={() => setImageLoaded(true)}
-          className={`object-cover w-full h-full transition-all duration-700 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`object-cover w-full h-full transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
         />
         
         {/* Badges */}
@@ -2448,7 +2564,7 @@ const ProductListItem: React.FC<{
           )}
           {product.isNew && (
             <span className="bg-blue-600 text-white text-sm sm:text-[10px] font-bold px-2.5 sm:px-2.5 md:px-2 py-1.5 sm:py-1 md:py-1 rounded-full shadow-sm">
-              NOVO
+              Novo
             </span>
           )}
         </div>
@@ -2821,7 +2937,7 @@ const OfferTimer = ({ endDate, size = 'default' }: { endDate: Date; size?: 'defa
   const iconSize = isSmall ? 'w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5' : 'w-4 h-4';
 
   return (
-    <div className={`flex items-center flex-wrap ${gap} ${textSize} font-semibold leading-tight`} style={{ minHeight: isSmall ? '39px' : 'auto' }}>
+    <div className={`flex items-center justify-center flex-wrap ${gap} ${textSize} font-semibold leading-tight`} style={{ minHeight: isSmall ? '39px' : 'auto' }}>
       <Calendar className={`${iconSize} text-orange-600 flex-shrink-0`} />
       <span className="text-orange-600 whitespace-nowrap">TERMINA EM:</span>
       <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -2861,7 +2977,7 @@ const BenefitsCarousel = () => {
 
     const interval = setInterval(() => {
       api.scrollNext();
-    }, 3000); // Muda a cada 3 segundos
+    }, 2000); // Muda a cada 2 segundos
 
     return () => clearInterval(interval);
   }, [api]);
@@ -2880,6 +2996,7 @@ const BenefitsCarousel = () => {
         loop: true,
         dragFree: true,
         containScroll: "trimSnaps",
+        duration: 15,
       }}
       className="w-full"
     >
@@ -2887,7 +3004,7 @@ const BenefitsCarousel = () => {
         {benefits.map((item, idx) => (
           <CarouselItem key={idx} className="pl-3 basis-[85%]">
             <div className="flex items-center justify-center py-2">
-              <div className="flex flex-col items-center justify-center space-y-2 w-full text-center bg-gray-50 rounded-lg p-4 border border-gray-100">
+              <div className="flex flex-col items-center justify-center space-y-2 w-full text-center rounded-lg p-4 border border-gray-100">
                 <div className="text-primary-600">
                   <item.icon className="w-10 h-10 stroke-[1.5]" />
                 </div>
@@ -3682,7 +3799,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
         {/* Indicadores (Dots) */}
 
-        <div className="flex items-center justify-center gap-1.5 sm:gap-2 mt-4 sm:mt-6 md:mt-8">
+        <div className="flex items-center justify-center gap-2 sm:gap-2.5 mt-4 sm:mt-6 md:mt-8">
           {testimonials.map((_, idx) => (
 
             <button
@@ -3694,7 +3811,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
               className={`transition-all duration-300 rounded-full flex items-center justify-center ${
                 idx === currentTestimonial
 
-                  ? 'w-4 h-1 sm:w-5 sm:h-1.5 bg-primary-600 shadow-md'
+                  ? 'w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary-600 shadow-sm'
                   : 'w-1 h-1 sm:w-1.5 sm:h-1.5 bg-gray-300 hover:bg-primary-400 hover:scale-125'
               }`}
 
@@ -6541,14 +6658,14 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
 
         <div className="flex-1">
 
-          <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6 shadow-sm">
+          <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-100 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 sm:gap-0 mb-4 sm:mb-6 shadow-sm">
 
-            <span className="text-gray-500 font-medium text-sm sm:text-base">{filteredProducts.length} produtos encontrados</span>
+            <span className="text-gray-500 font-medium text-sm sm:text-base flex items-center">{filteredProducts.length} produtos encontrados</span>
 
-            <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-wrap">
+            <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-wrap w-full sm:w-auto justify-between sm:justify-end">
               {/* Dropdown Exibir por página */}
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
 
                 <label htmlFor="items-per-page" className="text-xs sm:text-sm font-medium text-gray-700 whitespace-nowrap">
 
@@ -6570,7 +6687,7 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
 
                   }}
 
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white cursor-pointer hover:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[44px]"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white cursor-pointer hover:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[44px] min-w-[120px] sm:min-w-[140px]"
 
                 >
 
@@ -6590,7 +6707,7 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
 
               {/* Dropdown Ordenação */}
 
-              <select className="border-none text-xs sm:text-sm font-medium focus:ring-0 text-gray-700 bg-transparent cursor-pointer hover:text-primary-600 min-h-[44px]">
+              <select className="border border-gray-300 rounded-lg px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white cursor-pointer hover:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[44px] min-w-[140px] sm:min-w-[160px] sm:border-none sm:bg-transparent sm:hover:border-transparent sm:focus:ring-0 sm:hover:text-primary-600">
 
                 <option>Mais Relevantes</option>
 
@@ -6604,7 +6721,7 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
 
               
               {/* Botões de Visualização Grid/Lista - Movido para o final */}
-              <div className="flex items-center gap-1 border border-gray-200 rounded-lg p-1 bg-gray-50">
+              <div className="flex items-center gap-1 border border-gray-200 rounded-lg p-1 bg-gray-50 flex-shrink-0 ml-auto sm:ml-0">
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`p-2 rounded-md transition-all min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] flex items-center justify-center touch-manipulation ${
@@ -11035,9 +11152,14 @@ export default function App() {
 
   const { navigate, isBannerVisible, searchTerm, setSearchTerm, setActiveCategory } = useApp();
   const { toast, showError, showSuccess, closeToast } = useToast();
+  const { products } = useProducts();
 
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [expandedFilterCategory, setExpandedFilterCategory] = useState<string | null>(null);
+  const [filterCategorySearch, setFilterCategorySearch] = useState<Record<string, string>>({});
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { addToCart } = useCart();
 
@@ -11097,18 +11219,117 @@ export default function App() {
             {/* Search Bar */}
             <div className="flex-1 relative">
               <input
+                ref={searchInputRef}
                 type="text"
                 placeholder="Pesquise seu produto..."
                 className="w-full bg-gray-50 border border-gray-200 rounded-full py-2 sm:py-2.5 pl-9 sm:pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all placeholder-gray-400 text-sm min-h-[44px]"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setShowSearchSuggestions(e.target.value.trim().length > 0);
+                }}
+                onFocus={() => {
+                  if (searchTerm.trim().length > 0) {
+                    setShowSearchSuggestions(true);
+                  }
+                }}
+                onBlur={() => {
+                  // Delay para permitir clicar nos resultados
+                  setTimeout(() => setShowSearchSuggestions(false), 200);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && searchTerm.trim()) {
+                    setShowSearchSuggestions(false);
                     navigateRouter('/catalogo');
                   }
                 }}
               />
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              
+              {/* Search Suggestions Dropdown */}
+              {showSearchSuggestions && searchTerm.trim() && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-[9998] max-h-[400px] overflow-y-auto">
+                  {(() => {
+                    const filteredProducts = products.filter(p => 
+                      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      p.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      p.description.toLowerCase().includes(searchTerm.toLowerCase())
+                    ).slice(0, 5);
+
+                    if (filteredProducts.length === 0) {
+                      return (
+                        <div className="p-4 text-center">
+                          <Search className="w-8 h-8 mx-auto text-gray-300 mb-2" />
+                          <p className="text-sm font-medium text-gray-700 mb-1">
+                            Nenhum produto encontrado
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Tente buscar com outros termos
+                          </p>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <>
+                        <div className="p-2 border-b border-gray-100">
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2">
+                            Sugestões ({filteredProducts.length})
+                          </p>
+                        </div>
+                        <div className="py-1">
+                          {filteredProducts.map((product) => (
+                            <button
+                              key={product.id}
+                              onClick={() => {
+                                setSearchTerm(product.name);
+                                setShowSearchSuggestions(false);
+                                navigateRouter(`/produto/${product.id}`);
+                              }}
+                              className="w-full text-left px-4 py-3 hover:bg-gray-50 active:bg-gray-100 transition-colors flex items-center gap-3 group"
+                            >
+                              {product.images && product.images.length > 0 && (
+                                <img
+                                  src={product.images[0]}
+                                  alt={product.name}
+                                  className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 group-hover:text-primary-700 truncate">
+                                  {product.name}
+                                </p>
+                                {product.brand && (
+                                  <p className="text-xs text-gray-500 truncate">
+                                    {product.brand}
+                                  </p>
+                                )}
+                                <p className="text-sm font-bold text-primary-600 mt-0.5">
+                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
+                                </p>
+                              </div>
+                              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary-600 flex-shrink-0" />
+                            </button>
+                          ))}
+                        </div>
+                        {filteredProducts.length > 0 && (
+                          <div className="p-2 border-t border-gray-100">
+                            <button
+                              onClick={() => {
+                                setShowSearchSuggestions(false);
+                                navigateRouter('/catalogo');
+                              }}
+                              className="w-full text-center px-4 py-2 text-sm font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
+                            >
+                              Ver todos os resultados
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
             {/* Filter Button */}
             <button
@@ -11175,33 +11396,53 @@ export default function App() {
       {/* Mobile Filter Drawer - Categories */}
       <div 
         className={`fixed inset-0 z-[10000] bg-white transition-transform duration-300 ease-in-out lg:hidden flex flex-col ${
-          isFilterDrawerOpen ? 'translate-y-0' : '-translate-y-full'
+          isFilterDrawerOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 bg-white sticky top-0 z-10">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Filter className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
+        <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+          {expandedFilterCategory ? (
+            <>
+              <button
+                onClick={() => setExpandedFilterCategory(null)}
+                className="p-2 -ml-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
+                aria-label="Voltar"
+              >
+                <ChevronLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <div className="flex-1 flex items-center gap-2 px-2">
+                <span className="text-sm text-gray-500">Categorias</span>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <span className="text-sm font-semibold text-gray-900">
+                  {CATEGORIES.find(c => c.id === expandedFilterCategory)?.name}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Filter className="w-5 h-5 text-primary-600" />
             <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-              Filtrar por Categoria
+                Categorias
             </h2>
           </div>
+          )}
           <button
-            onClick={() => setIsFilterDrawerOpen(false)}
-            className="p-2 hover:bg-gray-100 active:bg-gray-200 rounded-full transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
+            onClick={() => {
+              setIsFilterDrawerOpen(false);
+              setExpandedFilterCategory(null);
+            }}
+            className="p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
             aria-label="Fechar filtros"
           >
-            <X className="w-5 h-5 sm:w-6 sm:h-6" />
+            <X className="w-5 h-5 text-gray-600" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <div className="space-y-2">
-            {CATEGORIES.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => {
+        <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-5">
+          <div className="space-y-3">
+            {CATEGORIES.map((category) => {
+              const isExpanded = expandedFilterCategory === category.id;
                   const categoryIdToProductCategory: Record<string, string> = {
                     'promocoes': 'all',
                     'pods-descartaveis': 'pods',
@@ -11213,21 +11454,182 @@ export default function App() {
                     'acessorios': 'acessorios',
                     'perfumes': 'perfumes'
                   };
+
+              return (
+                <div key={category.id} className="border-b border-gray-100 last:border-b-0">
+                  <button
+                    onClick={() => {
+                      if (category.hasDropdown) {
+                        setExpandedFilterCategory(isExpanded ? null : category.id);
+                      } else {
                   const productCategory = categoryIdToProductCategory[category.id] || 'all';
                   setActiveCategory(productCategory);
                   navigateRouter('/catalogo');
                   setIsFilterDrawerOpen(false);
-                }}
-                className="w-full text-left p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-primary-300 active:bg-gray-100 transition-colors min-h-[44px] touch-manipulation"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-900">{category.name}</span>
+                      }
+                    }}
+                    className={`w-full text-left px-4 py-4 flex items-center justify-between transition-colors min-h-[56px] touch-manipulation relative overflow-hidden ${
+                      category.isHighlight
+                        ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white font-bold highlight-button-shimmer'
+                        : isExpanded
+                        ? 'bg-gray-50 text-primary-700'
+                        : 'text-gray-900 hover:bg-gray-50 active:bg-gray-100'
+                    }`}
+                  >
+                    <span className={`text-base font-medium relative z-10 ${category.isHighlight ? 'text-white' : ''}`}>
+                      {category.name}
+                    </span>
                   {category.hasDropdown && (
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  )}
+                      <ChevronRight className={`w-5 h-5 transition-transform duration-200 relative z-10 ${
+                        isExpanded ? 'rotate-90' : ''
+                      } ${category.isHighlight ? 'text-white' : 'text-gray-400'}`} />
+                    )}
+                  </button>
+                  
+                  {/* Submenu */}
+                  {isExpanded && category.submenu && (
+                    <div className="bg-gray-50 border-t border-gray-200 animate-in slide-in-from-top-2 duration-200">
+                      {/* Barra de busca */}
+                      {(category.submenu.items?.length > 6 || category.submenu.categories || category.submenu.sections) && (
+                        <div className="px-4 pt-4 pb-3 border-b border-gray-200">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            <input
+                              type="text"
+                              placeholder="Buscar..."
+                              value={filterCategorySearch[category.id] || ''}
+                              onChange={(e) => {
+                                setFilterCategorySearch(prev => ({
+                                  ...prev,
+                                  [category.id]: e.target.value
+                                }));
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all bg-white"
+                            />
                 </div>
+                        </div>
+                      )}
+                      
+                      <div className="px-4 py-3 space-y-1">
+                      {category.submenu.categories ? (
+                        // Menu com categorias organizadas - Design minimalista
+                        <div className="space-y-4">
+                          {category.submenu.categories.map((subCategory, idx) => {
+                            const searchValue = filterCategorySearch[category.id] || '';
+                            const filteredItems = subCategory.items.filter(item =>
+                              item.toLowerCase().includes(searchValue.toLowerCase())
+                            );
+                            
+                            if (filteredItems.length === 0 && searchValue) return null;
+                            
+                            return (
+                              <div key={idx} className="space-y-2">
+                                {/* Título da categoria */}
+                                <h4 className="text-xs font-semibold text-primary-600 uppercase tracking-wider px-1 py-2">
+                                  {subCategory.title}
+                                </h4>
+                                
+                                {/* Lista simples de itens */}
+                                <div className="space-y-0.5">
+                                  {filteredItems.map((item, itemIdx) => (
+                                    <button
+                                      key={itemIdx}
+                                      onClick={() => {
+                                        setActiveCategory(categoryIdToProductCategory[category.id] || 'all');
+                                        navigateRouter('/catalogo');
+                                        setIsFilterDrawerOpen(false);
+                                      }}
+                                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:text-primary-700 hover:bg-white active:bg-gray-100 rounded-lg transition-colors min-h-[44px] touch-manipulation"
+                                    >
+                                      {item}
               </button>
             ))}
+          </div>
+        </div>
+                            );
+                          })}
+      </div>
+                      ) : category.submenu.sections ? (
+                        // Menu com seções - Design minimalista
+                        <div className="space-y-3">
+                          {category.submenu.sections.map((section, idx) => {
+                            const searchValue = filterCategorySearch[category.id] || '';
+                            const filteredItems = section.items.filter(item =>
+                              item.toLowerCase().includes(searchValue.toLowerCase())
+                            );
+                            
+                            if (filteredItems.length === 0 && searchValue) return null;
+                            
+                            return (
+                              <div key={idx} className="space-y-2">
+                                {/* Título da seção */}
+                                <h4 className="text-xs font-semibold text-primary-600 uppercase tracking-wider px-1 py-2">
+                                  {section.title}
+                                </h4>
+                                
+                                {/* Lista simples de itens */}
+                                <div className="space-y-0.5">
+                                  {filteredItems.map((item, itemIdx) => (
+                                    <button
+                                      key={itemIdx}
+                                      onClick={() => {
+                                        setActiveCategory(categoryIdToProductCategory[category.id] || 'all');
+                                        navigateRouter('/catalogo');
+                                        setIsFilterDrawerOpen(false);
+                                      }}
+                                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:text-primary-700 hover:bg-white active:bg-gray-100 rounded-lg transition-colors min-h-[44px] touch-manipulation"
+                                    >
+                                      {item}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : category.submenu.items ? (
+                        // Menu simples com itens - Design minimalista
+                        (() => {
+                          const searchValue = filterCategorySearch[category.id] || '';
+                          const filteredItems = category.submenu.items.filter(item =>
+                            item.toLowerCase().includes(searchValue.toLowerCase())
+                          );
+                          
+                          if (filteredItems.length === 0 && searchValue) {
+                            return (
+                              <div className="text-center py-8">
+                                <Search className="w-8 h-8 mx-auto text-gray-300 mb-3" />
+                                <p className="text-sm text-gray-500">Nenhum item encontrado</p>
+                              </div>
+                            );
+                          }
+                          
+                          return (
+                            <div className="space-y-0">
+                              {filteredItems.map((item, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => {
+                                    setActiveCategory(categoryIdToProductCategory[category.id] || 'all');
+                                    navigateRouter('/catalogo');
+                                    setIsFilterDrawerOpen(false);
+                                  }}
+                                  className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:text-primary-700 hover:bg-white active:bg-gray-100 rounded-lg transition-colors min-h-[44px] touch-manipulation"
+                                >
+                                  {item}
+                                </button>
+                              ))}
+                            </div>
+                          );
+                        })()
+                      ) : null}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
