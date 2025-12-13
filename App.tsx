@@ -71,7 +71,7 @@ const LOGO_URL = "/images/logo-whitecloud.png";
 
 const Header = () => {
 
-  const { searchTerm, setSearchTerm, isBannerVisible, setIsBannerVisible } = useApp();
+  const { searchTerm, setSearchTerm, isBannerVisible, setIsBannerVisible, setActiveCategory } = useApp();
   const navigateRouter = useNavigateRouter();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -1042,6 +1042,27 @@ const Header = () => {
 
   };
 
+  // Mapeamento de IDs do menu para categorias de produto
+  const categoryIdToProductCategory: Record<string, string> = {
+    'promocoes': 'all', // Promoções mostra tudo
+    'pods-descartaveis': 'pods',
+    'juices': 'juices',
+    'coils': 'coils',
+    'hardware': 'hardware',
+    'saltnic': 'juices', // SaltNic geralmente está na categoria juices
+    'pods': 'pods',
+    'acessorios': 'acessorios',
+    'perfumes': 'perfumes'
+  };
+
+  // Função para lidar com clique na categoria principal
+  const handleCategoryClick = (categoryId: string) => {
+    const productCategory = categoryIdToProductCategory[categoryId] || 'all';
+    setActiveCategory(productCategory);
+    navigateRouter('/catalogo');
+    setOpenDropdown(null);
+  };
+
 
   // #region agent log
   useEffect(() => {
@@ -1777,7 +1798,7 @@ const Header = () => {
 
                     <button 
 
-                      onClick={() => navigateRouter('/catalogo')}
+                      onClick={() => handleCategoryClick(cat.id)}
 
                       className={`hover:text-primary-600 transition-colors py-1 px-2 relative uppercase whitespace-nowrap text-xs ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-2 sm:px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
 
@@ -2435,13 +2456,6 @@ const ProductListItem: React.FC<{
         <h3 className="font-semibold text-base sm:text-lg md:text-xl text-gray-900 mb-2 sm:mb-3 group-hover:text-primary-600 transition-colors line-clamp-2">
           {product.name}
         </h3>
-
-        {/* Descrição (opcional) */}
-        {product.description && (
-          <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2 hidden sm:block">
-            {product.description}
-          </p>
-        )}
 
         {/* Preço e Ações */}
         <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -3517,15 +3531,15 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
 
         <h3 className="text-center font-bold text-gray-400 text-sm tracking-widest uppercase mb-8">As Melhores Marcas</h3>
 
-        <div className="relative">
+        <div className="relative overflow-hidden">
 
           {/* Gradiente esquerdo */}
-          <div className="absolute left-0 top-0 bottom-0 w-32 md:w-48 bg-gradient-to-r from-white via-white/60 via-white/20 to-transparent z-10 pointer-events-none"></div>
+          <div className="absolute left-0 top-0 bottom-0 w-32 md:w-48 bg-gradient-to-r from-white via-white/90 via-white/70 to-transparent z-30 pointer-events-none"></div>
 
           {/* Gradiente direito */}
-          <div className="absolute right-0 top-0 bottom-0 w-32 md:w-48 bg-gradient-to-l from-white via-white/60 via-white/20 to-transparent z-10 pointer-events-none"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-32 md:w-48 bg-gradient-to-l from-white via-white/90 via-white/70 to-transparent z-30 pointer-events-none"></div>
 
-          <div className="flex animate-scroll-left items-center gap-8 md:gap-12">
+          <div className="flex animate-scroll-left items-center gap-8 md:gap-12 relative z-0">
 
             {/* Primeira linha de logos */}
 
