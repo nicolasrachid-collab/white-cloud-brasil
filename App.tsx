@@ -138,7 +138,7 @@ const Header = () => {
         if (navListRef.current) {
           // Remover qualquer classe que possa estar forçando nowrap
           navListRef.current.classList.remove('flex-nowrap');
-          navListRef.current.classList.add('flex-wrap');
+      navListRef.current.classList.add('flex-wrap');
           // Forçar via estilo inline com !important
           navListRef.current.style.setProperty('flex-wrap', 'wrap', 'important');
           // Também forçar via style.flexWrap como fallback
@@ -169,7 +169,8 @@ const Header = () => {
         element.style.setProperty('flex-shrink', '1', 'important');
         element.style.setProperty('min-width', '0', 'important');
         element.style.setProperty('max-width', '100%', 'important');
-        element.style.setProperty('overflow', 'hidden', 'important');
+        // NÃO aplicar overflow: hidden nos li, pois isso corta os dropdowns
+        // element.style.setProperty('overflow', 'hidden', 'important');
         
         const button = element.querySelector('button') as HTMLElement;
         if (button) {
@@ -324,45 +325,187 @@ const Header = () => {
   }, []);
 
   // Função para abrir dropdown com delay
+  // Função auxiliar para calcular posição correta do dropdown
+  const calculateDropdownPosition = (dropdownEl: HTMLElement): { left: string; transform: string } => {
+    const parentLi = dropdownEl.closest('li');
+    const parentRect = parentLi ? parentLi.getBoundingClientRect() : null;
+    const viewportWidth = window.innerWidth;
+    const dropdownWidth = 900; // max-width do dropdown
+    const halfDropdownWidth = dropdownWidth / 2;
+    
+    let leftPosition = '50%';
+    let transformValue = 'translateX(-50%)';
+    
+    if (parentRect) {
+      const parentCenterX = parentRect.left + (parentRect.width / 2);
+      
+      // Se o dropdown sair pela esquerda
+      if (parentCenterX - halfDropdownWidth < 0) {
+        const leftOffset = Math.abs(parentCenterX - halfDropdownWidth) + 16; // 16px de padding
+        leftPosition = `${leftOffset}px`;
+        transformValue = 'translateX(0)';
+      }
+      // Se o dropdown sair pela direita
+      else if (parentCenterX + halfDropdownWidth > viewportWidth) {
+        const rightOffset = viewportWidth - (parentCenterX + halfDropdownWidth) - 16; // 16px de padding
+        leftPosition = `calc(50% + ${rightOffset}px)`;
+        transformValue = 'translateX(-50%)';
+      }
+    }
+    
+    return { left: leftPosition, transform: transformValue };
+  };
+
   const handleMouseEnter = (categoryId: string) => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter',message:'handleMouseEnter called',data:{categoryId,currentOpenDropdown:openDropdown},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU8'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:start',message:'handleMouseEnter called',data:{categoryId},timestamp:Date.now(),sessionId:'debug-session',runId:'overflow-debug-v2',hypothesisId:'H3'})}).catch(()=>{});
     // #endregion
+    console.log('handleMouseEnter chamado para:', categoryId);
     if (closeTimeoutRef.current) {
       clearTimeout(closeTimeoutRef.current);
       closeTimeoutRef.current = null;
     }
     
-    // Atualizar o estado PRIMEIRO
+    // Atualizar o estado
     setOpenDropdown(categoryId);
+    console.log('setOpenDropdown chamado com:', categoryId);
     
-    // Forçar visibilidade ANTES de atualizar o estado React
+    // Forçar visibilidade imediatamente
     const dropdownEl = document.querySelector(`[data-dropdown-id="${categoryId}"]`) as HTMLElement;
+    console.log('Dropdown encontrado:', !!dropdownEl, dropdownEl);
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:beforeForce',message:'Before forcing visibility',data:{categoryId,dropdownFound:!!dropdownEl,dropdownExists:dropdownEl ? {tagName:dropdownEl.tagName,className:dropdownEl.className,hasDataAttr:dropdownEl.hasAttribute('data-dropdown-open'),dataAttrValue:dropdownEl.getAttribute('data-dropdown-open'),computedVisibility:window.getComputedStyle(dropdownEl).visibility,computedOpacity:window.getComputedStyle(dropdownEl).opacity} : null},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'AO'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:dropdownFound',message:'Dropdown element found',data:{categoryId,dropdownFound:!!dropdownEl},timestamp:Date.now(),sessionId:'debug-session',runId:'overflow-debug-v2',hypothesisId:'H3'})}).catch(()=>{});
     // #endregion
-    if (dropdownEl) {
-      dropdownEl.setAttribute('data-dropdown-open', 'true');
-      dropdownEl.classList.remove('invisible', 'dropdown-closed');
-      dropdownEl.classList.add('visible', 'dropdown-open');
-      dropdownEl.style.setProperty('visibility', 'visible', 'important');
-      dropdownEl.style.setProperty('opacity', '1', 'important');
-      dropdownEl.style.setProperty('pointer-events', 'auto', 'important');
-      dropdownEl.style.setProperty('height', 'auto', 'important');
-      dropdownEl.style.setProperty('overflow', 'visible', 'important');
-      // #region agent log
-      const computedAfter = window.getComputedStyle(dropdownEl);
-      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:forceVisible',message:'Forced dropdown visibility in handleMouseEnter',data:{categoryId,hasDataAttr:dropdownEl.hasAttribute('data-dropdown-open'),dataAttrValue:dropdownEl.getAttribute('data-dropdown-open'),hasVisibleClass:dropdownEl.classList.contains('visible'),hasInvisibleClass:dropdownEl.classList.contains('invisible'),computedVisibility:computedAfter.visibility,computedOpacity:computedAfter.opacity,computedPointerEvents:computedAfter.pointerEvents,inlineVisibility:dropdownEl.style.visibility,inlineOpacity:dropdownEl.style.opacity,inlinePointerEvents:dropdownEl.style.pointerEvents},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'AI'})}).catch(()=>{});
-      // #endregion
+      if (dropdownEl) {
+        dropdownEl.setAttribute('data-dropdown-open', 'true');
+        dropdownEl.classList.remove('invisible', 'dropdown-closed');
+        dropdownEl.classList.add('visible', 'dropdown-open');
+        
+        // Calcular posição correta
+        const position = calculateDropdownPosition(dropdownEl);
+        
+        // Usar cssText para sobrescrever completamente qualquer estilo inline do React
+        dropdownEl.style.cssText = `
+          position: absolute !important;
+          z-index: 99999 !important;
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          pointer-events: auto !important;
+          height: auto !important;
+          overflow: visible !important;
+          top: 100% !important;
+          left: ${position.left} !important;
+          transform: ${position.transform} !important;
+          margin-top: 4px !important;
+          width: 90vw !important;
+          max-width: 900px !important;
+        `;
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:positionFix',message:'Applied position fix in handleMouseEnter',data:{categoryId,leftPosition:position.left,transformValue:position.transform},timestamp:Date.now(),sessionId:'debug-session',runId:'overflow-debug-v2',hypothesisId:'H4'})}).catch(()=>{});
+        // #endregion
+        
+        // Verificar posicionamento após aplicar estilos e corrigir se necessário
+        setTimeout(() => {
+          const rect = dropdownEl.getBoundingClientRect();
+          const navEl = dropdownEl.closest('nav');
+          const navRect = navEl ? navEl.getBoundingClientRect() : null;
+          
+          // Recalcular e aplicar posição corrigida
+          const position = calculateDropdownPosition(dropdownEl);
+          dropdownEl.style.setProperty('left', position.left, 'important');
+          dropdownEl.style.setProperty('transform', position.transform, 'important');
+          
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:positionFix',message:'Applied position fix to dropdown in setTimeout',data:{categoryId,leftPosition:position.left,transformValue:position.transform,originalLeft:rect.left,originalRight:rect.right},timestamp:Date.now(),sessionId:'debug-session',runId:'overflow-debug-v2',hypothesisId:'H4'})}).catch(()=>{});
+          // #endregion
+          
+          console.log('=== DIAGNÓSTICO DE POSICIONAMENTO ===');
+          console.log('Dropdown rect:', {
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height,
+            bottom: rect.bottom,
+            right: rect.right
+          });
+          console.log('Viewport:', {
+            width: window.innerWidth,
+            height: window.innerHeight
+          });
+          console.log('Dropdown está visível?', 
+            rect.top >= 0 && 
+            rect.left >= 0 && 
+            rect.bottom <= window.innerHeight && 
+            rect.right <= window.innerWidth
+          );
+          
+          // Verificar overflow dos pais
+          let current = dropdownEl.parentElement;
+          const overflowParents: Array<{element: HTMLElement, tagName: string, className: string, id: string, overflow: string, computed: {overflow: string, overflowX: string, overflowY: string}, inlineStyle: string, hasOverflowHiddenClass: boolean}> = [];
+          while (current && current !== document.body) {
+            const computed = window.getComputedStyle(current);
+            if (computed.overflow === 'hidden' || computed.overflowX === 'hidden' || computed.overflowY === 'hidden') {
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:overflowCheck',message:'Parent element with overflow hidden found',data:{tagName:current.tagName,className:current.className,id:current.id || 'no-id',overflow:computed.overflow,overflowX:computed.overflowX,overflowY:computed.overflowY,inlineStyle:current.style.cssText || 'no-inline-style',hasOverflowHiddenClass:current.classList.contains('overflow-hidden') || current.classList.contains('overflow-x-hidden') || current.classList.contains('overflow-y-hidden'),allClasses:Array.from(current.classList)},timestamp:Date.now(),sessionId:'debug-session',runId:'overflow-debug',hypothesisId:'H1'})}).catch(()=>{});
+              // #endregion
+              overflowParents.push({
+                element: current,
+                tagName: current.tagName,
+                className: current.className,
+                id: current.id || '',
+                overflow: `${computed.overflow} / ${computed.overflowX} / ${computed.overflowY}`,
+                computed: {
+                  overflow: computed.overflow,
+                  overflowX: computed.overflowX,
+                  overflowY: computed.overflowY
+                },
+                inlineStyle: current.style.cssText || 'no-inline-style',
+                hasOverflowHiddenClass: current.classList.contains('overflow-hidden') || current.classList.contains('overflow-x-hidden') || current.classList.contains('overflow-y-hidden')
+              });
+              
+              // Aplicar correção em tempo de execução
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:beforeFix',message:'About to apply overflow fix',data:{tagName:current.tagName,className:current.className,id:current.id || 'no-id',overflow:computed.overflow,overflowX:computed.overflowX,overflowY:computed.overflowY,isLI:current.tagName === 'LI',isUL:current.tagName === 'UL',isDIV:current.tagName === 'DIV',hasOverflowXHidden:current.classList.contains('overflow-x-hidden'),isRoot:current.id === 'root'},timestamp:Date.now(),sessionId:'debug-session',runId:'overflow-debug-v2',hypothesisId:'H2'})}).catch(()=>{});
+              // #endregion
+              if (current.tagName === 'LI' || current.tagName === 'UL' || (current.tagName === 'DIV' && (current.classList.contains('overflow-x-hidden') || current.id === 'root'))) {
+                current.style.setProperty('overflow', 'visible', 'important');
+                current.style.setProperty('overflow-y', 'visible', 'important');
+                if (current.tagName !== 'UL' && !current.classList.contains('overflow-x-hidden')) {
+                  current.style.setProperty('overflow-x', 'visible', 'important');
+                }
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:overflowFix',message:'Applied overflow visible fix to element',data:{tagName:current.tagName,className:current.className,id:current.id || 'no-id',beforeOverflow:computed.overflow,beforeOverflowX:computed.overflowX,beforeOverflowY:computed.overflowY,afterOverflow:window.getComputedStyle(current).overflow,afterOverflowX:window.getComputedStyle(current).overflowX,afterOverflowY:window.getComputedStyle(current).overflowY},timestamp:Date.now(),sessionId:'debug-session',runId:'overflow-debug-v2',hypothesisId:'H2'})}).catch(()=>{});
+                // #endregion
+              } else {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:skipFix',message:'Skipped overflow fix - element not in fix list',data:{tagName:current.tagName,className:current.className,id:current.id || 'no-id'},timestamp:Date.now(),sessionId:'debug-session',runId:'overflow-debug-v2',hypothesisId:'H2'})}).catch(()=>{});
+                // #endregion
+              }
+            }
+            current = current.parentElement;
+          }
+          if (overflowParents.length > 0) {
+            console.warn('⚠️ Elementos pais com overflow hidden:', overflowParents);
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:overflowSummary',message:'Summary of all parent elements with overflow hidden',data:{count:overflowParents.length,elements:overflowParents.map(p => ({tagName:p.tagName,className:p.className,id:p.id,overflow:p.overflow,hasOverflowHiddenClass:p.hasOverflowHiddenClass,inlineStyle:p.inlineStyle}))},timestamp:Date.now(),sessionId:'debug-session',runId:'overflow-debug',hypothesisId:'H1'})}).catch(()=>{});
+            // #endregion
+          } else {
+            console.log('✅ Nenhum elemento pai com overflow hidden');
+          }
+        }, 100);
+        
+        console.log('Estilos aplicados. Computed:', {
+          display: window.getComputedStyle(dropdownEl).display,
+          visibility: window.getComputedStyle(dropdownEl).visibility,
+          opacity: window.getComputedStyle(dropdownEl).opacity,
+          zIndex: window.getComputedStyle(dropdownEl).zIndex,
+          position: window.getComputedStyle(dropdownEl).position
+        });
     } else {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:dropdownNotFound',message:'Dropdown element not found',data:{categoryId,allDropdowns:Array.from(document.querySelectorAll('[data-dropdown-id]')).map(el => ({id:(el as HTMLElement).getAttribute('data-dropdown-id'),tagName:el.tagName}))},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'AO'})}).catch(()=>{});
-      // #endregion
+      console.error('Dropdown não encontrado para:', categoryId);
     }
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleMouseEnter:setState',message:'setOpenDropdown called',data:{categoryId,previousOpenDropdown:openDropdown},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU6'})}).catch(()=>{});
-    // #endregion
     
     // Forçar novamente após um pequeno delay para garantir
     setTimeout(() => {
@@ -514,18 +657,14 @@ const Header = () => {
 
   // Monitorar mudanças no estado openDropdown e forçar visibilidade
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:openDropdown',message:'openDropdown state changed',data:{openDropdown,allDropdownsInDom:Array.from(document.querySelectorAll('[data-dropdown-id]')).map(el => (el as HTMLElement).getAttribute('data-dropdown-id'))},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU10'})}).catch(()=>{});
-    // #endregion
-    
+    console.log('useEffect openDropdown executado. openDropdown:', openDropdown);
     // Fechar apenas os dropdowns que NÃO são o que está sendo aberto
     const allDropdowns = document.querySelectorAll('[data-dropdown-id]') as NodeListOf<HTMLElement>;
+    console.log('Total de dropdowns encontrados:', allDropdowns.length);
     allDropdowns.forEach((dropdown) => {
       const dropdownId = dropdown.getAttribute('data-dropdown-id');
       // Se este dropdown NÃO é o que está sendo aberto, fechá-lo
       if (dropdownId !== openDropdown) {
-        // NÃO adicionar classes 'dropdown-closed' ou 'invisible' aqui
-        // Essas classes podem estar sendo usadas por regras CSS que sobrescrevem nossos estilos
         dropdown.removeAttribute('data-dropdown-open');
         dropdown.classList.remove('dropdown-open', 'visible', 'dropdown-closed', 'invisible');
         dropdown.style.setProperty('visibility', 'hidden', 'important');
@@ -537,66 +676,77 @@ const Header = () => {
     
     // Forçar visibilidade do dropdown que está sendo aberto
     if (openDropdown) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:openDropdown:beforeRAF',message:'Before requestAnimationFrame',data:{openDropdown},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'H'})}).catch(()=>{});
-      // #endregion
-      // Forçar imediatamente também
-      const dropdownElImmediate = document.querySelector(`[data-dropdown-id="${openDropdown}"]`) as HTMLElement;
-      if (dropdownElImmediate) {
-        // Remover classes de fechado
-        dropdownElImmediate.classList.remove('invisible', 'dropdown-closed');
-        // Adicionar classes de aberto
-        dropdownElImmediate.classList.add('visible', 'dropdown-open');
-        // Adicionar atributo de dados
-        dropdownElImmediate.setAttribute('data-dropdown-open', 'true');
-        // Forçar estilos inline
-        dropdownElImmediate.style.setProperty('visibility', 'visible', 'important');
-        dropdownElImmediate.style.setProperty('opacity', '1', 'important');
-        dropdownElImmediate.style.setProperty('pointer-events', 'auto', 'important');
-        dropdownElImmediate.style.setProperty('height', 'auto', 'important');
-        dropdownElImmediate.style.setProperty('overflow', 'visible', 'important');
-        dropdownElImmediate.style.setProperty('display', 'block', 'important');
-        // Também usar setProperty como fallback
-        dropdownElImmediate.style.setProperty('visibility', 'visible', 'important');
-        dropdownElImmediate.style.setProperty('opacity', '1', 'important');
-        dropdownElImmediate.style.setProperty('pointer-events', 'auto', 'important');
-        dropdownElImmediate.style.setProperty('height', 'auto', 'important');
-        dropdownElImmediate.style.setProperty('overflow', 'visible', 'important');
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:openDropdown:immediate',message:'Forced dropdown visibility immediately',data:{openDropdown,styleAttribute:dropdownElImmediate.getAttribute('style'),computedVisibility:window.getComputedStyle(dropdownElImmediate).visibility,computedOpacity:window.getComputedStyle(dropdownElImmediate).opacity,hasVisibleClass:dropdownElImmediate.classList.contains('visible')},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU10'})}).catch(()=>{});
-        // #endregion
+      console.log('Abrindo dropdown:', openDropdown);
+      // Forçar visibilidade imediatamente
+      const dropdownEl = document.querySelector(`[data-dropdown-id="${openDropdown}"]`) as HTMLElement;
+      console.log('useEffect: Dropdown element encontrado:', !!dropdownEl);
+      if (dropdownEl) {
+        dropdownEl.setAttribute('data-dropdown-open', 'true');
+        dropdownEl.classList.remove('invisible', 'dropdown-closed');
+        dropdownEl.classList.add('visible', 'dropdown-open');
+        
+        // Calcular posição correta
+        const position = calculateDropdownPosition(dropdownEl);
+        
+        // Usar cssText para sobrescrever completamente qualquer estilo inline do React
+        dropdownEl.style.cssText = `
+          position: absolute !important;
+          z-index: 99999 !important;
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          pointer-events: auto !important;
+          height: auto !important;
+          overflow: visible !important;
+          top: 100% !important;
+          left: ${position.left} !important;
+          transform: ${position.transform} !important;
+          margin-top: 4px !important;
+          width: 90vw !important;
+          max-width: 900px !important;
+        `;
+        console.log('useEffect: Estilos aplicados. Computed:', {
+          display: window.getComputedStyle(dropdownEl).display,
+          visibility: window.getComputedStyle(dropdownEl).visibility,
+          opacity: window.getComputedStyle(dropdownEl).opacity,
+          zIndex: window.getComputedStyle(dropdownEl).zIndex
+        });
+      } else {
+        console.error('useEffect: Dropdown element NÃO encontrado para:', openDropdown);
       }
+      
+      // Também forçar após requestAnimationFrame para garantir
       requestAnimationFrame(() => {
-        const dropdownEl = document.querySelector(`[data-dropdown-id="${openDropdown}"]`) as HTMLElement;
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:openDropdown:inRAF',message:'Inside requestAnimationFrame',data:{openDropdown,dropdownFound:!!dropdownEl},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU10'})}).catch(()=>{});
-        // #endregion
-        if (dropdownEl) {
-          const computed = window.getComputedStyle(dropdownEl);
-          // Remover classes de fechado
-          dropdownEl.classList.remove('invisible', 'dropdown-closed');
-          // Adicionar classes de aberto
-          dropdownEl.classList.add('visible', 'dropdown-open');
-          // Adicionar atributo de dados
-          dropdownEl.setAttribute('data-dropdown-open', 'true');
-          // Forçar estilos inline
-          dropdownEl.style.setProperty('visibility', 'visible', 'important');
-          dropdownEl.style.setProperty('opacity', '1', 'important');
-          dropdownEl.style.setProperty('pointer-events', 'auto', 'important');
-          dropdownEl.style.setProperty('height', 'auto', 'important');
-          dropdownEl.style.setProperty('overflow', 'visible', 'important');
-          dropdownEl.style.setProperty('display', 'block', 'important');
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:openDropdown:forceVisible',message:'Forced dropdown visibility in useEffect',data:{openDropdown,computedVisibility:computed.visibility,computedOpacity:computed.opacity,afterVisibility:window.getComputedStyle(dropdownEl).visibility,afterOpacity:window.getComputedStyle(dropdownEl).opacity,styleAttribute:dropdownEl.getAttribute('style'),hasVisibleClass:dropdownEl.classList.contains('visible')},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU10'})}).catch(()=>{});
-          // #endregion
-        } else {
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:useEffect:openDropdown:dropdownNotFound',message:'Dropdown element not found',data:{openDropdown,allDropdowns:Array.from(document.querySelectorAll('[data-dropdown-id]')).map(el => (el as HTMLElement).getAttribute('data-dropdown-id'))},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU10'})}).catch(()=>{});
-          // #endregion
+        const dropdownElRAF = document.querySelector(`[data-dropdown-id="${openDropdown}"]`) as HTMLElement;
+        if (dropdownElRAF) {
+          dropdownElRAF.setAttribute('data-dropdown-open', 'true');
+          dropdownElRAF.classList.remove('invisible', 'dropdown-closed');
+          dropdownElRAF.classList.add('visible', 'dropdown-open');
+          
+          // Calcular posição correta
+          const positionRAF = calculateDropdownPosition(dropdownElRAF);
+          
+          // Usar cssText para sobrescrever completamente qualquer estilo inline do React
+          dropdownElRAF.style.cssText = `
+            position: absolute !important;
+            z-index: 99999 !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            height: auto !important;
+            overflow: visible !important;
+            top: 100% !important;
+            left: ${positionRAF.left} !important;
+            transform: ${positionRAF.transform} !important;
+            margin-top: 4px !important;
+            width: 90vw !important;
+            max-width: 900px !important;
+          `;
         }
       });
       
-      // Usar MutationObserver para garantir que as classes sejam mantidas mesmo se o React tentar removê-las
+      // Usar MutationObserver para garantir que as classes sejam mantidas
       const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
           if (mutation.type === 'attributes' && (mutation.attributeName === 'class' || mutation.attributeName === 'style')) {
@@ -604,72 +754,45 @@ const Header = () => {
             if (target.hasAttribute('data-dropdown-id') && target.getAttribute('data-dropdown-id') === openDropdown) {
               // Verificar se as classes foram removidas
               if (!target.classList.contains('dropdown-open') || !target.classList.contains('visible')) {
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:MutationObserver:classRemoved',message:'Classes removed by React, re-applying',data:{categoryId:openDropdown,hasDropdownOpen:target.classList.contains('dropdown-open'),hasVisible:target.classList.contains('visible'),allClasses:Array.from(target.classList)},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'BH'})}).catch(()=>{});
-                // #endregion
                 target.classList.remove('invisible', 'dropdown-closed');
                 target.classList.add('visible', 'dropdown-open');
                 target.setAttribute('data-dropdown-open', 'true');
-                target.style.setProperty('visibility', 'visible', 'important');
-                target.style.setProperty('opacity', '1', 'important');
-                target.style.setProperty('pointer-events', 'auto', 'important');
-                target.style.setProperty('height', 'auto', 'important');
-                target.style.setProperty('overflow', 'visible', 'important');
-                target.style.setProperty('display', 'block', 'important');
+                // Usar cssText para sobrescrever completamente qualquer estilo inline do React
+                target.style.cssText = `
+                  position: absolute !important;
+                  z-index: 99999 !important;
+                  display: block !important;
+                  visibility: visible !important;
+                  opacity: 1 !important;
+                  pointer-events: auto !important;
+                  height: auto !important;
+                  overflow: visible !important;
+                  top: 100% !important;
+                  left: 50% !important;
+                  transform: translateX(-50%) !important;
+                  margin-top: 4px !important;
+                  width: 90vw !important;
+                  max-width: 900px !important;
+                `;
               }
             }
           }
         });
       });
       
-      // Observar todos os dropdowns
-      const allDropdownsToObserve = document.querySelectorAll('[data-dropdown-id]') as NodeListOf<HTMLElement>;
-      allDropdownsToObserve.forEach((dropdown) => {
-        observer.observe(dropdown, {
+      // Observar o dropdown aberto
+      const dropdownToObserve = document.querySelector(`[data-dropdown-id="${openDropdown}"]`) as HTMLElement;
+      if (dropdownToObserve) {
+        observer.observe(dropdownToObserve, {
           attributes: true,
           attributeFilter: ['class', 'style'],
           subtree: false
         });
-      });
+      }
       
-      // Também usar setInterval como backup para forçar continuamente
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:setInterval:setup',message:'Setting up setInterval',data:{openDropdown},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'BL'})}).catch(()=>{});
-      // #endregion
-      const forceInterval = setInterval(() => {
-        const dropdownEl = document.querySelector(`[data-dropdown-id="${openDropdown}"]`) as HTMLElement;
-        if (dropdownEl) {
-          const computed = window.getComputedStyle(dropdownEl);
-          // Sempre forçar, mesmo se as classes estiverem corretas, pois o React pode estar removendo os estilos inline
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:setInterval:forceVisible',message:'setInterval forcing visibility',data:{categoryId:openDropdown,computedVisibility:computed.visibility,computedOpacity:computed.opacity,computedDisplay:computed.display,hasDropdownOpen:dropdownEl.classList.contains('dropdown-open'),hasVisible:dropdownEl.classList.contains('visible'),inlineVisibility:dropdownEl.style.visibility,inlineOpacity:dropdownEl.style.opacity,inlineDisplay:dropdownEl.style.display},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'BL'})}).catch(()=>{});
-          // #endregion
-          dropdownEl.classList.remove('invisible', 'dropdown-closed');
-          dropdownEl.classList.add('visible', 'dropdown-open');
-          dropdownEl.setAttribute('data-dropdown-open', 'true');
-          dropdownEl.style.setProperty('visibility', 'visible', 'important');
-          dropdownEl.style.setProperty('opacity', '1', 'important');
-          dropdownEl.style.setProperty('pointer-events', 'auto', 'important');
-          dropdownEl.style.setProperty('height', 'auto', 'important');
-          dropdownEl.style.setProperty('overflow', 'visible', 'important');
-          dropdownEl.style.setProperty('display', 'block', 'important');
-          // Forçar novamente após um pequeno delay para garantir que seja aplicado
-          setTimeout(() => {
-            dropdownEl.style.setProperty('visibility', 'visible', 'important');
-            dropdownEl.style.setProperty('opacity', '1', 'important');
-            dropdownEl.style.setProperty('display', 'block', 'important');
-          }, 0);
-        } else {
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:setInterval:dropdownNotFound',message:'Dropdown element not found in setInterval',data:{openDropdown,allDropdowns:Array.from(document.querySelectorAll('[data-dropdown-id]')).map(el => (el as HTMLElement).getAttribute('data-dropdown-id'))},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'BL'})}).catch(()=>{});
-          // #endregion
-        }
-      }, 16); // ~60fps
-      
-      // Limpar observer e interval quando o dropdown fechar
+      // Limpar observer quando o dropdown fechar
       return () => {
         observer.disconnect();
-        clearInterval(forceInterval);
       };
     } else {
       // Fechar todos os dropdowns quando openDropdown é null
@@ -736,7 +859,7 @@ const Header = () => {
           className="fixed top-0 left-0 right-0 bg-gradient-to-r from-primary-600 via-primary-700 to-blue-600 border-b border-primary-800 z-[10000] banner-shimmer overflow-hidden animate-fade-in" 
           style={{ position: 'fixed', top: 0, left: 0, right: 0, width: '100%' }}
         >
-          <div className="container mx-auto px-4 sm:px-6 py-2 sm:py-2.5 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 py-2 sm:py-2.5 relative z-10">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 relative">
               {/* Botão de fechar */}
               <button
@@ -749,30 +872,30 @@ const Header = () => {
 
               <div className="text-center pr-6 sm:pr-8 md:pr-12 flex-1 min-w-0">
                 <p className="text-xs sm:text-sm md:text-base lg:text-lg font-extrabold text-white mb-1 sm:mb-0.5 tracking-tight leading-tight">
-                  🎉 Mega Promoção Monstrinho Misterioso
-                </p>
+                🎉 Mega Promoção Monstrinho Misterioso
+              </p>
                 <p className="text-[9px] sm:text-[10px] md:text-xs text-white/95 font-medium leading-tight px-1">
-                  A cada <span className="font-bold text-white">R$400,00</span> em compra, leve um <span className="font-bold text-white">Labubu Misterioso</span> grátis!
-                </p>
-              </div>
-              
-              <button 
-                onClick={() => navigateRouter('/catalogo')}
+                A cada <span className="font-bold text-white">R$400,00</span> em compra, leve um <span className="font-bold text-white">Labubu Misterioso</span> grátis!
+              </p>
+            </div>
+            
+            <button 
+              onClick={() => navigateRouter('/catalogo')}
                 className="group bg-white hover:bg-gray-50 active:bg-gray-100 text-primary-600 font-semibold px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg transition-all duration-300 whitespace-nowrap text-[9px] sm:text-[10px] md:text-xs shadow-md hover:shadow-lg hover:scale-105 active:scale-100 relative z-10 border border-transparent hover:border-white/20 touch-manipulation min-h-[36px] sm:min-h-[40px]"
               >
                 <span className="flex items-center gap-1 sm:gap-1.5">
                   <span className="hidden sm:inline">Confira Agora</span>
                   <span className="sm:hidden">Ver</span>
                   <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 transform group-hover:translate-x-1 transition-transform" />
-                </span>
-              </button>
-            </div>
+              </span>
+            </button>
           </div>
         </div>
+      </div>
       )}
 
-      <header ref={headerRef} className={`fixed left-0 right-0 z-[9998] bg-white shadow-sm border-b border-gray-100 w-full overflow-x-hidden h-14 sm:h-16 md:h-20 lg:h-24 transition-all duration-300 ${isBannerVisible ? 'top-[67px]' : 'top-0'}`} style={{ maxWidth: '100vw', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
-        <div className="container mx-auto px-2 sm:px-3 md:px-4 lg:px-6 xl:px-8 flex items-center justify-between gap-2 sm:gap-3 md:gap-4 lg:gap-6 h-14 sm:h-16 md:h-20 lg:h-24" style={{ maxWidth: 'min(100%, 1536px)', overflowX: 'hidden', width: '100%', boxSizing: 'border-box' }}>
+      <header ref={headerRef} className={`fixed left-0 right-0 z-[9998] bg-white shadow-sm border-b border-gray-100 w-full overflow-x-hidden h-14 sm:h-16 md:h-20 lg:h-24 transition-all duration-300 ${isBannerVisible ? 'top-[67px]' : 'top-0'}`} style={{ maxWidth: '100vw', overflowX: 'hidden', overflowY: 'visible', overflow: 'visible', width: '100%', boxSizing: 'border-box' }}>
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl flex items-center justify-between gap-2 sm:gap-3 md:gap-4 lg:gap-6 h-14 sm:h-16 md:h-20 lg:h-24" style={{ overflowX: 'hidden', overflowY: 'visible', overflow: 'visible', width: '100%', boxSizing: 'border-box' }}>
           {/* Logo */}
           <div 
             className="cursor-pointer flex-shrink-0 min-w-0"
@@ -872,8 +995,8 @@ const Header = () => {
         </div>
 
         {/* Desktop Navigation Bar */}
-        <nav ref={navRef} className={`hidden lg:block border-t border-gray-100 bg-white fixed left-0 right-0 z-[9997] w-full overflow-x-hidden transition-all duration-300 ${isBannerVisible ? 'top-[163px]' : 'top-[96px]'}`} style={{ overflowX: 'hidden', width: '100%', position: 'fixed', boxSizing: 'border-box' }}>
-          <div ref={navContainerRef} className="w-full px-3 sm:px-4 lg:px-6 xl:px-8 overflow-x-hidden flex justify-center" style={{ overflowX: 'hidden', width: '100%', maxWidth: '100%', boxSizing: 'border-box', textAlign: 'center', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', minWidth: 0 }}>
+        <nav ref={navRef} className={`hidden lg:block border-t border-gray-100 bg-white fixed left-0 right-0 z-[9997] w-full overflow-x-hidden transition-all duration-300 ${isBannerVisible ? 'top-[163px]' : 'top-[96px]'}`} style={{ overflowX: 'hidden', overflowY: 'visible', overflow: 'visible', width: '100%', position: 'fixed', boxSizing: 'border-box' }}>
+          <div ref={navContainerRef} className="w-full px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl mx-auto overflow-x-hidden flex justify-center" style={{ overflowX: 'hidden', overflowY: 'visible', overflow: 'visible', width: '100%', maxWidth: '100%', boxSizing: 'border-box', textAlign: 'center', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', minWidth: 0 }}>
             <ul 
               ref={(el) => {
                 navListRef.current = el;
@@ -885,7 +1008,7 @@ const Header = () => {
                 }
               }}
               className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm font-medium text-gray-600 py-4 sm:py-5 overflow-x-hidden" 
-              style={{ maxWidth: '100%', overflowX: 'hidden', flexWrap: 'wrap', boxSizing: 'border-box', display: 'flex', margin: 0, padding: 0, listStyle: 'none', minHeight: '58px', textAlign: 'center', verticalAlign: 'middle' }}>
+              style={{ maxWidth: '100%', overflowX: 'hidden', overflowY: 'visible', overflow: 'visible', flexWrap: 'wrap', boxSizing: 'border-box', display: 'flex', margin: 0, padding: 0, listStyle: 'none', minHeight: '58px', textAlign: 'center', verticalAlign: 'middle' }}>
               {CATEGORIES.map(cat => {
                 // #region agent log
                 if (cat.hasDropdown) {
@@ -893,7 +1016,7 @@ const Header = () => {
                 }
                 // #endregion
                 return (
-                  <li 
+                <li 
                   key={cat.id} 
                   className="relative z-[100]"
                   onMouseEnter={(e) => {
@@ -909,7 +1032,7 @@ const Header = () => {
                     e.stopPropagation();
                     handleMouseLeave();
                   }}
-                  style={{ flexShrink: 1, minWidth: 0, maxWidth: '100%', whiteSpace: 'nowrap', margin: 0, padding: 0, overflow: 'visible', position: 'relative', pointerEvents: 'auto' }}
+                  style={{ flexShrink: 1, minWidth: 0, maxWidth: '100%', whiteSpace: 'nowrap', margin: 0, padding: 0, overflow: 'visible', overflowX: 'visible', overflowY: 'visible', position: 'relative', pointerEvents: 'auto' }}
                 >
                   {cat.hasDropdown ? (
                     <>
@@ -934,15 +1057,15 @@ const Header = () => {
                       {/* Dropdown Menu - Design Moderno */}
                       <div 
                         data-dropdown-id={cat.id}
-                        className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[90vw] max-w-[900px] bg-white rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 z-[99999] overflow-x-hidden ${
+                        className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[90vw] max-w-[900px] bg-white rounded-xl shadow-2xl border border-gray-200 z-[99999] overflow-x-hidden ${
                           openDropdown === cat.id 
-                            ? 'opacity-100 !visible translate-y-0 !pointer-events-auto block' 
-                            : 'opacity-0 invisible -translate-y-2 pointer-events-none'
+                            ? 'translate-y-0' 
+                            : '-translate-y-2'
                         }`}
                         style={{
                           position: 'absolute',
                           zIndex: 99999,
-                          display: openDropdown === cat.id ? 'block' : 'block',
+                          display: 'block',
                           visibility: openDropdown === cat.id ? 'visible' : 'hidden',
                           opacity: openDropdown === cat.id ? 1 : 0,
                           pointerEvents: openDropdown === cat.id ? 'auto' : 'none'
@@ -951,9 +1074,6 @@ const Header = () => {
                         // O React sobrescreve as classes que adicionamos via JavaScript
                         // Essas serão controladas apenas via JavaScript direto no DOM
                         onMouseEnter={() => {
-                          // #region agent log
-                          fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:dropdown:onMouseEnter',message:'Dropdown onMouseEnter',data:{categoryId:cat.id,openDropdown},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'B'})}).catch(()=>{});
-                          // #endregion
                           // Cancelar o timeout quando o mouse entra no dropdown
                           if (closeTimeoutRef.current) {
                             clearTimeout(closeTimeoutRef.current);
@@ -963,67 +1083,39 @@ const Header = () => {
                           setOpenDropdown(cat.id);
                         }}
                         onMouseLeave={handleMouseLeave}
-                        // #region agent log
                         ref={(el) => {
-                          // Log de renderização sempre
                           if (el) {
                             const isOpen = openDropdown === cat.id;
-                            const hasDataAttr = el.getAttribute('data-dropdown-open') === 'true';
-                            const computed = window.getComputedStyle(el);
-                            // Forçar visibilidade se o estado indica que está aberto OU se o atributo de dados indica que está aberto
-                            if (isOpen || hasDataAttr) {
-                              // Forçar imediatamente
+                            // Forçar visibilidade se o dropdown está aberto
+                            if (isOpen) {
                               el.setAttribute('data-dropdown-open', 'true');
                               el.classList.remove('invisible', 'dropdown-closed');
                               el.classList.add('visible', 'dropdown-open');
-                              el.style.setProperty('visibility', 'visible', 'important');
-                              el.style.setProperty('opacity', '1', 'important');
-                              el.style.setProperty('pointer-events', 'auto', 'important');
-                              el.style.setProperty('height', 'auto', 'important');
-                              el.style.setProperty('overflow', 'visible', 'important');
-                              el.style.setProperty('display', 'block', 'important');
+                              
+                              // Calcular posição correta
+                              const position = calculateDropdownPosition(el);
+                              
+                              // Usar cssText para sobrescrever completamente qualquer estilo inline do React
+                              el.style.cssText = `
+                                position: absolute !important;
+                                z-index: 99999 !important;
+                                display: block !important;
+                                visibility: visible !important;
+                                opacity: 1 !important;
+                                pointer-events: auto !important;
+                                height: auto !important;
+                                overflow: visible !important;
+                                top: 100% !important;
+                                left: ${position.left} !important;
+                                transform: ${position.transform} !important;
+                                margin-top: 4px !important;
+                                width: 90vw !important;
+                                max-width: 900px !important;
+                              `;
+                              
                               // #region agent log
-                              fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:dropdown:render:forceVisible',message:'Forced dropdown visibility',data:{categoryId:cat.id,openDropdown,isOpen,hasDataAttr},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'G'})}).catch(()=>{});
+                              fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:ref:positionFix',message:'Applied position fix in ref callback',data:{categoryId:cat.id,leftPosition:position.left,transformValue:position.transform},timestamp:Date.now(),sessionId:'debug-session',runId:'overflow-debug-v2',hypothesisId:'H4'})}).catch(()=>{});
                               // #endregion
-                              // Usar setInterval para forçar continuamente enquanto estiver aberto
-                              const forceInterval = setInterval(() => {
-                                if (el && (openDropdown === cat.id || el.getAttribute('data-dropdown-open') === 'true')) {
-                                  const currentComputed = window.getComputedStyle(el);
-                                  if (currentComputed.visibility === 'hidden' || currentComputed.opacity === '0' || currentComputed.display === 'none') {
-                                    el.setAttribute('data-dropdown-open', 'true');
-                                    el.classList.remove('invisible', 'dropdown-closed');
-                                    el.classList.add('visible', 'dropdown-open');
-                                    el.style.setProperty('visibility', 'visible', 'important');
-                                    el.style.setProperty('opacity', '1', 'important');
-                                    el.style.setProperty('pointer-events', 'auto', 'important');
-                                    el.style.setProperty('height', 'auto', 'important');
-                                    el.style.setProperty('overflow', 'visible', 'important');
-                                    el.style.setProperty('display', 'block', 'important');
-                                  }
-                                } else {
-                                  clearInterval(forceInterval);
-                                }
-                              }, 16); // ~60fps
-                              // Armazenar o interval no elemento para limpar depois
-                              (el as any).__forceInterval = forceInterval;
-                              // Verificar novamente após requestAnimationFrame
-                              requestAnimationFrame(() => {
-                                const currentComputed = window.getComputedStyle(el);
-                                if (currentComputed.visibility === 'hidden' || currentComputed.opacity === '0') {
-                                  el.setAttribute('data-dropdown-open', 'true');
-                                  el.classList.remove('invisible', 'dropdown-closed');
-                                  el.classList.add('visible', 'dropdown-open');
-                                  el.style.setProperty('visibility', 'visible', 'important');
-                                  el.style.setProperty('opacity', '1', 'important');
-                                  el.style.setProperty('pointer-events', 'auto', 'important');
-                                  el.style.setProperty('height', 'auto', 'important');
-                                  el.style.setProperty('overflow', 'visible', 'important');
-                                  el.style.setProperty('display', 'block', 'important');
-                                  // #region agent log
-                                  fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:dropdown:render:forceVisible:raf',message:'Forced dropdown visibility after RAF',data:{categoryId:cat.id,openDropdown,isOpen,computedVisibility:currentComputed.visibility,computedOpacity:currentComputed.opacity},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'G'})}).catch(()=>{});
-                                  // #endregion
-                                }
-                              });
                             } else {
                               // Limpar interval se existir
                               if ((el as any).__forceInterval) {
@@ -1031,48 +1123,13 @@ const Header = () => {
                                 delete (el as any).__forceInterval;
                               }
                             }
-                            fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:dropdown:render',message:'Dropdown render check',data:{categoryId:cat.id,openDropdown,isOpen,hasDropdownOpenClass:el.classList.contains('dropdown-open'),hasDropdownClosedClass:el.classList.contains('dropdown-closed'),allClasses:Array.from(el.classList),computedVisibility:computed.visibility,computedOpacity:computed.opacity,computedDisplay:computed.display,inlineVisibility:el.style.visibility,inlineOpacity:el.style.opacity,inlineDisplay:el.style.display},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-fix',hypothesisId:'C'})}).catch(()=>{});
-                          }
-                          // Medição detalhada quando aberto
-                          if (el && openDropdown === cat.id) {
-                            setTimeout(() => {
-                              const computed = window.getComputedStyle(el);
-                              const rect = el.getBoundingClientRect();
-                              const navEl = navRef.current;
-                              const liEl = el.closest('li') as HTMLElement;
-                              const navComputed = navEl ? window.getComputedStyle(navEl) : null;
-                              const liComputed = liEl ? window.getComputedStyle(liEl) : null;
-                              
-                              fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:367',message:'Dropdown rendered and measured',data:{
-                                categoryId: cat.id,
-                                dropdownZIndex: computed.zIndex,
-                                dropdownPosition: computed.position,
-                                dropdownDisplay: computed.display,
-                                dropdownVisibility: computed.visibility,
-                                dropdownOpacity: computed.opacity,
-                                dropdownRect: {top: rect.top, left: rect.left, width: rect.width, height: rect.height, bottom: rect.bottom, right: rect.right},
-                                viewportHeight: window.innerHeight,
-                                viewportWidth: window.innerWidth,
-                                navZIndex: navComputed?.zIndex || 'none',
-                                navPosition: navComputed?.position || 'none',
-                                navOverflow: navComputed?.overflow || 'none',
-                                liZIndex: liComputed?.zIndex || 'none',
-                                liPosition: liComputed?.position || 'none',
-                                liOverflow: liComputed?.overflow || 'none',
-                                parentOverflow: el.parentElement ? window.getComputedStyle(el.parentElement).overflow : 'none'
-                              },timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C,D'})}).catch(()=>{});
-                            }, 50);
                           }
                         }}
-                        // #endregion
                       >
                         {/* Padding invisível no topo para facilitar transição do mouse */}
                         <div 
                           className="absolute -top-4 left-0 right-0 h-4 pointer-events-auto"
                           onMouseEnter={() => {
-                            // #region agent log
-                            fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:dropdown:paddingArea:onMouseEnter',message:'Mouse entered padding area',data:{categoryId:cat.id,openDropdown},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU2'})}).catch(()=>{});
-                            // #endregion
                             // Cancelar o timeout quando o mouse entra na área de transição
                             if (closeTimeoutRef.current) {
                               clearTimeout(closeTimeoutRef.current);
@@ -1083,12 +1140,6 @@ const Header = () => {
                           }}
                         ></div>
                         <div className="overflow-hidden">
-                          {/* #region agent log */}
-                          {(() => {
-                            fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:dropdown:content:render',message:'Dropdown content rendering',data:{categoryId:cat.id,hasCategories:!!cat.submenu?.categories,categoriesCount:cat.submenu?.categories?.length || 0,hasSections:!!cat.submenu?.sections,sectionsCount:cat.submenu?.sections?.length || 0,hasItems:!!cat.submenu?.items,itemsCount:cat.submenu?.items?.length || 0},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU3'})}).catch(()=>{});
-                            return null;
-                          })()}
-                          {/* #endregion */}
                         {/* Header do Dropdown melhorado com gradiente sutil e campo de busca */}
                         <div className="bg-gradient-to-r from-primary-50 via-blue-50 to-primary-50 border-b-2 border-primary-100 px-6 sm:px-8 py-5 sm:py-6">
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
@@ -1119,9 +1170,6 @@ const Header = () => {
                             // Menu com categorias organizadas (Juices) - Layout melhorado
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 lg:gap-8">
                               {cat.submenu.categories.map((category, idx) => {
-                                // #region agent log
-                                fetch('http://127.0.0.1:7242/ingest/2dc4085e-d764-46ce-8c5f-25813aefd5f6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:dropdown:category:render',message:'Rendering category in dropdown',data:{categoryId:cat.id,categoryTitle:category.title,categoryItemsCount:category.items.length,items:category.items.slice(0,5)},timestamp:Date.now(),sessionId:'debug-session',runId:'dropdown-menu-debug',hypothesisId:'MENU4'})}).catch(()=>{});
-                                // #endregion
                                 const searchValue = categorySearch[cat.id] || '';
                                 const filteredItems = filterItems(category.items, searchValue);
                                 
@@ -1277,18 +1325,18 @@ const Header = () => {
                         </div>
                       </div>
                     </>
-                 ) : (
-                   // Link simples (Promoções e Perfumes)
-                   <button
-                     onClick={() => navigateRouter('/catalogo')}
-                     className={`hover:text-primary-600 transition-colors py-1 px-2 relative uppercase whitespace-nowrap text-xs ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-2 sm:px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
+                  ) : (
+                    // Link simples (Promoções e Perfumes)
+                    <button 
+                      onClick={() => navigateRouter('/catalogo')}
+                      className={`hover:text-primary-600 transition-colors py-1 px-2 relative uppercase whitespace-nowrap text-xs ${cat.isHighlight ? 'text-white bg-gradient-to-r from-primary-600 to-primary-700 px-2 sm:px-3 rounded-full hover:from-primary-800 hover:to-primary-900 hover:text-white highlight-button-shimmer transition-all duration-300 ease-in-out' : ''}`}
                      style={{ overflow: 'visible', flexShrink: 1, minWidth: 0, maxWidth: '100%', width: 'auto', margin: 0 }}
-                   >
+                    >
                       <span className={cat.isHighlight ? 'relative z-10' : ''}>{cat.name}</span>
                     {!cat.isHighlight && <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all group-hover:w-full"></span>}
                   </button>
                   )}
-                  </li>
+                </li>
                 );
               })}
             </ul>
@@ -1428,6 +1476,7 @@ const ProductCard: React.FC<{
 }> = ({ product, onClick, onQuickView, onQuickAdd, showTimer = false, timerEndDate }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [hoverImageLoaded, setHoverImageLoaded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const { toggleFavorite, isFavorite } = useFavorites();
   const { showSuccess } = useToast();
   const hasSecondImage = product.images && product.images.length > 1;
@@ -1446,9 +1495,12 @@ const ProductCard: React.FC<{
   };
 
   return (
+    <div className="flex flex-col h-full w-full min-w-[187px]">
     <div 
-      className="group bg-white rounded-lg sm:rounded-xl border border-gray-100 overflow-hidden transition-all duration-300 cursor-pointer flex flex-col h-full w-full min-w-[187px] relative hover:shadow-xl sm:hover:shadow-2xl hover:scale-[1.01] sm:hover:scale-[1.02] hover:border-primary-200 hover:z-10"
+      className="group bg-white rounded-lg sm:rounded-xl border border-gray-100 overflow-hidden transition-all duration-300 cursor-pointer flex flex-col h-full w-full relative hover:shadow-xl sm:hover:shadow-2xl hover:scale-[1.01] sm:hover:scale-[1.02] hover:border-primary-200 hover:z-10"
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Floating Badges */}
       <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
@@ -1560,12 +1612,6 @@ const ProductCard: React.FC<{
           {product.name}
         </h3>
         
-        {showTimer && timerEndDate && (
-          <div className="mt-2 sm:mt-3 mb-2 bg-orange-50 border border-orange-200 rounded-lg px-1.5 sm:px-2 py-1 sm:py-1.5 w-full overflow-hidden">
-            <OfferTimer endDate={timerEndDate} size="small" />
-          </div>
-        )}
-        
         <div className="mt-auto">
           {product.originalPrice && (
             <span className="text-[10px] sm:text-xs text-gray-400 line-through block mb-0.5">
@@ -1581,6 +1627,31 @@ const ProductCard: React.FC<{
           </p>
         </div>
       </div>
+    </div>
+    
+    {/* Botão com temporizador ou "Comprar" abaixo do card */}
+    {showTimer && timerEndDate && (
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
+        className={`mt-2 w-full rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 font-semibold text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-2 min-h-[44px] ${
+          isHovered
+            ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg'
+            : 'bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100'
+        }`}
+      >
+        {isHovered ? (
+          <>
+            <ShoppingCart className="w-4 h-4" />
+            <span>Comprar</span>
+          </>
+        ) : (
+          <OfferTimer endDate={timerEndDate} size="small" />
+        )}
+      </button>
+    )}
     </div>
   );
 };
@@ -2250,20 +2321,20 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-6 sm:pt-8 border-t border-gray-200">
               <div className="relative">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 flex items-center justify-center flex-shrink-0 shadow-md ring-2 ring-primary-100">
-                  <img 
-                    src={`https://i.pravatar.cc/128?img=${currentTestimonial + 1}`}
-                    alt={testimonials[currentTestimonial].name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      target.style.display = 'none';
-                      if (target.parentElement) {
+                <img 
+                  src={`https://i.pravatar.cc/128?img=${currentTestimonial + 1}`}
+                  alt={testimonials[currentTestimonial].name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    target.style.display = 'none';
+                    if (target.parentElement) {
                         target.parentElement.innerHTML = `<span class="text-white font-bold text-base sm:text-lg">${testimonials[currentTestimonial].name.charAt(0)}</span>`;
                         target.parentElement.className = 'w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-base sm:text-lg flex-shrink-0 shadow-md ring-2 ring-primary-100';
-                      }
-                    }}
-                  />
-                </div>
+                    }
+                  }}
+                />
+              </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full border-2 border-white shadow-sm flex items-center justify-center">
                   <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white fill-white" />
                 </div>
@@ -2569,98 +2640,98 @@ const FinalizeOrderPage = () => {
 
             <div className="space-y-8">
               {/* Seção: Dados Gerais */}
-              <div className="space-y-4">
+            <div className="space-y-4">
                 <h3 className="text-base font-semibold text-gray-800 mb-4">Dados Gerais</h3>
 
-                {/* Nome e Sobrenome */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome* <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="firstName"
-                      type="text"
-                      value={formData.firstName}
-                      onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
-                      Sobrenome* <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="lastName"
-                      type="text"
-                      value={formData.lastName}
-                      onChange={(e) => handleInputChange('lastName', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                    />
-                  </div>
+              {/* Nome e Sobrenome */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Nome* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="firstName"
+                    type="text"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
                 </div>
-
-                {/* CPF e Data de Nascimento */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-2">
-                      CPF* <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="cpf"
-                      type="text"
-                      value={formData.cpf}
-                      onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
-                      maxLength={14}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-2">
-                      Data de Nascimento* <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="birthDate"
-                      type="text"
-                      value={formData.birthDate}
-                      onChange={(e) => handleInputChange('birthDate', formatDate(e.target.value))}
-                      placeholder="DD/MM/AAAA"
-                      maxLength={10}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                    />
-                  </div>
+                <div>
+                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Sobrenome* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="lastName"
+                    type="text"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
                 </div>
+              </div>
 
-                {/* Gênero e País */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
-                      Gênero* <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="gender"
-                      value={formData.gender}
-                      onChange={(e) => handleInputChange('gender', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                    >
-                      <option value="">Selecionar</option>
-                      <option value="masculino">Masculino</option>
-                      <option value="feminino">Feminino</option>
-                      <option value="outro">Outro</option>
-                      <option value="prefiro-nao-informar">Prefiro não informar</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
-                      País* <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="country"
-                      type="text"
-                      value={formData.country}
-                      onChange={(e) => handleInputChange('country', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                    />
+              {/* CPF e Data de Nascimento */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-2">
+                    CPF* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="cpf"
+                    type="text"
+                    value={formData.cpf}
+                    onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
+                    maxLength={14}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-2">
+                    Data de Nascimento* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="birthDate"
+                    type="text"
+                    value={formData.birthDate}
+                    onChange={(e) => handleInputChange('birthDate', formatDate(e.target.value))}
+                    placeholder="DD/MM/AAAA"
+                    maxLength={10}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+              </div>
+
+              {/* Gênero e País */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
+                    Gênero* <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="gender"
+                    value={formData.gender}
+                    onChange={(e) => handleInputChange('gender', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  >
+                    <option value="">Selecionar</option>
+                    <option value="masculino">Masculino</option>
+                    <option value="feminino">Feminino</option>
+                    <option value="outro">Outro</option>
+                    <option value="prefiro-nao-informar">Prefiro não informar</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
+                    País* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="country"
+                    type="text"
+                    value={formData.country}
+                    onChange={(e) => handleInputChange('country', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
                   </div>
                 </div>
               </div>
@@ -2669,108 +2740,108 @@ const FinalizeOrderPage = () => {
               <div className="space-y-4 pt-4 border-t border-gray-200">
                 <h3 className="text-base font-semibold text-gray-800 mb-4">Endereço</h3>
 
-                {/* CEP */}
-                <div>
-                  <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-2">
-                    CEP* <span className="text-red-500">*</span>
+              {/* CEP */}
+              <div>
+                <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-2">
+                  CEP* <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="zipCode"
+                  type="text"
+                  value={formData.zipCode}
+                  onChange={(e) => handleInputChange('zipCode', formatCEP(e.target.value))}
+                  maxLength={9}
+                  placeholder="00000-000"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                />
+              </div>
+
+              {/* Endereço e Número */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                    Endereço* <span className="text-red-500">*</span>
                   </label>
                   <input
-                    id="zipCode"
+                    id="address"
                     type="text"
-                    value={formData.zipCode}
-                    onChange={(e) => handleInputChange('zipCode', formatCEP(e.target.value))}
-                    maxLength={9}
-                    placeholder="00000-000"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    placeholder="Nome da rua e número da casa"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
                   />
                 </div>
-
-                {/* Endereço e Número */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="sm:col-span-2">
-                    <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-                      Endereço* <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="address"
-                      type="text"
-                      value={formData.address}
-                      onChange={(e) => handleInputChange('address', e.target.value)}
-                      placeholder="Nome da rua e número da casa"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-2">
-                      Número* <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="number"
-                      type="text"
-                      value={formData.number}
-                      onChange={(e) => handleInputChange('number', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                    />
-                  </div>
+                <div>
+                  <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-2">
+                    Número* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="number"
+                    type="text"
+                    value={formData.number}
+                    onChange={(e) => handleInputChange('number', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
                 </div>
+              </div>
 
-                {/* Complemento e Bairro */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="complement" className="block text-sm font-medium text-gray-700 mb-2">
-                      Apartamento, suíte, unidade, etc. (opcional)
-                    </label>
-                    <input
-                      id="complement"
-                      type="text"
-                      value={formData.complement}
-                      onChange={(e) => handleInputChange('complement', e.target.value)}
-                      placeholder="Apartamento, suíte, unidade, etc."
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="neighborhood" className="block text-sm font-medium text-gray-700 mb-2">
-                      Bairro (opcional)
-                    </label>
-                    <input
-                      id="neighborhood"
-                      type="text"
-                      value={formData.neighborhood}
-                      onChange={(e) => handleInputChange('neighborhood', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                    />
-                  </div>
+              {/* Complemento e Bairro */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="complement" className="block text-sm font-medium text-gray-700 mb-2">
+                    Apartamento, suíte, unidade, etc. (opcional)
+                  </label>
+                  <input
+                    id="complement"
+                    type="text"
+                    value={formData.complement}
+                    onChange={(e) => handleInputChange('complement', e.target.value)}
+                    placeholder="Apartamento, suíte, unidade, etc."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
                 </div>
+                <div>
+                  <label htmlFor="neighborhood" className="block text-sm font-medium text-gray-700 mb-2">
+                    Bairro (opcional)
+                  </label>
+                  <input
+                    id="neighborhood"
+                    type="text"
+                    value={formData.neighborhood}
+                    onChange={(e) => handleInputChange('neighborhood', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+              </div>
 
-                {/* Cidade e Estado */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
-                      Cidade* <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="city"
-                      type="text"
-                      value={formData.city}
-                      onChange={(e) => handleInputChange('city', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
-                      Estado* <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="state"
-                      value={formData.state}
-                      onChange={(e) => handleInputChange('state', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                    >
-                      {brazilianStates.map(state => (
-                        <option key={state} value={state}>{state}</option>
-                      ))}
-                    </select>
+              {/* Cidade e Estado */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
+                    Cidade* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="city"
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
+                    Estado* <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="state"
+                    value={formData.state}
+                    onChange={(e) => handleInputChange('state', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  >
+                    {brazilianStates.map(state => (
+                      <option key={state} value={state}>{state}</option>
+                    ))}
+                  </select>
                   </div>
                 </div>
               </div>
@@ -2779,32 +2850,32 @@ const FinalizeOrderPage = () => {
               <div className="space-y-4 pt-4 border-t border-gray-200">
                 <h3 className="text-base font-semibold text-gray-800 mb-4">Contato</h3>
 
-                {/* Telefone e Email */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                      Telefone* <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="phone"
-                      type="text"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
-                      maxLength={15}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                      Endereço de e-mail* <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
-                    />
+              {/* Telefone e Email */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                    Telefone* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="phone"
+                    type="text"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
+                    maxLength={15}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    Endereço de e-mail* <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  />
                   </div>
                 </div>
               </div>
@@ -2813,19 +2884,19 @@ const FinalizeOrderPage = () => {
               <div className="space-y-4 pt-4 border-t border-gray-200">
                 <h3 className="text-base font-semibold text-gray-800 mb-4">Observações</h3>
 
-                {/* Notas do Pedido */}
-                <div>
-                  <label htmlFor="orderNotes" className="block text-sm font-medium text-gray-700 mb-2">
-                    Notas de Pedido (opcional)
-                  </label>
-                  <textarea
-                    id="orderNotes"
-                    value={formData.orderNotes}
-                    onChange={(e) => handleInputChange('orderNotes', e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none"
-                    placeholder="Notas sobre seu pedido, por exemplo, instruções especiais para entrega."
-                  />
+              {/* Notas do Pedido */}
+              <div>
+                <label htmlFor="orderNotes" className="block text-sm font-medium text-gray-700 mb-2">
+                  Notas de Pedido (opcional)
+                </label>
+                <textarea
+                  id="orderNotes"
+                  value={formData.orderNotes}
+                  onChange={(e) => handleInputChange('orderNotes', e.target.value)}
+                  rows={4}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none"
+                  placeholder="Notas sobre seu pedido, por exemplo, instruções especiais para entrega."
+                />
                 </div>
               </div>
             </div>
@@ -3797,17 +3868,17 @@ const Catalog = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product)
           ) : (
             <>
               {viewMode === 'grid' ? (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                  {paginatedProducts.map(product => (
-                    <ProductCard 
-                      key={product.id} 
-                      product={product} 
-                      onClick={() => handleProductClick(product.id)}
-                      onQuickView={onQuickView}
-                      onQuickAdd={onQuickAdd}
-                    />
-                  ))}
-                </div>
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                {paginatedProducts.map(product => (
+                  <ProductCard 
+                    key={product.id} 
+                    product={product} 
+                    onClick={() => handleProductClick(product.id)}
+                    onQuickView={onQuickView}
+                    onQuickAdd={onQuickAdd}
+                  />
+                ))}
+              </div>
               ) : (
                 <div className="space-y-4 sm:space-y-6">
                   {paginatedProducts.map(product => (
@@ -3997,7 +4068,7 @@ const ProductDetail = ({ product }: { product: Product }) => {
       const totalItems = complementaryItems.length + 1;
       showSuccess(`${totalItems} produto(s) adicionado(s) ao carrinho! (${product.name} + ${complementaryItems.length} complementar${complementaryItems.length > 1 ? 'es' : ''})`);
     } else {
-      showSuccess(`${product.name} adicionado ao carrinho!`);
+    showSuccess(`${product.name} adicionado ao carrinho!`);
     }
   };
   
@@ -6269,13 +6340,13 @@ export default function App() {
   };
 
   const navigateRouter = useNavigateRouter();
-  
+
   const handleViewFullDetails = (product: Product) => {
     navigateRouter(`/produto/${product.id}`);
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans text-gray-900 bg-white w-full overflow-x-hidden">
+    <div className="min-h-screen flex flex-col font-sans text-gray-900 bg-white w-full overflow-x-hidden" style={{ overflowY: 'visible', overflow: 'visible' }}>
       <AgeVerificationModal />
       <Header />
 
