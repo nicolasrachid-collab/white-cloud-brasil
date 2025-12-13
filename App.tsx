@@ -776,7 +776,7 @@ const Header = () => {
       });
       setOpenDropdown(null);
 
-    }, 200); // Delay de 200ms antes de fechar
+    }, 20); // Delay reduzido para 20ms para transição muito rápida entre menus
 
   };
 
@@ -2155,7 +2155,7 @@ const ProductCard: React.FC<{
 
 
 
-      <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
+      <div className="relative aspect-[4/5] overflow-hidden bg-gray-50" style={{ position: 'relative' }}>
 
         {/* Placeholder Skeleton */}
 
@@ -2775,19 +2775,19 @@ const OfferTimer = ({ endDate, size = 'default' }: { endDate: Date; size?: 'defa
       <Calendar className={`${iconSize} text-orange-600 flex-shrink-0`} />
       <span className="text-orange-600 whitespace-nowrap">TERMINA EM:</span>
       <div className="flex items-center gap-0.5 flex-shrink-0">
-        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] text-center`}>
+        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] flex items-center justify-center`}>
           {String(timeLeft.days).padStart(2, '0')}D
         </span>
         <span className="text-orange-600 text-[8px] sm:text-[9px]">:</span>
-        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] text-center`}>
+        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] flex items-center justify-center`}>
           {String(timeLeft.hours).padStart(2, '0')}
         </span>
         <span className="text-orange-600 text-[8px] sm:text-[9px]">:</span>
-        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] text-center`}>
+        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] flex items-center justify-center`}>
           {String(timeLeft.minutes).padStart(2, '0')}
         </span>
         <span className="text-orange-600 text-[8px] sm:text-[9px]">:</span>
-        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] text-center`}>
+        <span className={`bg-orange-600 text-white px-0.5 sm:px-1 md:px-1.5 py-0.5 rounded font-bold ${numberSize} min-w-[1.5em] flex items-center justify-center`}>
           {String(timeLeft.seconds).padStart(2, '0')}
         </span>
       </div>
@@ -3096,11 +3096,11 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
     <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl py-4 sm:py-6 md:py-8 lg:py-10">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
 
-        <div className="relative aspect-[2.5/1] sm:aspect-[2.8/1] md:aspect-[2.6/1] lg:aspect-[2.7/1] rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer shadow-md hover:shadow-lg transition-shadow duration-300">
+        <div className="relative aspect-[2.08/1] sm:aspect-[2.33/1] md:aspect-[2.17/1] lg:aspect-[2.25/1] rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer shadow-md hover:shadow-lg transition-shadow duration-300">
           <img src="/images/banner01.svg" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Promoção Pod Systems" loading="lazy" />
         </div>
 
-        <div className="relative aspect-[2.5/1] sm:aspect-[2.8/1] md:aspect-[2.6/1] lg:aspect-[2.7/1] rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer shadow-md hover:shadow-lg transition-shadow duration-300">
+        <div className="relative aspect-[2.08/1] sm:aspect-[2.33/1] md:aspect-[2.17/1] lg:aspect-[2.25/1] rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer shadow-md hover:shadow-lg transition-shadow duration-300">
           <img src="/images/banner02.svg" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Promoção Premium Juices" loading="lazy" onError={(e) => {
             // Fallback para banner01 se banner02 não existir
             e.currentTarget.src = '/images/banner01.png';
@@ -3328,7 +3328,7 @@ const Home = ({ onQuickView, onQuickAdd }: { onQuickView?: (product: Product) =>
         <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 lg:p-12 shadow-xl border border-gray-100 relative overflow-hidden">
           {/* Gradiente de fundo aprimorado */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary-50/40 via-white to-blue-50/30 pointer-events-none" />
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-500 via-primary-600 to-blue-500" />
+          <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-500 via-primary-600 to-blue-500 opacity-90" />
           
           {/* Botões de Navegação - Design aprimorado */}
           <button

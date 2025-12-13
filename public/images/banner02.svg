@@ -1,4 +1,4 @@
-<svg width="1200" height="450" viewBox="0 0 1200 450" xmlns="http://www.w3.org/2000/svg">
+<svg width="1200" height="540" viewBox="0 0 1200 540" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#2759FF;stop-opacity:1" />
@@ -22,50 +22,50 @@
   <rect width="1200" height="450" fill="url(#bgGradient)"/>
   
   <!-- Decorative circles -->
-  <circle cx="100" cy="100" r="80" fill="rgba(255,255,255,0.1)"/>
-  <circle cx="1100" cy="350" r="120" fill="rgba(255,255,255,0.05)"/>
-  <circle cx="1050" cy="80" r="60" fill="rgba(255,255,255,0.08)"/>
+  <circle cx="100" cy="120" r="80" fill="rgba(255,255,255,0.1)"/>
+  <circle cx="1100" cy="420" r="120" fill="rgba(255,255,255,0.05)"/>
+  <circle cx="1050" cy="100" r="60" fill="rgba(255,255,255,0.08)"/>
   
   <!-- Main content area -->
-  <g transform="translate(80, 80)">
+  <g transform="translate(80, 100)">
     <!-- Title -->
-    <text x="0" y="60" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white">
+    <text x="0" y="70" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white">
       Premium Juices
     </text>
     
     <!-- Subtitle -->
-    <text x="0" y="110" font-family="Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.9)">
+    <text x="0" y="120" font-family="Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.9)">
       Sabores Incríveis
     </text>
     
     <!-- Highlight text -->
-    <text x="0" y="180" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="url(#accentGradient)">
+    <text x="0" y="200" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="url(#accentGradient)">
       ATÉ 30% OFF
     </text>
     
     <!-- Description -->
-    <text x="0" y="230" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.85)">
+    <text x="0" y="260" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.85)">
       Experimente a melhor qualidade
     </text>
-    <text x="0" y="260" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.85)">
+    <text x="0" y="290" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.85)">
       em juices premium
     </text>
   </g>
   
   <!-- Decorative elements - juice drops -->
   <g opacity="0.3">
-    <circle cx="850" cy="150" r="25" fill="rgba(255,255,255,0.4)"/>
-    <circle cx="900" cy="200" r="20" fill="rgba(255,255,255,0.3)"/>
-    <circle cx="950" cy="120" r="30" fill="rgba(255,255,255,0.35)"/>
-    <circle cx="1000" cy="250" r="22" fill="rgba(255,255,255,0.3)"/>
+    <circle cx="850" cy="180" r="25" fill="rgba(255,255,255,0.4)"/>
+    <circle cx="900" cy="240" r="20" fill="rgba(255,255,255,0.3)"/>
+    <circle cx="950" cy="150" r="30" fill="rgba(255,255,255,0.35)"/>
+    <circle cx="1000" cy="300" r="22" fill="rgba(255,255,255,0.3)"/>
   </g>
   
   <!-- CTA Button background -->
-  <rect x="80" y="320" width="220" height="60" rx="30" fill="url(#accentGradient)" filter="url(#glow)"/>
-  <text x="190" y="360" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="white" text-anchor="middle">
+  <rect x="80" y="390" width="220" height="60" rx="30" fill="url(#accentGradient)" filter="url(#glow)"/>
+  <text x="190" y="430" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="white" text-anchor="middle">
     Comprar Agora
   </text>
   
   <!-- Decorative lines -->
-  <line x1="0" y1="400" x2="1200" y2="400" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+  <line x1="0" y1="480" x2="1200" y2="480" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
 </svg>
