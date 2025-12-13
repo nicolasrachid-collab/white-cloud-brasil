@@ -12,7 +12,7 @@ import {
 
   Users, ChevronLeft, ChevronRight, ChevronDown, Mail, Instagram, Facebook, Youtube, Twitter,
 
-  Heart, Eye, Share2, Calendar, MessageCircle, Grid3x3, List
+  Heart, Eye, Share2, Calendar, MessageCircle, Grid3x3, List, Filter
 } from './components/Icons';
 
 import { Button } from './components/Button';
@@ -1269,14 +1269,7 @@ const Header = () => {
 
 
              {/* Mobile Actions - Right side */}
-             {/* Mobile Search Button */}
-             <button 
-               className="lg:hidden p-1.5 sm:p-2 text-gray-700 min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] flex items-center justify-center touch-manipulation hover:text-primary-600 transition-colors"
-               onClick={() => setIsSearchOpen(true)}
-               aria-label="Buscar produtos"
-             >
-               <Search className="w-5 h-5 sm:w-6 sm:h-6" />
-             </button>
+             {/* Mobile Search Button - Removed, now in mobile search bar section below header */}
 
              <button 
 
@@ -10830,12 +10823,25 @@ const ChatWidget = () => {
 
 export default function App() {
 
-  const { navigate, isBannerVisible } = useApp();
+  const { navigate, isBannerVisible, searchTerm, setSearchTerm, setActiveCategory } = useApp();
   const { toast, showError, showSuccess, closeToast } = useToast();
 
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
   const { addToCart } = useCart();
+
+  // Prevenir scroll do body quando drawer de filtros está aberto
+  useEffect(() => {
+    if (isFilterDrawerOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isFilterDrawerOpen]);
 
 
 
@@ -10874,9 +10880,39 @@ export default function App() {
 
       <Header />
 
+      {/* Mobile Search Bar Section - Below Header */}
+      <div className="lg:hidden fixed left-0 right-0 bg-white border-b border-gray-100 shadow-sm z-[9997] transition-all duration-300" style={{ top: isBannerVisible ? '123px' : '56px' }}>
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="flex items-center gap-2 sm:gap-3 py-2 sm:py-3">
+            {/* Search Bar */}
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder="Pesquise seu produto..."
+                className="w-full bg-gray-50 border border-gray-200 rounded-full py-2 sm:py-2.5 pl-9 sm:pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all placeholder-gray-400 text-sm min-h-[44px]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchTerm.trim()) {
+                    navigateRouter('/catalogo');
+                  }
+                }}
+              />
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            </div>
+            {/* Filter Button */}
+            <button
+              onClick={() => setIsFilterDrawerOpen(true)}
+              className="p-2.5 sm:p-3 bg-gray-50 border border-gray-200 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
+              aria-label="Filtros"
+            >
+              <Filter className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+            </button>
+          </div>
+        </div>
+      </div>
 
-
-      <main className={`flex-1 w-full overflow-x-hidden transition-all duration-300 ${isBannerVisible ? 'pt-[147px] sm:pt-[163px] lg:pt-[221px]' : 'pt-[80px] sm:pt-[96px] lg:pt-[154px]'}`}>
+      <main className={`flex-1 w-full overflow-x-hidden transition-all duration-300 ${isBannerVisible ? 'pt-[183px] sm:pt-[191px] lg:pt-[221px]' : 'pt-[116px] sm:pt-[124px] lg:pt-[154px]'}`}>
         <Routes>
 
           <Route path="/" element={<Home onQuickView={handleQuickView} onQuickAdd={handleQuickAdd} />} />
@@ -10925,6 +10961,66 @@ export default function App() {
         onViewFullDetails={handleViewFullDetails}
 
       />
+
+      {/* Mobile Filter Drawer - Categories */}
+      <div 
+        className={`fixed inset-0 z-[10000] bg-white transition-transform duration-300 ease-in-out lg:hidden flex flex-col ${
+          isFilterDrawerOpen ? 'translate-y-0' : '-translate-y-full'
+        }`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 bg-white sticky top-0 z-10">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Filter className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+              Filtrar por Categoria
+            </h2>
+          </div>
+          <button
+            onClick={() => setIsFilterDrawerOpen(false)}
+            className="p-2 hover:bg-gray-100 active:bg-gray-200 rounded-full transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
+            aria-label="Fechar filtros"
+          >
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div className="space-y-2">
+            {CATEGORIES.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => {
+                  const categoryIdToProductCategory: Record<string, string> = {
+                    'promocoes': 'all',
+                    'pods-descartaveis': 'pods',
+                    'juices': 'juices',
+                    'coils': 'coils',
+                    'hardware': 'hardware',
+                    'saltnic': 'juices',
+                    'pods': 'pods',
+                    'acessorios': 'acessorios',
+                    'perfumes': 'perfumes'
+                  };
+                  const productCategory = categoryIdToProductCategory[category.id] || 'all';
+                  setActiveCategory(productCategory);
+                  navigateRouter('/catalogo');
+                  setIsFilterDrawerOpen(false);
+                }}
+                className="w-full text-left p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-primary-300 active:bg-gray-100 transition-colors min-h-[44px] touch-manipulation"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-gray-900">{category.name}</span>
+                  {category.hasDropdown && (
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
 
 
