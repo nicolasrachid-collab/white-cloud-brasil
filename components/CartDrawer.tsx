@@ -169,7 +169,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   onClose();
                   navigateRouter('/checkout');
                 }}
-                className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-900 active:bg-gray-950 transition-colors min-h-[44px] touch-manipulation"
+                className="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 active:bg-green-800 transition-colors min-h-[44px] touch-manipulation"
               >
                 Finalizar Compra
               </button>
