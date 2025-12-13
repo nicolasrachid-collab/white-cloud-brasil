@@ -83,6 +83,7 @@ const Header = () => {
   const [categorySearch, setCategorySearch] = useState<Record<string, string>>({});
 
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const navRef = useRef<HTMLElement>(null);
 
@@ -1133,7 +1134,7 @@ const Header = () => {
 
 
       <header ref={headerRef} className={`fixed left-0 right-0 z-[9998] bg-white shadow-sm border-b border-gray-100 w-full overflow-x-hidden h-14 sm:h-16 md:h-20 lg:h-24 transition-all duration-300 ${isBannerVisible ? 'top-[67px]' : 'top-0'}`} style={{ maxWidth: '100vw', overflowX: 'hidden', overflowY: 'visible', overflow: 'visible', width: '100%', boxSizing: 'border-box' }}>
-        <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl flex items-center justify-between gap-2 sm:gap-3 md:gap-4 lg:gap-6 h-14 sm:h-16 md:h-20 lg:h-24" style={{ overflowX: 'hidden', overflowY: 'visible', overflow: 'visible', width: '100%', boxSizing: 'border-box' }}>
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 max-w-7xl flex items-center justify-between gap-2 sm:gap-3 md:gap-4 lg:gap-4 xl:gap-5 h-14 sm:h-16 md:h-20 lg:h-24" style={{ overflowX: 'hidden', overflowY: 'visible', overflow: 'visible', width: '100%', boxSizing: 'border-box' }}>
           {/* Logo */}
 
           <div 
@@ -1200,7 +1201,7 @@ const Header = () => {
 
 
           {/* User Actions - Mobile Optimized */}
-          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-4 text-sm font-medium text-gray-700 flex-shrink-0 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-3 xl:gap-4 text-sm font-medium text-gray-700 flex-shrink-0 min-w-0">
              {/* Login/Cadastro Button - Visible on md+ screens, appears in hamburger menu on smaller screens */}
              <button 
 
@@ -1247,6 +1248,15 @@ const Header = () => {
 
 
              {/* Mobile Actions - Right side */}
+             {/* Mobile Search Button */}
+             <button 
+               className="lg:hidden p-1.5 sm:p-2 text-gray-700 min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] flex items-center justify-center touch-manipulation hover:text-primary-600 transition-colors"
+               onClick={() => setIsSearchOpen(true)}
+               aria-label="Buscar produtos"
+             >
+               <Search className="w-5 h-5 sm:w-6 sm:h-6" />
+             </button>
+
              <button 
 
               className="relative cursor-pointer flex items-center justify-center hover:text-primary-600 transition-colors min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] p-1.5 sm:p-2 touch-manipulation"
@@ -1504,7 +1514,7 @@ const Header = () => {
 
 
 
-                        <div className="p-6 sm:p-8">
+                        <div className="p-6 sm:p-8 lg:p-10">
                           {cat.submenu?.categories ? (
 
                             // Menu com categorias organizadas (Juices) - Layout melhorado
@@ -1550,7 +1560,7 @@ const Header = () => {
                                               className="text-xs sm:text-sm text-gray-600 hover:text-primary-600 hover:bg-gradient-to-r hover:from-primary-50 hover:to-transparent transition-all duration-200 text-left w-full px-3 py-2 rounded-md group/item relative overflow-hidden"
                                             >
                                               <span className="relative z-10 flex items-center gap-2">
-                                                <span className="w-1 h-1 rounded-full bg-gray-300 group-hover/item:bg-primary-500 transition-colors duration-200"></span>
+                                                <span className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover/item:bg-primary-500 transition-colors duration-200 flex-shrink-0"></span>
                                                 {item}
 
                                               </span>
@@ -1584,7 +1594,7 @@ const Header = () => {
                           ) : cat.submenu?.sections ? (
 
                             // Menu com seções (SaltNic) - Layout em 2 colunas melhorado
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 xl:gap-16">
                               {cat.submenu.sections.map((section, idx) => {
 
                                 const searchValue = categorySearch[cat.id] || '';
@@ -1598,9 +1608,9 @@ const Header = () => {
                                   <div key={idx} className="group/section">
 
                                     {/* Título da seção melhorado */}
-                                    <div className="flex items-center gap-2.5 mb-4 pb-3 border-b-2 border-primary-200 group-hover/section:border-primary-500 transition-colors duration-300">
+                                    <div className="flex items-center gap-3 mb-5 pb-4 border-b-2 border-primary-200 group-hover/section:border-primary-500 transition-colors duration-300">
                                       <div className="w-2 h-2 rounded-full bg-primary-500 group-hover/section:bg-primary-600 transition-colors duration-300"></div>
-                                      <h4 className="font-bold text-gray-900 text-sm sm:text-base uppercase tracking-wider">
+                                      <h4 className="font-bold text-gray-900 text-base sm:text-lg uppercase tracking-wider">
                                         {section.title}
 
                                       </h4>
@@ -1610,7 +1620,7 @@ const Header = () => {
                                     
 
                                     {/* Grid de itens em 2 colunas filtrados melhorado */}
-                                    <ul className="grid grid-cols-2 gap-x-4 gap-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-1">
+                                    <ul className="grid grid-cols-2 gap-x-5 gap-y-2.5 max-h-80 overflow-y-auto custom-scrollbar pr-2">
                                       {filteredItems.length > 0 ? (
 
                                         filteredItems.map((item, itemIdx) => (
@@ -1623,10 +1633,10 @@ const Header = () => {
                                                 navigateRouter('/catalogo');
                                                 setOpenDropdown(null);
                                               }}
-                                              className="text-sm text-gray-600 hover:text-primary-600 hover:bg-gradient-to-r hover:from-primary-50 hover:to-transparent transition-all duration-200 text-left w-full px-3 py-2 rounded-lg group/item relative overflow-hidden"
+                                              className="text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-gradient-to-r hover:from-primary-50 hover:to-transparent transition-all duration-200 text-left w-full px-4 py-2.5 rounded-lg group/item relative overflow-hidden hover:shadow-sm"
                                             >
                                               <span className="relative z-10 flex items-center gap-2">
-                                                <span className="w-1 h-1 rounded-full bg-gray-300 group-hover/item:bg-primary-500 transition-colors duration-200"></span>
+                                                <span className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover/item:bg-primary-500 transition-colors duration-200 flex-shrink-0"></span>
                                                 {item}
 
                                               </span>
@@ -1981,7 +1991,39 @@ const Header = () => {
 
       </aside>
 
-
+      {/* Mobile Search Drawer */}
+      <div 
+        className={`fixed inset-0 z-[10002] bg-white transition-transform duration-300 ease-in-out lg:hidden ${
+          isSearchOpen ? 'translate-y-0' : '-translate-y-full'
+        }`}
+      >
+        <div className="flex items-center gap-3 p-3 sm:p-4 border-b border-gray-200 bg-white">
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              placeholder="Pesquise seu produto na White Cloud..."
+              className="w-full bg-gray-50 border border-gray-200 rounded-full py-2.5 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all placeholder-gray-400 text-sm min-h-[44px]"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchTerm.trim()) {
+                  navigateRouter('/catalogo');
+                  setIsSearchOpen(false);
+                }
+              }}
+            />
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          </div>
+          <button
+            onClick={() => setIsSearchOpen(false)}
+            className="p-2 text-gray-500 hover:text-gray-700 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
+            aria-label="Fechar busca"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
 
       {/* Cart Drawer */}
 
