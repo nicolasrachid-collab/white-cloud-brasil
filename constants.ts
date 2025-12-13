@@ -226,8 +226,8 @@ export const HERO_BANNERS = [
     id: 1,
     title: "BLACK FRIDAY VAPE",
     subtitle: "Descontos de até 60% em toda a linha premium de Pods e Juices.",
-    image: "/images/hero/banner-black-friday.svg",
-    imageMobile: "/images/hero/banner-black-friday-mobile.svg",
+    image: "/images/hero/banner-icy-blast.png",
+    imageMobile: "/images/hero/banner-icy-blast.png",
     cta: "Aproveitar Agora",
     color: "from-purple-900 to-indigo-900"
   },
@@ -235,26 +235,26 @@ export const HERO_BANNERS = [
     id: 2,
     title: "XROS SERIES: A EVOLUÇÃO DO SABOR",
     subtitle: "DISPOSITIVOS PREMIUM. SESSÕES INIGUALÁVEIS.",
-    image: "/images/hero/banner-xros.svg",
-    imageMobile: "/images/hero/banner-xros-mobile.svg",
+    image: "/images/hero/banner-icy-blast.png",
+    imageMobile: "/images/hero/banner-icy-blast.png",
     cta: "Compre Agora",
     color: "from-blue-900 via-purple-900 to-orange-900"
   },
   {
     id: 3,
-    title: "NOVO IGNITE V80",
-    subtitle: "A revolução do sabor chegou. 8000 puffs de pura tecnologia.",
-    image: "/images/hero/banner-ignite.svg",
-    imageMobile: "/images/hero/banner-ignite-mobile.svg",
-    cta: "Conhecer Lançamento",
+    title: "ICY BLAST",
+    subtitle: "A revolução do sabor chegou. Sinta a potência do Reds Apple Glacial Mint com nossa tecnologia de resfriamento instantâneo.",
+    image: "/images/hero/banner-icy-blast.png",
+    imageMobile: "/images/hero/banner-icy-blast.png",
+    cta: "Comprar Agora",
     color: "from-blue-900 to-indigo-900"
   },
   {
     id: 4,
     title: "JUICES IMPORTADOS",
     subtitle: "As melhores marcas do mundo com preços do Brasil.",
-    image: "/images/hero/banner-juices.svg",
-    imageMobile: "/images/hero/banner-juices-mobile.svg",
+    image: "/images/hero/banner-icy-blast.png",
+    imageMobile: "/images/hero/banner-icy-blast.png",
     cta: "Ver Coleção",
     color: "from-blue-900 to-slate-900"
   }
